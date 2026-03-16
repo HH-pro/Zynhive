@@ -1,0 +1,396 @@
+// ─── src/components/admin/leads/AddLeadModal.tsx ────────────────────────────
+// Modal to add a single lead manually or search via AI
+
+import { useState } from "react";
+import type { Lead, LeadSource } from "../../../types/leads";
+import { LEAD_SOURCES, DEFAULT_CATEGORIES } from "../../../lib/lead-constants";
+import { searchLeadsAI, type SearchResult } from "../../../lib/lead-ai";
+
+interface Props {
+  onClose: () => void;
+  onAdd: (lead: Omit<Lead, "id" | "selected" | "firestoreId">) => Promise<void>;
+  onAddBatch: (leads: Omit<Lead, "id" | "selected" | "firestoreId">[]) => Promise<void>;
+}
+
+const emptyForm = {
+  name: "", email: "", phone: "", website: "", instagram: "",
+  source: "Google Maps" as LeadSource,
+  category: "", hasChatbot: false, hasQuickResponse: false,
+  hasLeadForm: false, hasMobileOptimized: false, notes: "",
+};
+
+export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
+  const [mode, setMode] = useState<"manual" | "ai-search">("manual");
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+
+  // AI Search state
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchLocation, setSearchLocation] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<(SearchResult & { selected: boolean })[]>([]);
+
+  const set = (key: string, val: unknown) => setForm((p) => ({ ...p, [key]: val }));
+
+  async function handleSubmitManual() {
+    if (!form.name || !form.email) return;
+    setSaving(true);
+    await onAdd({
+      ...form,
+      aiAuditSummary: "",
+      dateAdded: new Date().toISOString().split("T")[0],
+      mailHistory: [],
+      status: "new",
+    });
+    setSaving(false);
+    onClose();
+  }
+
+  async function handleAiSearch() {
+    if (!searchKeyword || !searchLocation) return;
+    setSearching(true);
+    try {
+      const results = await searchLeadsAI(searchKeyword, searchLocation);
+      setSearchResults(results.map((r) => ({ ...r, selected: true })));
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  async function handleImportSelected() {
+    const selected = searchResults.filter((r) => r.selected);
+    if (selected.length === 0) return;
+    setSaving(true);
+    const leadsToAdd = selected.map((r) => ({
+      name: r.name, email: r.email, phone: r.phone,
+      website: r.website, instagram: r.instagram,
+      source: (r.source || "AI Search") as LeadSource,
+      category: r.category || searchKeyword,
+      hasChatbot: false, hasQuickResponse: false,
+      hasLeadForm: false, hasMobileOptimized: false,
+      notes: "", aiAuditSummary: "",
+      dateAdded: new Date().toISOString().split("T")[0],
+      mailHistory: [],
+      status: "new" as const,
+    }));
+    await onAddBatch(leadsToAdd);
+    setSaving(false);
+    onClose();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[640px] max-h-[85vh] overflow-y-auto rounded-2xl p-6"
+        style={{
+          background: "var(--bg-surface)",
+          border: "1px solid var(--border2)",
+          boxShadow: "var(--shadow-lg)",
+          animation: "fadeScaleIn .25s cubic-bezier(0.16,1,0.3,1) both",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-display text-[18px] font-bold" style={{ color: "var(--ink)" }}>
+            Add Leads
+          </h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ color: "var(--ink4)", cursor: "pointer" }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Mode Toggle */}
+        <div
+          className="flex rounded-xl p-1 mb-6"
+          style={{ background: "var(--bg-alt)", border: "1px solid var(--border2)" }}
+        >
+          {(["manual", "ai-search"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className="flex-1 py-2.5 rounded-lg font-mono text-[11px] font-semibold
+                transition-all duration-200"
+              style={{
+                cursor: "pointer",
+                background: mode === m
+                  ? "linear-gradient(135deg, var(--accent), var(--cyan))"
+                  : "transparent",
+                color: mode === m ? "white" : "var(--ink4)",
+              }}
+            >
+              {m === "manual" ? "✏️ Manual Add" : "🤖 AI Search & Import"}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Manual Mode ────────────────────────────────────────────────── */}
+        {mode === "manual" && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Business Name *" value={form.name}
+                onChange={(v) => set("name", v)} placeholder="e.g. Horizon Estates" />
+              <FormField label="Email *" value={form.email}
+                onChange={(v) => set("email", v)} placeholder="info@example.com" />
+              <FormField label="Phone" value={form.phone}
+                onChange={(v) => set("phone", v)} placeholder="+44 20 7946 0958" />
+              <FormField label="Website" value={form.website}
+                onChange={(v) => set("website", v)} placeholder="horizonestates.co.uk" />
+              <FormField label="Instagram" value={form.instagram}
+                onChange={(v) => set("instagram", v)} placeholder="@handle" />
+              <div className="flex flex-col gap-1">
+                <label className="font-mono text-[10px] font-semibold uppercase tracking-widest"
+                  style={{ color: "var(--ink4)" }}>Source</label>
+                <select
+                  value={form.source}
+                  onChange={(e) => set("source", e.target.value)}
+                  className="py-2 px-3 rounded-lg text-[13px]"
+                  style={{
+                    background: "var(--bg-alt)", border: "1px solid var(--border2)",
+                    color: "var(--ink)", outline: "none", cursor: "pointer",
+                  }}
+                >
+                  {LEAD_SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="font-mono text-[10px] font-semibold uppercase tracking-widest"
+                  style={{ color: "var(--ink4)" }}>Category</label>
+                <select
+                  value={form.category}
+                  onChange={(e) => set("category", e.target.value)}
+                  className="py-2 px-3 rounded-lg text-[13px]"
+                  style={{
+                    background: "var(--bg-alt)", border: "1px solid var(--border2)",
+                    color: "var(--ink)", outline: "none", cursor: "pointer",
+                  }}
+                >
+                  <option value="">Select category</option>
+                  {DEFAULT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              {/* Checkboxes */}
+              <div className="col-span-2 flex flex-wrap gap-4 py-2">
+                {([
+                  ["hasChatbot", "Has Chatbot"],
+                  ["hasQuickResponse", "Has Quick Response"],
+                  ["hasLeadForm", "Has Lead Form"],
+                  ["hasMobileOptimized", "Mobile Optimized"],
+                ] as const).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form[key] as boolean}
+                      onChange={(e) => set(key, e.target.checked)}
+                      className="w-4 h-4 rounded"
+                      style={{ accentColor: "var(--accent)" }}
+                    />
+                    <span className="font-mono text-[11px]" style={{ color: "var(--ink3)" }}>
+                      {label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Notes */}
+              <div className="col-span-2 flex flex-col gap-1">
+                <label className="font-mono text-[10px] font-semibold uppercase tracking-widest"
+                  style={{ color: "var(--ink4)" }}>Notes</label>
+                <textarea
+                  value={form.notes}
+                  onChange={(e) => set("notes", e.target.value)}
+                  rows={3}
+                  placeholder="Website issues, observations..."
+                  className="py-2 px-3 rounded-lg text-[13px] resize-none"
+                  style={{
+                    background: "var(--bg-alt)", border: "1px solid var(--border2)",
+                    color: "var(--ink)", outline: "none",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={onClose}
+                className="px-5 py-2.5 rounded-xl text-[13px] font-medium"
+                style={{ border: "1px solid var(--border2)", color: "var(--ink3)", cursor: "pointer", background: "transparent" }}>
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitManual}
+                disabled={saving || !form.name || !form.email}
+                className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white
+                  transition-all duration-150 disabled:opacity-50"
+                style={{
+                  background: "linear-gradient(135deg, var(--accent), var(--cyan))",
+                  cursor: saving ? "wait" : "pointer",
+                }}
+              >
+                {saving ? "Adding…" : "Add Lead"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ── AI Search Mode ─────────────────────────────────────────────── */}
+        {mode === "ai-search" && (
+          <>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <FormField
+                label="Industry / Keyword"
+                value={searchKeyword}
+                onChange={setSearchKeyword}
+                placeholder="e.g. Real Estate"
+              />
+              <FormField
+                label="Location"
+                value={searchLocation}
+                onChange={setSearchLocation}
+                placeholder="e.g. London, UK"
+              />
+            </div>
+            <button
+              onClick={handleAiSearch}
+              disabled={searching || !searchKeyword || !searchLocation}
+              className="w-full py-3 rounded-xl text-[13px] font-semibold text-white mb-5
+                transition-all duration-150 disabled:opacity-50 flex items-center justify-center gap-2"
+              style={{
+                background: "linear-gradient(135deg, var(--accent), var(--cyan))",
+                cursor: searching ? "wait" : "pointer",
+              }}
+            >
+              {searching ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  AI is searching...
+                </>
+              ) : (
+                <>🤖 Search with AI</>
+              )}
+            </button>
+
+            {/* Results */}
+            {searchResults.length > 0 && (
+              <div
+                className="rounded-xl overflow-hidden mb-4"
+                style={{ border: "1px solid var(--border2)" }}
+              >
+                <div className="flex items-center justify-between px-4 py-2.5"
+                  style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--border2)" }}>
+                  <span className="font-mono text-[10px] uppercase tracking-widest" style={{ color: "var(--ink4)" }}>
+                    Found {searchResults.length} leads
+                  </span>
+                  <button
+                    onClick={() => setSearchResults((p) => p.map((r) => ({
+                      ...r, selected: !p.every((x) => x.selected),
+                    })))}
+                    className="font-mono text-[10px]"
+                    style={{ color: "var(--accent)", cursor: "pointer", background: "none", border: "none" }}
+                  >
+                    Toggle All
+                  </button>
+                </div>
+                {searchResults.map((r, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 px-4 py-3 border-b last:border-0"
+                    style={{
+                      borderColor: "var(--border)",
+                      background: r.selected ? "var(--accent-pale)" : "transparent",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={r.selected}
+                      onChange={() => {
+                        setSearchResults((p) =>
+                          p.map((x, j) => (j === i ? { ...x, selected: !x.selected } : x)),
+                        );
+                      }}
+                      className="w-4 h-4 flex-shrink-0"
+                      style={{ accentColor: "var(--accent)" }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-display text-[13px] font-semibold truncate"
+                        style={{ color: "var(--ink)" }}>
+                        {r.name}
+                      </div>
+                      <div className="font-mono text-[10px]" style={{ color: "var(--ink4)" }}>
+                        {r.email} · {r.website}
+                      </div>
+                    </div>
+                    <span className="font-mono text-[10px]" style={{ color: "var(--ink4)" }}>
+                      {r.source}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {searchResults.length > 0 && (
+              <div className="flex justify-end gap-3">
+                <button onClick={onClose}
+                  className="px-5 py-2.5 rounded-xl text-[13px] font-medium"
+                  style={{ border: "1px solid var(--border2)", color: "var(--ink3)", cursor: "pointer", background: "transparent" }}>
+                  Cancel
+                </button>
+                <button
+                  onClick={handleImportSelected}
+                  disabled={saving || searchResults.filter((r) => r.selected).length === 0}
+                  className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white
+                    transition-all duration-150 disabled:opacity-50"
+                  style={{
+                    background: "linear-gradient(135deg, var(--accent), var(--cyan))",
+                    cursor: saving ? "wait" : "pointer",
+                  }}
+                >
+                  {saving
+                    ? "Importing…"
+                    : `Import ${searchResults.filter((r) => r.selected).length} Leads`}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Tiny form field helper ────────────────────────────────────────────────────
+
+function FormField({
+  label, value, onChange, placeholder,
+}: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="font-mono text-[10px] font-semibold uppercase tracking-widest"
+        style={{ color: "var(--ink4)" }}>{label}</label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="py-2 px-3 rounded-lg text-[13px]"
+        style={{
+          background: "var(--bg-alt)", border: "1px solid var(--border2)",
+          color: "var(--ink)", outline: "none",
+        }}
+        onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; }}
+        onBlur={(e)  => { (e.target as HTMLInputElement).style.borderColor = "var(--border2)"; }}
+      />
+    </div>
+  );
+}

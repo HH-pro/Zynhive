@@ -1,0 +1,386 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ══ DESIGN TOKENS ══════════════════════════════════════════════════════════
+   Brand navy:   #020842
+   Accent blue:  #3B6EF8  (electric blue — primary CTA, links, highlights)
+   Accent 2:     #5580FA  (hover state)
+   Cyan flash:   #00D4FF  (secondary highlight, verified badges, teal swaps)
+   ══════════════════════════════════════════════════════════════════════════ */
+:root, [data-theme="light"] {
+  --bg-base:      #F4F6FF;
+  --bg-alt:       #EAEEF9;
+  --bg-surface:   #FFFFFF;
+  --bg-panel:     #E2E7F5;
+  --border:       rgba(2,8,66,0.08);
+  --border2:      rgba(2,8,66,0.16);
+
+  /* ── Primary accent ─────────────────────────────────────────── */
+  --accent:       #3B6EF8;
+  --accent2:      #5580FA;
+  --accent-dim:   rgba(59,110,248,0.28);
+  --accent-pale:  rgba(59,110,248,0.07);
+  --accent-pale2: rgba(59,110,248,0.14);
+
+  /* ── Navy brand ─────────────────────────────────────────────── */
+  --navy:         #020842;
+  --navy2:        #050E6B;
+  --navy-dim:     rgba(2,8,66,0.22);
+
+  /* ── Cyan highlight ─────────────────────────────────────────── */
+  --cyan:         #0099BB;
+  --cyan2:        #00D4FF;
+
+  /* ── Ink scale (dark-on-light) ──────────────────────────────── */
+  --ink:          #020842;
+  --ink2:         #1A2057;
+  --ink3:         #4A5280;
+  --ink4:         #8A92B8;
+
+  /* ── Hero (dark navy panel) ─────────────────────────────────── */
+  --hero-bg:      #020842;
+  --hero-text:    #F4F6FF;
+  --hero-muted:   rgba(244,246,255,0.52);
+  --hero-border:  rgba(59,110,248,0.20);
+
+  /* ── Marquee ─────────────────────────────────────────────────── */
+  --marquee-bg:   #030A55;
+  --marquee-text: #1E2880;
+
+  /* ── Nav glass ───────────────────────────────────────────────── */
+  --nav-glass:    rgba(244,246,255,0.93);
+
+  /* ── Shadows ─────────────────────────────────────────────────── */
+  --shadow-sm:    0 1px 4px rgba(2,8,66,0.08);
+  --shadow-md:    0 4px 18px rgba(2,8,66,0.12);
+  --shadow-lg:    0 12px 44px rgba(2,8,66,0.18);
+
+  --ease: cubic-bezier(0.16,1,0.3,1);
+
+  /* ── Legacy amber aliases ────────────────────────────────────── */
+  --amber:        var(--accent);
+  --amber2:       var(--accent2);
+  --amber-dim:    var(--accent-dim);
+  --amber-pale:   var(--accent-pale);
+  --amber-pale2:  var(--accent-pale2);
+  --teal:         var(--cyan);
+}
+
+/* ══ DARK THEME ═════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  --bg-base:      #010420;
+  --bg-alt:       #020730;
+  --bg-surface:   #050D3C;
+  --bg-panel:     #091248;
+  --border:       rgba(59,110,248,0.12);
+  --border2:      rgba(59,110,248,0.22);
+
+  --accent:       #5B8BFF;
+  --accent2:      #7BA3FF;
+  --accent-dim:   rgba(91,139,255,0.30);
+  --accent-pale:  rgba(91,139,255,0.08);
+  --accent-pale2: rgba(91,139,255,0.16);
+
+  --navy:         #020842;
+  --navy2:        #050E6B;
+  --navy-dim:     rgba(2,8,66,0.6);
+
+  --cyan:         #00D4FF;
+  --cyan2:        #5CF3FF;
+
+  --ink:          #E8EDFF;
+  --ink2:         #B8C3F0;
+  --ink3:         #7885C0;
+  --ink4:         #3D4880;
+
+  --hero-bg:      #010420;
+  --hero-text:    #E8EDFF;
+  --hero-muted:   rgba(232,237,255,0.50);
+  --hero-border:  rgba(91,139,255,0.18);
+
+  --marquee-bg:   #020730;
+  --marquee-text: #1C2565;
+
+  --nav-glass:    rgba(1,4,32,0.92);
+
+  --shadow-sm:    0 1px 4px rgba(0,0,0,0.50);
+  --shadow-md:    0 4px 18px rgba(0,0,0,0.55);
+  --shadow-lg:    0 12px 44px rgba(0,0,0,0.70);
+
+  --amber:        var(--accent);
+  --amber2:       var(--accent2);
+  --amber-dim:    var(--accent-dim);
+  --amber-pale:   var(--accent-pale);
+  --amber-pale2:  var(--accent-pale2);
+  --teal:         var(--cyan);
+}
+
+/* ══ BASE ═══════════════════════════════════════════════════════════════════ */
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg-base);
+  color: var(--ink3);
+  overflow-x: hidden;
+  cursor: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;          /* Poppins looks tighter at -0.01em */
+  transition: background 0.45s ease, color 0.45s ease;
+}
+
+::selection { background: var(--accent-pale2); color: var(--accent); }
+
+::-webkit-scrollbar        { width: 4px; }
+::-webkit-scrollbar-track  { background: var(--bg-base); }
+::-webkit-scrollbar-thumb  { background: var(--accent-dim); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ══ CUSTOM CURSOR ══════════════════════════════════════════════════════════ */
+.cursor-dot {
+  position: fixed; top: 0; left: 0; z-index: 9999;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s, background 0.3s;
+}
+.cursor-ring {
+  position: fixed; top: 0; left: 0; z-index: 9998;
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px solid var(--accent-dim); pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s var(--ease), height 0.3s var(--ease), border-color 0.3s;
+}
+body:has(a:hover) .cursor-dot,
+body:has(button:hover) .cursor-dot { width: 14px; height: 14px; }
+body:has(a:hover) .cursor-ring,
+body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: var(--accent); }
+
+/* ══ SCROLL REVEAL ══════════════════════════════════════════════════════════ */
+.reveal {
+  opacity: 0; transform: translateY(28px);
+  transition: opacity 0.75s var(--ease), transform 0.75s var(--ease);
+}
+.reveal.revealed { opacity: 1; transform: none; }
+.reveal-d1 { transition-delay: 0.1s; }
+.reveal-d2 { transition-delay: 0.2s; }
+.reveal-d3 { transition-delay: 0.3s; }
+.reveal-d4 { transition-delay: 0.4s; }
+
+/* ══ ANIMATIONS ═════════════════════════════════════════════════════════════ */
+@keyframes heroUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes blink    { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes scrollDown { 0% { top: -50%; } 100% { top: 150%; } }
+@keyframes floatGlow {
+  0%,100% { transform: translateY(0) scale(1); }
+  50%     { transform: translateY(-36px) scale(1.04); }
+}
+@keyframes marquee  { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes rPulse {
+  0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+  50%     { transform: translate(-50%,-50%) scale(1.05); opacity: 0.4; }
+}
+@keyframes barPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes bPulse   { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pulseRing {
+  0%   { box-shadow: 0 0 0 0   rgba(59,110,248,0.4); }
+  70%  { box-shadow: 0 0 0 14px rgba(59,110,248,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(59,110,248,0);    }
+}
+@keyframes spin {
+  from { transform: translate(-50%,-50%) rotate(0deg); }
+  to   { transform: translate(-50%,-50%) rotate(360deg); }
+}
+@keyframes floatA {
+  0%,100% { transform: translateY(0px); }
+  50%     { transform: translateY(-8px); }
+}
+@keyframes floatB {
+  0%,100% { transform: translateY(0px); }
+  50%     { transform: translateY(6px); }
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes fadeScaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ══ TYPOGRAPHY SCALE (Poppins) ═════════════════════════════════════════════
+   display  → Poppins 700/800  — hero headings, section titles
+   body     → Poppins 300/400  — paragraph text, descriptions
+   mono     → JetBrains Mono   — code, tags, badges, labels
+   ══════════════════════════════════════════════════════════════════════════ */
+.font-display { font-family: 'Poppins', sans-serif; }
+.font-body    { font-family: 'Poppins', sans-serif; font-weight: 300; }
+.font-mono    { font-family: 'JetBrains Mono', monospace; }
+
+/* Backward-compat aliases so old .font-syne / .font-outfit still work */
+.font-syne    { font-family: 'Poppins', sans-serif; font-weight: 700; }
+.font-outfit  { font-family: 'Poppins', sans-serif; }
+
+/* ══ GRADIENT TEXT ══════════════════════════════════════════════════════════ */
+.text-gradient,
+.text-gradient-blue {
+  background: linear-gradient(135deg, var(--accent), var(--cyan2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-cyan {
+  background: linear-gradient(135deg, var(--cyan), var(--cyan2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ══ UTILITY CLASSES ════════════════════════════════════════════════════════ */
+.text-accent { color: var(--accent);  }
+.text-ink    { color: var(--ink);     }
+.text-ink2   { color: var(--ink2);    }
+.text-ink3   { color: var(--ink3);    }
+.text-ink4   { color: var(--ink4);    }
+.text-navy   { color: var(--navy);    }
+.text-cyan   { color: var(--cyan);    }
+.bg-surface  { background: var(--bg-surface); }
+.bg-panel    { background: var(--bg-panel);   }
+.border-token { border-color: var(--border);  }
+
+/* ── Shimmer ─────────────────────────────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent-pale2) 50%,
+    transparent 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer 2s linear infinite;
+}
+
+/* ── Glass card ──────────────────────────────────────────────────────────── */
+.glass {
+  background: rgba(2,8,66,0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+[data-theme="dark"]  .glass { background: rgba(91,139,255,0.05); }
+[data-theme="light"] .glass { background: rgba(255,255,255,0.78); }
+
+/* ── Accent glow button ──────────────────────────────────────────────────── */
+.btn-accent-glow {
+  background: var(--accent);
+  color: #fff;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.btn-accent-glow:hover {
+  background: var(--accent2);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px var(--accent-dim);
+}
+
+/* ── Hero grid ───────────────────────────────────────────────────────────── */
+.hero-grid-pattern {
+  background-image:
+    linear-gradient(rgba(59,110,248,0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,110,248,0.07) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, black 30%, transparent 100%);
+}
+[data-theme="dark"] .hero-grid-pattern {
+  background-image:
+    linear-gradient(rgba(91,139,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(91,139,255,0.06) 1px, transparent 1px);
+}
+
+/* ── Orb glows ───────────────────────────────────────────────────────────── */
+.hero-orb-accent {
+  background: radial-gradient(circle, rgba(59,110,248,0.18) 0%, transparent 70%);
+  animation: floatGlow 8s ease-in-out infinite;
+}
+.hero-orb-cyan {
+  background: radial-gradient(circle, rgba(0,212,255,0.10) 0%, transparent 70%);
+  animation: floatGlow 11s ease-in-out infinite reverse;
+}
+[data-theme="dark"] .hero-orb-accent {
+  background: radial-gradient(circle, rgba(91,139,255,0.24) 0%, transparent 70%);
+}
+[data-theme="dark"] .hero-orb-cyan {
+  background: radial-gradient(circle, rgba(0,212,255,0.16) 0%, transparent 70%);
+}
+
+/* ── Input fields ────────────────────────────────────────────────────────── */
+.input-field {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 14px 18px;
+  color: var(--ink);
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  outline: none;
+}
+.input-field::placeholder { color: var(--ink4); font-weight: 300; }
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-pale);
+}
+.input-field.error { border-color: #ef4444; }
+
+/* ── Pulse ring (used on live/verified dots) ─────────────────────────────── */
+.pulse-ring { animation: pulseRing 2s ease-out infinite; }
+
+/* ── Card top-accent bar ─────────────────────────────────────────────────── */
+.card-top-bar {
+  background: linear-gradient(90deg, transparent, var(--accent), var(--cyan2), transparent);
+}
+
+/* ══ POPPINS WEIGHT OVERRIDES ═══════════════════════════════════════════════
+   Poppins needs slightly different weight assignments vs Outfit:
+   - Light (300)  → descriptive text, subtitles
+   - Regular (400) → body copy, labels
+   - Medium (500)  → UI labels, nav links, tags
+   - SemiBold (600)→ card titles, section subheadings
+   - Bold (700)    → headings, CTAs
+   - ExtraBold (800)→ hero display text
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Hero h1 / large display → ExtraBold for impact */
+h1 { font-weight: 800; letter-spacing: -0.03em; }
+
+/* Section headings → Bold */
+h2 { font-weight: 700; letter-spacing: -0.025em; }
+
+/* Card/component headings → SemiBold */
+h3, h4 { font-weight: 600; letter-spacing: -0.015em; }
+
+/* Body text → Light for elegance */
+p { font-weight: 300; line-height: 1.8; }
+
+/* Nav, buttons, labels → Medium */
+button, a, label {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+}
