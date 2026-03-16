@@ -29,29 +29,6 @@ const THEME = {
   purple: "#8B5CF6",
 };
 
-const TABS: { id: Tab; label: string; icon: React.ReactNode; badge?: string }[] = [
-  { 
-    id: "projects", 
-    label: "Projects",
-    icon: <ProjectsIcon />
-  },
-  { 
-    id: "team", 
-    label: "Team",
-    icon: <TeamIcon />
-  },
-  { 
-    id: "leads", 
-    label: "Leads",
-    badge: "3",
-    icon: <LeadsIcon />
-  },
-  { 
-    id: "analytics", 
-    label: "Analytics",
-    icon: <AnalyticsIcon />
-  },
-];
 
 // ─── SVG Icons (memoized for performance) ─────────────────────────────────
 const ProjectsIcon = () => (
