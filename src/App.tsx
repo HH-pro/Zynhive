@@ -114,7 +114,24 @@ const HomePage = lazy(() =>
   import("./pages/HomePage").then((m) => ({ default: m.HomePage }))
 );
 
-// ─── Page fallback ────────────────────────────────────────────────────────────
+const AdminPage = lazy(() =>
+  import("./pages/admin/AdminPage").then((m) => ({ default: m.AdminPage }))
+);
+
+// ─── Simple router ────────────────────────────────────────────────────────────
+function useRouter() {
+  const [path, setPath] = useState(() => window.location.pathname || "/");
+
+  useEffect(() => {
+    const onPop = () => setPath(window.location.pathname || "/");
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  return path;
+}
+
+// ─── Loader ───────────────────────────────────────────────────────────────────
 function PageLoader() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
@@ -128,9 +145,20 @@ function PageLoader() {
   );
 }
 
+// ─── Router ───────────────────────────────────────────────────────────────────
+function Router({ path }: { path: string }) {
+  switch (path) {
+    case "/admin":
+      return <AdminPage />;
+    default:
+      return <HomePage />;
+  }
+}
+
 // ─── App Root ─────────────────────────────────────────────────────────────────
 export default function App() {
   const { dark, toggle } = useTheme();
+  const path = useRouter();
 
   return (
     <>
@@ -138,11 +166,11 @@ export default function App() {
 
       {/* Navbar temporarily disabled */}
       {/*
-      <Navbar dark={dark} onToggle={toggle} currentPage="/" />
+      <Navbar dark={dark} onToggle={toggle} currentPage={path} />
       */}
 
       <Suspense fallback={<PageLoader />}>
-        <HomePage />
+        <Router path={path} />
       </Suspense>
 
       {/* Footer temporarily disabled */}
