@@ -2,7 +2,7 @@ import { useReveal } from "../hooks/index";
 import { ContactForm } from "../components/ui/ContactForm";
 import { SITE_CONFIG } from "../lib/data";
 import { SectionHead } from "../components/ui/index";
-import { useState } from "react"; // Added missing import
+import { useState } from "react";
 
 const CONTACT_INFO = [
   { label: "WhatsApp",  value: SITE_CONFIG.phone,    href: SITE_CONFIG.whatsapp, emoji: "💬", external: true },
@@ -115,7 +115,7 @@ export function ContactPage() {
         <div className="max-w-3xl mx-auto">
           <SectionHead
             tag="FAQ"
-            heading={<>Common <em className="not-italic text-[var(--accent)]">questions.</em></>} {/* Fixed: added closing bracket */}
+            heading={<>Common <em className="not-italic text-[var(--accent)]">questions.</em></>}
           />
           <div className="flex flex-col gap-4">
             {FAQ.map(({ q, a }, i) => (
