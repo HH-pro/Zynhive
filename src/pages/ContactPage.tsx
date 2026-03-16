@@ -149,5 +149,4 @@ function FAQItem({ question, answer, index }: { question: string; answer: string
   );
 }
 
-// Need useState import
-import { useState } from "react";
+
