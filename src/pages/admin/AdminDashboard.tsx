@@ -29,8 +29,7 @@ const THEME = {
   purple: "#8B5CF6",
 };
 
-
-// ─── SVG Icons (memoized for performance) ─────────────────────────────────
+// ─── SVG Icons (defined BEFORE TABS that uses them) ────────────────────────
 const ProjectsIcon = () => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
     <rect x="1" y="1" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.1"/>
@@ -86,6 +85,43 @@ const ChevronIcon = ({ direction }: { direction: "left" | "right" }) => (
     <path d={direction === "right" ? "M4 2l4 4-4 4" : "M8 2L4 6l4 4"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+
+const EditIcon = () => (
+  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+    <path d="M7.5 1.5l2 2L3 10H1V8L7.5 1.5z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+  </svg>
+);
+
+const DeleteIcon = () => (
+  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+    <path d="M1.5 3h8M4 3V1.5h3V3M3.5 3l.5 6.5M7.5 3l-.5 6.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+  </svg>
+);
+
+// ─── Tabs Configuration (now defined AFTER the icon components) ────────────
+const TABS: { id: Tab; label: string; icon: React.ReactNode; badge?: string }[] = [
+  { 
+    id: "projects", 
+    label: "Projects",
+    icon: <ProjectsIcon />
+  },
+  { 
+    id: "team", 
+    label: "Team",
+    icon: <TeamIcon />
+  },
+  { 
+    id: "leads", 
+    label: "Leads",
+    badge: "3",
+    icon: <LeadsIcon />
+  },
+  { 
+    id: "analytics", 
+    label: "Analytics",
+    icon: <AnalyticsIcon />
+  },
+];
 
 // ─── Theme Injector Component ──────────────────────────────────────────────
 const ThemeInjector = () => {
@@ -201,6 +237,33 @@ const StatCard = ({ label, value, sub, color, icon, trend }: StatCardProps) => (
   </div>
 );
 
+// ─── Action Button Component ───────────────────────────────────────────────
+interface ActionButtonProps {
+  icon: React.ReactNode;
+  label: string;
+  color: string;
+  onClick: () => void;
+}
+
+const ActionButton = ({ icon, label, color, onClick }: ActionButtonProps) => (
+  <button
+    onClick={onClick}
+    title={label}
+    className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:scale-110"
+    style={{ color: "var(--ink4)" }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = `${color}12`;
+      e.currentTarget.style.color = color;
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = "transparent";
+      e.currentTarget.style.color = "var(--ink4)";
+    }}
+  >
+    {icon}
+  </button>
+);
+
 // ─── Project Row Component ─────────────────────────────────────────────────
 interface ProjectRowProps {
   project: FirestoreProject;
@@ -305,45 +368,6 @@ const ProjectRow = ({ project, onEdit, onDelete }: ProjectRowProps) => {
     </div>
   );
 };
-
-// ─── Action Button Component ───────────────────────────────────────────────
-interface ActionButtonProps {
-  icon: React.ReactNode;
-  label: string;
-  color: string;
-  onClick: () => void;
-}
-
-const ActionButton = ({ icon, label, color, onClick }: ActionButtonProps) => (
-  <button
-    onClick={onClick}
-    title={label}
-    className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:scale-110"
-    style={{ color: "var(--ink4)" }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.background = `${color}12`;
-      e.currentTarget.style.color = color;
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.background = "transparent";
-      e.currentTarget.style.color = "var(--ink4)";
-    }}
-  >
-    {icon}
-  </button>
-);
-
-const EditIcon = () => (
-  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-    <path d="M7.5 1.5l2 2L3 10H1V8L7.5 1.5z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
-  </svg>
-);
-
-const DeleteIcon = () => (
-  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-    <path d="M1.5 3h8M4 3V1.5h3V3M3.5 3l.5 6.5M7.5 3l-.5 6.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
-  </svg>
-);
 
 // ─── Delete Confirmation Modal ─────────────────────────────────────────────
 interface DeleteConfirmProps {
@@ -750,413 +774,4 @@ export function AdminDashboard({ user }: Props) {
     [projects, search]
   );
 
-  const currentTab = TABS.find((t) => t.id === tab);
-
-  const stats = useMemo(() => ({
-    total: projects.length,
-    featured: projects.filter((p) => p.featured).length,
-    withImages: projects.filter((p) => p.imageUrl).length,
-    aiProjects: projects.filter((p) => p.category === "AI Development").length,
-  }), [projects]);
-
-  return (
-    <>
-      <ThemeInjector />
-      
-      {/* Fonts */}
-      <link 
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" 
-        rel="stylesheet"
-      />
-
-      <style>{`
-        @keyframes slide-up {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes scale-in {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        .animate-slide-up {
-          animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        .animate-scale-in {
-          animation: scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-      `}</style>
-
-      <div 
-        className="min-h-screen flex"
-        style={{ background: "var(--bg)", fontFamily: "'DM Sans', sans-serif" }}
-      >
-
-        {/* Sidebar */}
-        <aside 
-          className="flex flex-col flex-shrink-0 transition-all duration-300 relative"
-          style={{ 
-            width: sidebarOpen ? 240 : 72, 
-            background: "var(--bg-panel)", 
-            borderRight: "1px solid var(--border)" 
-          }}
-        >
-          {/* Sidebar glow effect */}
-          <div 
-            className="absolute top-0 right-0 bottom-0 w-px"
-            style={{ background: "linear-gradient(180deg, transparent, rgba(59,130,246,0.3) 40%, rgba(6,182,212,0.2) 60%, transparent)" }}
-          />
-
-          {/* Logo Area */}
-          <div 
-            className="flex items-center h-16 px-4 gap-3 overflow-hidden flex-shrink-0"
-            style={{ borderBottom: "1px solid var(--border)" }}
-          >
-            <div className="relative w-8 h-8 flex-shrink-0">
-              <div 
-                className="absolute inset-0 rounded-lg"
-                style={{ background: "linear-gradient(135deg, #3B82F6, #06B6D4)", boxShadow: "0 0 16px rgba(59,130,246,0.4)" }}
-              />
-              <div 
-                className="absolute inset-[2px] rounded-md"
-                style={{ background: "var(--bg-panel)" }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="font-mono font-black text-[9px]" style={{ color: "#60A5FA" }}>ZH</span>
-              </div>
-            </div>
-            
-            {sidebarOpen && (
-              <div className="min-w-0 flex-1">
-                <div className="font-black text-[15px] tracking-tight leading-none" style={{ color: "var(--ink)" }}>
-                  ZynHive<span style={{ color: THEME.accent }}>.</span>
-                </div>
-                <div className="font-mono text-[8px] tracking-[0.15em] uppercase mt-0.5" style={{ color: "var(--ink4)" }}>
-                  Admin
-                </div>
-              </div>
-            )}
-
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="ml-auto flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center transition-all hover:bg-white/5"
-              style={{ color: "var(--ink4)" }}
-            >
-              <ChevronIcon direction={sidebarOpen ? "left" : "right"} />
-            </button>
-          </div>
-
-          {/* Navigation */}
-          {sidebarOpen && (
-            <div className="px-4 pt-5 pb-2">
-              <span className="font-mono text-[8px] tracking-[0.2em] uppercase" style={{ color: "var(--ink4)" }}>
-                Navigation
-              </span>
-            </div>
-          )}
-
-          <nav className="flex flex-col gap-1 px-2 flex-1">
-            {TABS.map((tabItem) => {
-              const isActive = tab === tabItem.id;
-              return (
-                <button
-                  key={tabItem.id}
-                  onClick={() => setTab(tabItem.id)}
-                  title={!sidebarOpen ? tabItem.label : undefined}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left w-full relative overflow-hidden group"
-                  style={{
-                    background: isActive ? "rgba(59,130,246,0.12)" : "transparent",
-                    color: isActive ? "#60A5FA" : "var(--ink4)",
-                    border: isActive ? "1px solid rgba(59,130,246,0.2)" : "1px solid transparent",
-                  }}
-                >
-                  {isActive && (
-                    <div 
-                      className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full"
-                      style={{ background: THEME.accent, boxShadow: `0 0 8px ${THEME.accent}` }}
-                    />
-                  )}
-                  
-                  <span className="flex-shrink-0 ml-0.5 group-hover:scale-110 transition-transform">
-                    {tabItem.icon}
-                  </span>
-                  
-                  {sidebarOpen && (
-                    <>
-                      <span className="font-medium text-[13px] whitespace-nowrap flex-1">
-                        {tabItem.label}
-                      </span>
-                      {tabItem.badge && (
-                        <span 
-                          className="px-1.5 py-0.5 rounded-md text-[8px] font-mono font-bold"
-                          style={{ background: THEME.accent, color: "white" }}
-                        >
-                          {tabItem.badge}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* User Section */}
-          <div className="p-3 mt-auto">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <div 
-                className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-[11px] text-white"
-                style={{ 
-                  background: "linear-gradient(135deg, #3B82F6, #06B6D4)",
-                  boxShadow: "0 0 12px rgba(59,130,246,0.3)"
-                }}
-              >
-                {user.email?.[0]?.toUpperCase() ?? "A"}
-              </div>
-              
-              {sidebarOpen && (
-                <>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-mono text-[10px] truncate" style={{ color: "var(--ink2)" }}>
-                      {user.email}
-                    </p>
-                    <p className="font-mono text-[8px] tracking-[0.12em] uppercase mt-0.5" style={{ color: "var(--ink4)" }}>
-                      Administrator
-                    </p>
-                  </div>
-                  
-                  <button
-                    onClick={() => adminLogout()}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all hover:bg-red-500/10 hover:text-red-400"
-                    style={{ color: "var(--ink4)" }}
-                    title="Sign out"
-                  >
-                    <LogoutIcon />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col min-w-0">
-
-          {/* Header */}
-          <header 
-            className="h-16 flex items-center justify-between px-6 flex-shrink-0"
-            style={{ background: "var(--bg-panel)", borderBottom: "1px solid var(--border)" }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] tracking-widest uppercase" style={{ color: "var(--ink4)" }}>
-                  ZynHive
-                </span>
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path d="M3 2l4 3-4 3" stroke="var(--ink4)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="font-semibold text-[14px]" style={{ color: "var(--ink)" }}>
-                  {currentTab?.label}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Stats Pill */}
-              <div 
-                className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border2)" }}
-              >
-                <span className="font-mono text-[10px]" style={{ color: "var(--ink4)" }}>
-                  <span style={{ color: "#60A5FA", fontWeight: 700 }}>{projects.length}</span> projects
-                </span>
-                <div className="w-px h-3" style={{ background: "var(--border2)" }} />
-                <div 
-                  className="w-1.5 h-1.5 rounded-full animate-pulse"
-                  style={{ background: THEME.green, boxShadow: `0 0 6px ${THEME.green}` }}
-                />
-                <span className="font-mono text-[10px]" style={{ color: "var(--ink4)" }}>
-                  Live
-                </span>
-              </div>
-
-              {tab === "projects" && (
-                <button
-                  onClick={() => {
-                    setEditProject(null);
-                    setFormOpen(true);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white transition-all active:scale-95 hover:shadow-lg hover:scale-105"
-                  style={{ 
-                    background: "linear-gradient(135deg, #3B82F6, #06B6D4)",
-                    boxShadow: "0 4px 16px rgba(59,130,246,0.25)"
-                  }}
-                >
-                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                    <path d="M5.5 1v9M1 5.5h9" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-                  </svg>
-                  New Project
-                </button>
-              )}
-            </div>
-          </header>
-
-          {/* Content Area */}
-          <main className="flex-1 overflow-y-auto" style={{ background: "var(--bg)" }}>
-
-            {/* Projects Tab */}
-            {tab === "projects" && (
-              <div className="p-6 flex flex-col gap-5">
-                
-                {/* Stat Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <StatCard
-                    label="Total"
-                    value={stats.total}
-                    sub="all categories"
-                    color={THEME.accent}
-                    icon={<ProjectsIcon />}
-                  />
-                  <StatCard
-                    label="Featured"
-                    value={stats.featured}
-                    sub="on homepage"
-                    color={THEME.cyan}
-                    icon={
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M7 1l1.5 3.5 3.5.5-2.5 2.5.7 3.5L7 9.5l-3.2 1.5.7-3.5L2 5l3.5-.5L7 1z" stroke="currentColor" strokeWidth="1"/>
-                      </svg>
-                    }
-                  />
-                  <StatCard
-                    label="With Images"
-                    value={stats.withImages}
-                    sub="on Cloudinary"
-                    color={THEME.purple}
-                    icon={
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M2 10l3-3.5 2.5 2.5 2-2.5L12 10H2z" stroke="currentColor" strokeWidth="1"/>
-                        <rect x="1" y="2" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1"/>
-                      </svg>
-                    }
-                  />
-                  <StatCard
-                    label="AI Projects"
-                    value={stats.aiProjects}
-                    sub="ML & LLM builds"
-                    color={THEME.gold}
-                    icon={
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <circle cx="5" cy="5" r="2" stroke="currentColor" strokeWidth="1"/>
-                        <circle cx="9" cy="5" r="2" stroke="currentColor" strokeWidth="1"/>
-                        <circle cx="7" cy="9" r="2" stroke="currentColor" strokeWidth="1"/>
-                      </svg>
-                    }
-                  />
-                </div>
-
-                {/* Search Bar */}
-                <div className="flex items-center gap-3 flex-wrap">
-                  <SearchBar
-                    value={search}
-                    onChange={setSearch}
-                    onClear={() => setSearch("")}
-                  />
-                  
-                  <div 
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
-                    style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}
-                  >
-                    <span className="font-mono text-[10px]" style={{ color: "var(--ink4)" }}>
-                      <span style={{ color: "#60A5FA", fontWeight: 700 }}>{filteredProjects.length}</span>
-                      <span style={{ color: "var(--ink4)" }}> / {projects.length}</span>
-                    </span>
-                  </div>
-                </div>
-
-                {/* Projects Table */}
-                <div className="rounded-2xl overflow-hidden" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-                  
-                  {/* Table Header */}
-                  <div 
-                    className="flex items-center gap-4 px-5 py-3"
-                    style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid var(--border)" }}
-                  >
-                    <span className="font-mono text-[9px] tracking-[0.18em] uppercase ml-14 flex-1" style={{ color: "var(--ink4)" }}>
-                      Project
-                    </span>
-                    <span className="hidden lg:block font-mono text-[9px] tracking-[0.18em] uppercase max-w-[180px] w-full" style={{ color: "var(--ink4)" }}>
-                      Result
-                    </span>
-                    <span className="w-20 font-mono text-[9px] tracking-[0.18em] uppercase text-right" style={{ color: "var(--ink4)" }}>
-                      Actions
-                    </span>
-                  </div>
-
-                  {/* Table Body */}
-                  {loading ? (
-                    <LoadingState />
-                  ) : filteredProjects.length === 0 ? (
-                    <EmptyState
-                      hasSearch={!!search}
-                      onAddNew={() => {
-                        setEditProject(null);
-                        setFormOpen(true);
-                      }}
-                      onClearSearch={() => setSearch("")}
-                    />
-                  ) : (
-                    filteredProjects.map((project) => (
-                      <ProjectRow
-                        key={project.id}
-                        project={project}
-                        onEdit={(proj) => {
-                          setEditProject(proj);
-                          setFormOpen(true);
-                        }}
-                        onDelete={setDeleteTarget}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Other Tabs */}
-            {tab === "team" && <TeamTab showToast={showToast} />}
-            {tab === "leads" && <LeadTab showToast={showToast} />}
-            {tab === "analytics" && <AnalyticsTab projects={projects} />}
-          </main>
-        </div>
-
-        {/* Modals */}
-        {formOpen && (
-          <ProjectForm
-            project={editProject}
-            onClose={() => setFormOpen(false)}
-            onSaved={() => {
-              loadProjects();
-              showToast(editProject ? "Project updated!" : "Project created!");
-            }}
-          />
-        )}
-
-        {deleteTarget && (
-          <DeleteConfirm
-            project={deleteTarget}
-            onConfirm={handleDelete}
-            onCancel={() => setDeleteTarget(null)}
-          />
-        )}
-
-        {/* Toast Notification */}
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={hideToast}
-          />
-        )}
-      </div>
-    </>
-  );
-}
+  const currentTab
