@@ -1,6 +1,7 @@
 // ─── src/hooks/useLeads.ts ───────────────────────────────────────────────────
 import { useState, useEffect, useCallback, useMemo } from "react";
-import type { FirestoreLead, AuditResult, FollowUpKey, MailEntry } from "../types/leads";
+// FirestoreLead is the single source of truth — always import from types/leads
+import type { FirestoreLead, LeadUpdate, NewLead, AuditResult, FollowUpKey, MailEntry } from "../types/leads";
 import { FOLLOW_UP_SEQUENCE } from "../lib/lead-constants";
 import {
   fetchLeads, addLead, addLeadsBatch, updateLead,
@@ -120,9 +121,7 @@ export function useLeads(
   );
 
   // ── CRUD ────────────────────────────────────────────────────────────────────
-  const handleAddLead = useCallback(async (
-    lead: Omit<FirestoreLead, "id" | "createdAt" | "updatedAt">,
-  ) => {
+  const handleAddLead = useCallback(async (lead: NewLead) => {
     try {
       await addLead(lead);
       await load();
@@ -132,9 +131,7 @@ export function useLeads(
     }
   }, [load, showToast]);
 
-  const handleAddBatch = useCallback(async (
-    newLeads: Omit<FirestoreLead, "id" | "createdAt" | "updatedAt">[],
-  ) => {
+  const handleAddBatch = useCallback(async (newLeads: NewLead[]) => {
     try {
       await addLeadsBatch(newLeads);
       await load();
@@ -174,16 +171,9 @@ export function useLeads(
 
     setAiLoading(`Auditing ${lead.website}...`);
     try {
-      // AuditResult replaces the old (non-existent) AiAuditResult
       const result: AuditResult = await auditWebsite(lead.website);
-      await updateLeadAudit(leadId, {
-        hasChatbot:         result.hasChatbot,
-        hasQuickResponse:   result.hasQuickResponse,
-        hasLeadForm:        result.hasLeadForm,
-        hasMobileOptimized: result.hasMobileOptimized,
-        // auditData.summary replaces old aiAuditSummary field
-        summary:            result.summary,
-      });
+      const update: LeadUpdate = { auditData: result };
+      await updateLeadAudit(leadId, update);
       await load();
       showToast(`Audit complete for ${lead.companyName} — Score: ${result.score}/100`);
     } catch {
