@@ -5,7 +5,7 @@ import {
   TESTIMONIALS, SITE_CONFIG, INTRO_BULLETS,
 } from "../lib/data";
 import { SectionHead, LinkButton } from "../components/ui/index";
-import { ArrowRightIcon, WhatsAppIcon } from "../components/ui/Icons";
+import {  WhatsAppIcon } from "../components/ui/Icons";
 import { ServiceCard } from "../components/ui/Cards";
 
 // ─── Animated Counter ─────────────────────────────────────────────────────────
