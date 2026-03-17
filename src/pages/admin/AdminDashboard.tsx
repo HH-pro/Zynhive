@@ -783,55 +783,49 @@ export function AdminDashboard({ user }: Props) {
             style={{ background: "linear-gradient(180deg,transparent,rgba(59,130,246,0.22) 40%,rgba(6,182,212,0.12) 60%,transparent)" }}/>
 
           {/* ── LOGO ROW ── */}
-          <div className="flex items-center h-14 flex-shrink-0 overflow-hidden"
-            style={{ borderBottom: "1px solid var(--border)", padding: sidebarOpen ? "0 14px" : "0 10px" }}>
+          <div className="flex items-center h-14 flex-shrink-0"
+            style={{ borderBottom: "1px solid var(--border)", padding: "0 12px", minWidth: 0 }}>
 
-            {/* Logo mark — always visible */}
-            <div className="relative w-7 h-7 flex-shrink-0 cursor-pointer"
-              onClick={() => setSidebarOpen((o) => !o)}
-              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}>
-              <div className="absolute inset-0 rounded-lg"
-                style={{ background: "linear-gradient(135deg,#3B82F6,#06B6D4)", boxShadow: "0 0 14px rgba(59,130,246,0.4)" }}/>
-              <div className="absolute inset-[2px] rounded-md" style={{ background: "var(--bg-panel)" }}/>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="font-mono font-black text-[9px]" style={{ color: "#60A5FA" }}>ZH</span>
-              </div>
-            </div>
-
-            {/* Brand name — only when expanded */}
-            {sidebarOpen && (
-              <div className="min-w-0 flex-1 overflow-hidden ml-2.5">
-                <div className="font-black text-[14px] tracking-tight leading-none whitespace-nowrap" style={{ color: "var(--ink)" }}>
-                  ZynHive<span style={{ color: C.accent }}>.</span>
+            {/* Expanded: logo mark + brand name + collapse button */}
+            {sidebarOpen ? (
+              <>
+                <div className="relative w-7 h-7 flex-shrink-0">
+                  <div className="absolute inset-0 rounded-lg"
+                    style={{ background: "linear-gradient(135deg,#3B82F6,#06B6D4)", boxShadow: "0 0 14px rgba(59,130,246,0.4)" }}/>
+                  <div className="absolute inset-[2px] rounded-md" style={{ background: "var(--bg-panel)" }}/>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="font-mono font-black text-[9px]" style={{ color: "#60A5FA" }}>ZH</span>
+                  </div>
                 </div>
-                <div className="font-mono text-[8px] tracking-[0.15em] uppercase mt-0.5" style={{ color: "var(--ink4)" }}>Admin</div>
-              </div>
+                <div className="min-w-0 flex-1 overflow-hidden mx-2.5">
+                  <div className="font-black text-[14px] tracking-tight leading-none whitespace-nowrap" style={{ color: "var(--ink)" }}>
+                    ZynHive<span style={{ color: C.accent }}>.</span>
+                  </div>
+                  <div className="font-mono text-[8px] tracking-[0.15em] uppercase mt-0.5" style={{ color: "var(--ink4)" }}>Admin</div>
+                </div>
+                {/* Collapse button */}
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  title="Collapse sidebar"
+                  className="flex-shrink-0 flex items-center justify-center rounded-lg transition-all duration-150"
+                  style={{ width: 28, height: 28, background: "transparent", border: "1px solid var(--border2)", color: "var(--ink4)", cursor: "pointer" }}
+                  onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(59,130,246,0.1)"; el.style.borderColor = "rgba(59,130,246,0.3)"; el.style.color = "#60A5FA"; }}
+                  onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.borderColor = "var(--border2)"; el.style.color = "var(--ink4)"; }}>
+                  <Ic.ChevronLeft />
+                </button>
+              </>
+            ) : (
+              /* Collapsed: only the expand button, perfectly centred */
+              <button
+                onClick={() => setSidebarOpen(true)}
+                title="Expand sidebar"
+                className="flex items-center justify-center rounded-lg transition-all duration-150"
+                style={{ width: 28, height: 28, margin: "0 auto", background: "transparent", border: "1px solid var(--border2)", color: "var(--ink4)", cursor: "pointer", flexShrink: 0 }}
+                onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(59,130,246,0.1)"; el.style.borderColor = "rgba(59,130,246,0.3)"; el.style.color = "#60A5FA"; }}
+                onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.borderColor = "var(--border2)"; el.style.color = "var(--ink4)"; }}>
+                <Ic.ChevronRight />
+              </button>
             )}
-
-            {/* Toggle button — always visible, floats to the right when expanded */}
-            <button
-              onClick={() => setSidebarOpen((o) => !o)}
-              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-              className="flex-shrink-0 flex items-center justify-center rounded-lg transition-all duration-150"
-              style={{
-                width: 28, height: 28, marginLeft: sidebarOpen ? "auto" : 6,
-                background: "transparent", border: "1px solid var(--border2)",
-                color: "var(--ink4)", cursor: "pointer",
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.background = "rgba(59,130,246,0.1)";
-                el.style.borderColor = "rgba(59,130,246,0.3)";
-                el.style.color = "var(--accent)";
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.background = "transparent";
-                el.style.borderColor = "var(--border2)";
-                el.style.color = "var(--ink4)";
-              }}>
-              {sidebarOpen ? <Ic.ChevronLeft /> : <Ic.ChevronRight />}
-            </button>
           </div>
 
           {/* Section label — only when expanded */}
