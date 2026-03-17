@@ -1,39 +1,37 @@
 import { useEffect, useRef } from "react";
 
 export function Cursor() {
-  const dotRef  = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<HTMLDivElement>(null);
-  const pos     = useRef({ x: 0, y: 0 });
-  const ring    = useRef({ x: 0, y: 0 });
+  const cursorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
-      pos.current = { x: e.clientX, y: e.clientY };
-      if (dotRef.current) {
-        dotRef.current.style.left = `${e.clientX}px`;
-        dotRef.current.style.top  = `${e.clientY}px`;
+      if (cursorRef.current) {
+        cursorRef.current.style.left = `${e.clientX}px`;
+        cursorRef.current.style.top  = `${e.clientY}px`;
       }
     };
-
-    const tick = () => {
-      ring.current.x += (pos.current.x - ring.current.x) * 0.12;
-      ring.current.y += (pos.current.y - ring.current.y) * 0.12;
-      if (ringRef.current) {
-        ringRef.current.style.left = `${ring.current.x}px`;
-        ringRef.current.style.top  = `${ring.current.y}px`;
-      }
-      requestAnimationFrame(tick);
-    };
-
     window.addEventListener("mousemove", onMove);
-    tick();
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
   return (
     <>
-      <div ref={dotRef}  className="cursor-dot"  />
-      <div ref={ringRef} className="cursor-ring" />
+      <style>{`
+        *, *::before, *::after { cursor: none !important; }
+        .simple-cursor {
+          position: fixed;
+          width: 10px;
+          height: 10px;
+          background: #a78bfa;
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          pointer-events: none;
+          z-index: 99999;
+          transition: transform 0.1s ease;
+        }
+        .simple-cursor:hover { transform: translate(-50%, -50%) scale(1.5); }
+      `}</style>
+      <div ref={cursorRef} className="simple-cursor" />
     </>
   );
 }
