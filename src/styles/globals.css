@@ -4,71 +4,57 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ══ DESIGN TOKENS ══════════════════════════════════════════════════════════
-   Brand navy:   #020842
-   Accent blue:  #3B6EF8  (electric blue — primary CTA, links, highlights)
-   Accent 2:     #5580FA  (hover state)
-   Cyan flash:   #00D4FF  (secondary highlight, verified badges, teal swaps)
+/* ══ LIGHT THEME ════════════════════════════════════════════════════════════
+   Warm off-white base · clean white surfaces · blue accent
    ══════════════════════════════════════════════════════════════════════════ */
 :root, [data-theme="light"] {
-  --bg-base:      #F4F6FF;
-  --bg-alt:       #EAEEF9;
+  --bg-base:      #F5F6FA;
+  --bg-alt:       #ECEDF3;
   --bg-surface:   #FFFFFF;
-  --bg-panel:     #E2E7F5;
-  --border:       rgba(2,8,66,0.08);
-  --border2:      rgba(2,8,66,0.16);
+  --bg-panel:     #FFFFFF;
+  --bg-card:      #FFFFFF;
+  --border:       rgba(0,0,0,0.07);
+  --border2:      rgba(0,0,0,0.13);
 
-  /* ── Primary accent ─────────────────────────────────────────── */
-  --accent:       #3B6EF8;
-  --accent2:      #5580FA;
-  --accent-dim:   rgba(59,110,248,0.28);
-  --accent-pale:  rgba(59,110,248,0.07);
-  --accent-pale2: rgba(59,110,248,0.14);
+  --accent:       #4A6CF7;
+  --accent2:      #6381FF;
+  --accent-dim:   rgba(74,108,247,0.25);
+  --accent-pale:  rgba(74,108,247,0.08);
+  --accent-pale2: rgba(74,108,247,0.15);
 
-  /* ── Navy brand ─────────────────────────────────────────────── */
+  --ink:          #0F1117;
+  --ink2:         #2D3142;
+  --ink3:         #5A6072;
+  --ink4:         #9AA0B4;
+
+  --green:        #10B981;
+  --green-pale:   rgba(16,185,129,0.10);
+  --red:          #EF4444;
+  --red-pale:     rgba(239,68,68,0.10);
+  --gold:         #F59E0B;
+  --gold-pale:    rgba(245,158,11,0.10);
+  --purple:       #8B5CF6;
+  --purple-pale:  rgba(139,92,246,0.10);
+  --cyan:         #06B6D4;
+  --cyan-pale:    rgba(6,182,212,0.10);
+
+  --bg:           #F5F6FA;
+
   --navy:         #020842;
   --navy2:        #050E6B;
-  --navy-dim:     rgba(2,8,66,0.22);
-
-  /* ── Cyan highlight ─────────────────────────────────────────── */
-  --cyan:         #0099BB;
   --cyan2:        #00D4FF;
-
-  /* ── Ink scale (dark-on-light) ──────────────────────────────── */
-  --ink:          #020842;
-  --ink2:         #1A2057;
-  --ink3:         #4A5280;
-  --ink4:         #8A92B8;
-
-  /* ── Admin dashboard surface tokens ────────────────────────── */
-  --bg:           #F2F4F8;
-  --bg-card:      #FFFFFF;
-  --green:        #10B981;
-  --red:          #EF4444;
-  --gold:         #F59E0B;
-  --purple:       #8B5CF6;
-
-  /* ── Hero (dark navy panel) ─────────────────────────────────── */
   --hero-bg:      #020842;
   --hero-text:    #F4F6FF;
   --hero-muted:   rgba(244,246,255,0.52);
   --hero-border:  rgba(59,110,248,0.20);
-
-  /* ── Marquee ─────────────────────────────────────────────────── */
   --marquee-bg:   #030A55;
   --marquee-text: #1E2880;
+  --nav-glass:    rgba(245,246,250,0.93);
+  --shadow-sm:    0 1px 4px rgba(0,0,0,0.06);
+  --shadow-md:    0 4px 18px rgba(0,0,0,0.09);
+  --shadow-lg:    0 12px 44px rgba(0,0,0,0.13);
+  --ease:         cubic-bezier(0.16,1,0.3,1);
 
-  /* ── Nav glass ───────────────────────────────────────────────── */
-  --nav-glass:    rgba(244,246,255,0.93);
-
-  /* ── Shadows ─────────────────────────────────────────────────── */
-  --shadow-sm:    0 1px 4px rgba(2,8,66,0.08);
-  --shadow-md:    0 4px 18px rgba(2,8,66,0.12);
-  --shadow-lg:    0 12px 44px rgba(2,8,66,0.18);
-
-  --ease: cubic-bezier(0.16,1,0.3,1);
-
-  /* ── Legacy amber aliases ────────────────────────────────────── */
   --amber:        var(--accent);
   --amber2:       var(--accent2);
   --amber-dim:    var(--accent-dim);
@@ -77,57 +63,55 @@
   --teal:         var(--cyan);
 }
 
-/* ══ DARK THEME ═════════════════════════════════════════════════════════════
-   Applied via  html[data-theme="dark"]
-   The AdminDashboard sets this on <html> when the ThemeToggle fires.
+/* ══ DARK THEME — charcoal/graphite, NOT navy/blue ══════════════════════════
+   html[data-theme="dark"] set by AdminDashboard ThemeToggle
    ══════════════════════════════════════════════════════════════════════════ */
 [data-theme="dark"] {
-  --bg-base:      #010420;
-  --bg-alt:       #020730;
-  --bg-surface:   #050D3C;
-  --bg-panel:     #091248;
-  --border:       rgba(59,110,248,0.12);
-  --border2:      rgba(59,110,248,0.22);
+  --bg-base:      #111214;
+  --bg-alt:       #1A1C20;
+  --bg-surface:   #1E2126;
+  --bg-panel:     #1E2126;
+  --bg-card:      #252830;
+  --border:       rgba(255,255,255,0.07);
+  --border2:      rgba(255,255,255,0.13);
 
-  --accent:       #5B8BFF;
-  --accent2:      #7BA3FF;
-  --accent-dim:   rgba(91,139,255,0.30);
-  --accent-pale:  rgba(91,139,255,0.08);
-  --accent-pale2: rgba(91,139,255,0.16);
+  --accent:       #6B8FFF;
+  --accent2:      #85A3FF;
+  --accent-dim:   rgba(107,143,255,0.28);
+  --accent-pale:  rgba(107,143,255,0.10);
+  --accent-pale2: rgba(107,143,255,0.18);
 
-  --navy:         #020842;
-  --navy2:        #050E6B;
-  --navy-dim:     rgba(2,8,66,0.6);
+  --ink:          #F0F2F5;
+  --ink2:         #C5CAD5;
+  --ink3:         #8A909E;
+  --ink4:         #52575F;
 
-  --cyan:         #00D4FF;
-  --cyan2:        #5CF3FF;
-
-  --ink:          #E8EDFF;
-  --ink2:         #B8C3F0;
-  --ink3:         #7885C0;
-  --ink4:         #3D4880;
-
-  /* ── Admin dashboard surface tokens (dark) ─────────────────── */
-  --bg:           #010420;
-  --bg-card:      #0D1440;
   --green:        #34D399;
+  --green-pale:   rgba(52,211,153,0.12);
   --red:          #F87171;
-  --gold:         #FBB74B;
+  --red-pale:     rgba(248,113,113,0.12);
+  --gold:         #FBBF24;
+  --gold-pale:    rgba(251,191,36,0.12);
   --purple:       #A78BFA;
+  --purple-pale:  rgba(167,139,250,0.12);
+  --cyan:         #22D3EE;
+  --cyan-pale:    rgba(34,211,238,0.12);
 
-  --hero-bg:      #010420;
-  --hero-text:    #E8EDFF;
-  --hero-muted:   rgba(232,237,255,0.50);
-  --hero-border:  rgba(91,139,255,0.18);
+  --bg:           #111214;
 
-  --marquee-bg:   #020730;
-  --marquee-text: #1C2565;
-
-  --nav-glass:    rgba(1,4,32,0.92);
-
-  --shadow-sm:    0 1px 4px rgba(0,0,0,0.50);
-  --shadow-md:    0 4px 18px rgba(0,0,0,0.55);
-  --shadow-lg:    0 12px 44px rgba(0,0,0,0.70);
+  --navy:         #1A1C20;
+  --navy2:        #252830;
+  --cyan2:        #22D3EE;
+  --hero-bg:      #0D0E10;
+  --hero-text:    #F0F2F5;
+  --hero-muted:   rgba(240,242,245,0.50);
+  --hero-border:  rgba(107,143,255,0.18);
+  --marquee-bg:   #1A1C20;
+  --marquee-text: #2A2D35;
+  --nav-glass:    rgba(17,18,20,0.93);
+  --shadow-sm:    0 1px 4px rgba(0,0,0,0.40);
+  --shadow-md:    0 4px 18px rgba(0,0,0,0.50);
+  --shadow-lg:    0 12px 44px rgba(0,0,0,0.65);
 
   --amber:        var(--accent);
   --amber2:       var(--accent2);
@@ -149,32 +133,28 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
-  transition: background 0.45s ease, color 0.45s ease;
 }
 
-/* ── Theme transition — smooth token swap on every surface ──────────────── */
-*,
-*::before,
-*::after {
+/* Smooth theme transition on every surface */
+*, *::before, *::after {
   transition:
-    background-color 0.35s ease,
-    border-color     0.35s ease,
-    color            0.25s ease,
-    box-shadow       0.25s ease;
+    background-color 0.3s ease,
+    border-color     0.3s ease,
+    color            0.2s ease,
+    box-shadow       0.2s ease;
 }
-/* but don't slow down transform / opacity animations */
+/* Don't throttle transforms / animations */
 [class*="animate-"],
 [style*="animation"],
-[style*="transform"] {
-  transition: none !important;
-}
+.no-theme-transition,
+[style*="transform: translate"] { transition: none !important; }
 
 ::selection { background: var(--accent-pale2); color: var(--accent); }
 
-::-webkit-scrollbar        { width: 4px; }
-::-webkit-scrollbar-track  { background: var(--bg-base); }
-::-webkit-scrollbar-thumb  { background: var(--accent-dim); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::-webkit-scrollbar        { width: 4px; height: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--border2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
 
 /* ══ CUSTOM CURSOR ══════════════════════════════════════════════════════════ */
 .cursor-dot {
@@ -235,13 +215,17 @@ body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: v
   to   { opacity: 1; transform: none; }
 }
 @keyframes pulseRing {
-  0%   { box-shadow: 0 0 0 0   rgba(59,110,248,0.4); }
-  70%  { box-shadow: 0 0 0 14px rgba(59,110,248,0);   }
-  100% { box-shadow: 0 0 0 0   rgba(59,110,248,0);    }
+  0%   { box-shadow: 0 0 0 0   rgba(74,108,247,0.4); }
+  70%  { box-shadow: 0 0 0 14px rgba(74,108,247,0); }
+  100% { box-shadow: 0 0 0 0   rgba(74,108,247,0); }
 }
 @keyframes spin {
   from { transform: translate(-50%,-50%) rotate(0deg); }
   to   { transform: translate(-50%,-50%) rotate(360deg); }
+}
+@keyframes spinLoader {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 @keyframes floatA {
   0%,100% { transform: translateY(0px); }
@@ -264,7 +248,7 @@ body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: v
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ══ TYPOGRAPHY SCALE (Poppins) ════════════════════════════════════════════ */
+/* ══ TYPOGRAPHY ═════════════════════════════════════════════════════════════ */
 .font-display { font-family: 'Poppins', sans-serif; }
 .font-body    { font-family: 'Poppins', sans-serif; font-weight: 300; }
 .font-mono    { font-family: 'JetBrains Mono', monospace; }
@@ -274,7 +258,7 @@ body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: v
 /* ══ GRADIENT TEXT ══════════════════════════════════════════════════════════ */
 .text-gradient,
 .text-gradient-blue {
-  background: linear-gradient(135deg, var(--accent), var(--cyan2));
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -286,7 +270,7 @@ body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: v
   background-clip: text;
 }
 
-/* ══ UTILITY CLASSES ════════════════════════════════════════════════════════ */
+/* ══ UTILITIES ══════════════════════════════════════════════════════════════ */
 .text-accent  { color: var(--accent);  }
 .text-ink     { color: var(--ink);     }
 .text-ink2    { color: var(--ink2);    }
@@ -298,29 +282,22 @@ body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: v
 .bg-panel     { background: var(--bg-panel);   }
 .border-token { border-color: var(--border);   }
 
-/* ── Shimmer ─────────────────────────────────────────────────────────────── */
 .shimmer {
   background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--accent-pale2) 50%,
-    transparent 100%
+    90deg, transparent 0%, var(--accent-pale2) 50%, transparent 100%
   );
   background-size: 200% auto;
   animation: shimmer 2s linear infinite;
 }
 
-/* ── Glass card ──────────────────────────────────────────────────────────── */
 .glass {
-  background: rgba(2,8,66,0.03);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
 }
-[data-theme="dark"]  .glass { background: rgba(91,139,255,0.05); }
-[data-theme="light"] .glass { background: rgba(255,255,255,0.78); }
+[data-theme="light"] .glass { background: rgba(255,255,255,0.80); }
+[data-theme="dark"]  .glass { background: rgba(37,40,48,0.75); }
 
-/* ── Accent glow button ──────────────────────────────────────────────────── */
 .btn-accent-glow {
   background: var(--accent);
   color: #fff;
@@ -332,37 +309,34 @@ body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: v
   box-shadow: 0 12px 32px var(--accent-dim);
 }
 
-/* ── Hero grid ───────────────────────────────────────────────────────────── */
 .hero-grid-pattern {
   background-image:
-    linear-gradient(rgba(59,110,248,0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59,110,248,0.07) 1px, transparent 1px);
+    linear-gradient(rgba(74,108,247,0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74,108,247,0.07) 1px, transparent 1px);
   background-size: 72px 72px;
   mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, black 30%, transparent 100%);
 }
 [data-theme="dark"] .hero-grid-pattern {
   background-image:
-    linear-gradient(rgba(91,139,255,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(91,139,255,0.06) 1px, transparent 1px);
+    linear-gradient(rgba(107,143,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(107,143,255,0.06) 1px, transparent 1px);
 }
 
-/* ── Orb glows ───────────────────────────────────────────────────────────── */
 .hero-orb-accent {
-  background: radial-gradient(circle, rgba(59,110,248,0.18) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(74,108,247,0.16) 0%, transparent 70%);
   animation: floatGlow 8s ease-in-out infinite;
 }
 .hero-orb-cyan {
-  background: radial-gradient(circle, rgba(0,212,255,0.10) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(6,182,212,0.10) 0%, transparent 70%);
   animation: floatGlow 11s ease-in-out infinite reverse;
 }
 [data-theme="dark"] .hero-orb-accent {
-  background: radial-gradient(circle, rgba(91,139,255,0.24) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(107,143,255,0.18) 0%, transparent 70%);
 }
 [data-theme="dark"] .hero-orb-cyan {
-  background: radial-gradient(circle, rgba(0,212,255,0.16) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(34,211,238,0.12) 0%, transparent 70%);
 }
 
-/* ── Input fields ────────────────────────────────────────────────────────── */
 .input-field {
   width: 100%;
   background: var(--bg-surface);
@@ -381,17 +355,39 @@ body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: v
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-pale);
 }
-.input-field.error { border-color: #ef4444; }
+.input-field.error { border-color: var(--red); }
 
-/* ── Pulse ring ──────────────────────────────────────────────────────────── */
 .pulse-ring { animation: pulseRing 2s ease-out infinite; }
 
-/* ── Card top-accent bar ─────────────────────────────────────────────────── */
 .card-top-bar {
-  background: linear-gradient(90deg, transparent, var(--accent), var(--cyan2), transparent);
+  background: linear-gradient(90deg, transparent, var(--accent), var(--cyan), transparent);
 }
 
-/* ══ POPPINS WEIGHT OVERRIDES ═══════════════════════════════════════════════ */
+/* ══ RESPONSIVE ADMIN BREAKPOINTS ═══════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .admin-table-res   { display: none !important; }
+}
+@media (max-width: 768px) {
+  .admin-sidebar     { width: 52px !important; }
+  .admin-sb-label,
+  .admin-sb-user-info,
+  .admin-sb-section  { opacity: 0 !important; width: 0 !important; overflow: hidden !important; }
+  .admin-stat-grid   { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .admin-table-cat,
+  .admin-table-status { display: none !important; }
+  .admin-hdr-search,
+  .admin-status-pill { display: none !important; }
+  .admin-content-pad { padding: 12px !important; }
+}
+@media (max-width: 480px) {
+  .admin-stat-grid     { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .admin-team-grid     { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .admin-analytics-grid { grid-template-columns: 1fr !important; }
+  .admin-content-pad  { padding: 10px !important; }
+  .admin-row-result   { display: none !important; }
+}
+
+/* ══ TYPOGRAPHY WEIGHTS ═════════════════════════════════════════════════════ */
 h1 { font-weight: 800; letter-spacing: -0.03em; }
 h2 { font-weight: 700; letter-spacing: -0.025em; }
 h3, h4 { font-weight: 600; letter-spacing: -0.015em; }
