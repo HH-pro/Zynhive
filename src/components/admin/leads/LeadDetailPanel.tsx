@@ -11,8 +11,16 @@ interface Props {
   aiLoading:   boolean;
 }
 
-function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+import type { Timestamp } from "firebase/firestore";
+
+// Accepts both a plain ISO string and a Firestore Timestamp
+function toDateString(d: string | Timestamp): string {
+  if (typeof d === "string") return d;
+  return d.toDate().toISOString();
+}
+
+function fmtDate(d: string | Timestamp) {
+  return new Date(toDateString(d)).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export function LeadDetailPanel({ lead, onClose, onAudit, onSendEmail, aiLoading }: Props) {
