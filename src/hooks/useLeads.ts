@@ -1,8 +1,6 @@
 // ─── src/hooks/useLeads.ts ───────────────────────────────────────────────────
-// Central hook for all lead operations — keeps components clean
-
 import { useState, useEffect, useCallback, useMemo } from "react";
-import type { Lead, LeadStatus, FollowUpKey, AiAuditResult } from "../types/leads";
+import type { FirestoreLead, AuditResult, FollowUpKey, MailEntry } from "../types/leads";
 import { FOLLOW_UP_SEQUENCE } from "../lib/lead-constants";
 import {
   fetchLeads, addLead, addLeadsBatch, updateLead,
@@ -11,26 +9,37 @@ import {
 } from "../lib/lead-firebase";
 import { auditWebsite, generateEmail, generateBatchEmails } from "../lib/lead-ai";
 
+// ── Derived types — no phantom imports ───────────────────────────────────────
+// LeadStatus and Lead are not exported from types/leads — derive from FirestoreLead
+type LeadStatus = FirestoreLead["status"];
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function daysAgo(dateStr: string): number {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
 }
 
+// Safe accessor — mailHistory is optional on FirestoreLead
+function getMailHistory(lead: FirestoreLead): MailEntry[] {
+  return lead.mailHistory ?? [];
+}
+
 export interface DueFollowUp {
-  lead: Lead;
-  nextStep: typeof FOLLOW_UP_SEQUENCE[number];
+  lead:               FirestoreLead;
+  nextStep:           typeof FOLLOW_UP_SEQUENCE[number];
   daysSinceLastEmail: number;
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
-export function useLeads(showToast: (msg: string, type?: "success" | "error") => void) {
-  const [leads, setLeads]       = useState<Lead[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [search, setSearch]     = useState("");
+export function useLeads(
+  showToast: (msg: string, type?: "success" | "error") => void,
+) {
+  const [leads,        setLeads]        = useState<FirestoreLead[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [search,       setSearch]       = useState("");
   const [filterStatus, setFilterStatus] = useState<LeadStatus | "all">("all");
-  const [aiLoading, setAiLoading] = useState<string | null>(null); // loading context label
+  const [aiLoading,    setAiLoading]    = useState<string | null>(null);
 
   // ── Load ────────────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -50,62 +59,82 @@ export function useLeads(showToast: (msg: string, type?: "success" | "error") =>
   // ── Filtered list ───────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     return leads.filter((l) => {
-      const matchSearch = !search
-        || l.name.toLowerCase().includes(search.toLowerCase())
-        || l.email.toLowerCase().includes(search.toLowerCase())
-        || l.category.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = filterStatus === "all" || l.status === filterStatus;
+      const q            = search.toLowerCase();
+      const matchSearch  = !q
+        || l.companyName.toLowerCase().includes(q)
+        || l.email.toLowerCase().includes(q)
+        || (l.leadSource ?? "").toLowerCase().includes(q)
+        || l.tags?.some((t) => t.toLowerCase().includes(q));
+      const matchStatus  = filterStatus === "all" || l.status === filterStatus;
       return matchSearch && matchStatus;
     });
   }, [leads, search, filterStatus]);
 
   // ── Stats ───────────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
-    const total = leads.length;
-    const totalEmailsSent = leads.reduce((a, l) => a + l.mailHistory.length, 0);
-    const dueList = getDueFollowUps(leads);
+    const total           = leads.length;
+    const totalEmailsSent = leads.reduce((a, l) => a + getMailHistory(l).length, 0);
+    const dueList         = getDueFollowUps(leads);
+
     const byStatus = leads.reduce<Record<string, number>>((acc, l) => {
       acc[l.status] = (acc[l.status] || 0) + 1;
       return acc;
     }, {});
+
+    // leadSource replaces old lead.source
     const bySource = leads.reduce<Record<string, number>>((acc, l) => {
-      acc[l.source] = (acc[l.source] || 0) + 1;
+      const src = l.leadSource || "Unknown";
+      acc[src] = (acc[src] || 0) + 1;
       return acc;
     }, {});
+
     return { total, totalEmailsSent, dueFollowUps: dueList.length, byStatus, bySource };
   }, [leads]);
 
-  // ── Selection ───────────────────────────────────────────────────────────────
-  const toggleSelect = useCallback((id: string) => {
-    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, selected: !l.selected } : l)));
-  }, []);
+  // ── Selection — FirestoreLead has no `selected` field; track externally ─────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const toggleSelectAll = useCallback((ids: string[]) => {
-    setLeads((prev) => {
-      const idSet = new Set(ids);
-      const allSelected = prev.filter((l) => idSet.has(l.id)).every((l) => l.selected);
-      return prev.map((l) => (idSet.has(l.id) ? { ...l, selected: !allSelected } : l));
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
     });
   }, []);
 
-  const clearSelection = useCallback(() => {
-    setLeads((prev) => prev.map((l) => ({ ...l, selected: false })));
+  const toggleSelectAll = useCallback((ids: string[]) => {
+    setSelectedIds((prev) => {
+      const allSelected = ids.every((id) => prev.has(id));
+      const next        = new Set(prev);
+      if (allSelected) ids.forEach((id) => next.delete(id));
+      else             ids.forEach((id) => next.add(id));
+      return next;
+    });
   }, []);
 
-  const selectedLeads = useMemo(() => filtered.filter((l) => l.selected), [filtered]);
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
 
-  // ── CRUD operations ─────────────────────────────────────────────────────────
-  const handleAddLead = useCallback(async (lead: Omit<Lead, "id" | "selected" | "firestoreId">) => {
+  const selectedLeads = useMemo(
+    () => filtered.filter((l) => l.id && selectedIds.has(l.id)),
+    [filtered, selectedIds],
+  );
+
+  // ── CRUD ────────────────────────────────────────────────────────────────────
+  const handleAddLead = useCallback(async (
+    lead: Omit<FirestoreLead, "id" | "createdAt" | "updatedAt">,
+  ) => {
     try {
       await addLead(lead);
       await load();
-      showToast(`Lead "${lead.name}" added!`);
+      showToast(`Lead "${lead.companyName}" added!`);
     } catch {
       showToast("Failed to add lead", "error");
     }
   }, [load, showToast]);
 
-  const handleAddBatch = useCallback(async (newLeads: Omit<Lead, "id" | "selected" | "firestoreId">[]) => {
+  const handleAddBatch = useCallback(async (
+    newLeads: Omit<FirestoreLead, "id" | "createdAt" | "updatedAt">[],
+  ) => {
     try {
       await addLeadsBatch(newLeads);
       await load();
@@ -116,46 +145,47 @@ export function useLeads(showToast: (msg: string, type?: "success" | "error") =>
   }, [load, showToast]);
 
   const handleDeleteLead = useCallback(async (id: string) => {
-    const lead = leads.find((l) => l.id === id || l.firestoreId === id);
     try {
-      await deleteLead(lead?.firestoreId || id);
+      await deleteLead(id);
       await load();
-      showToast(`Lead removed`);
+      showToast("Lead removed");
     } catch {
       showToast("Failed to delete", "error");
     }
-  }, [leads, load, showToast]);
+  }, [load, showToast]);
 
   const handleDeleteSelected = useCallback(async () => {
-    const ids = selectedLeads.map((l) => l.firestoreId || l.id).filter(Boolean);
+    const ids = [...selectedIds];
+    if (!ids.length) return;
     try {
       await deleteLeadsBatch(ids);
+      clearSelection();
       await load();
       showToast(`${ids.length} leads deleted`);
     } catch {
       showToast("Failed to delete leads", "error");
     }
-  }, [selectedLeads, load, showToast]);
+  }, [selectedIds, clearSelection, load, showToast]);
 
   // ── AI Audit ────────────────────────────────────────────────────────────────
   const handleAuditWebsite = useCallback(async (leadId: string) => {
     const lead = leads.find((l) => l.id === leadId);
-    if (!lead?.website) {
-      showToast("No website URL to audit", "error");
-      return;
-    }
+    if (!lead?.website) { showToast("No website URL to audit", "error"); return; }
+
     setAiLoading(`Auditing ${lead.website}...`);
     try {
-      const result: AiAuditResult = await auditWebsite(lead.website);
-      await updateLeadAudit(lead.firestoreId || lead.id, {
-        hasChatbot: result.hasChatbot,
-        hasQuickResponse: result.hasQuickResponse,
-        hasLeadForm: result.hasLeadForm,
+      // AuditResult replaces the old (non-existent) AiAuditResult
+      const result: AuditResult = await auditWebsite(lead.website);
+      await updateLeadAudit(leadId, {
+        hasChatbot:         result.hasChatbot,
+        hasQuickResponse:   result.hasQuickResponse,
+        hasLeadForm:        result.hasLeadForm,
         hasMobileOptimized: result.hasMobileOptimized,
-        aiAuditSummary: result.summary,
+        // auditData.summary replaces old aiAuditSummary field
+        summary:            result.summary,
       });
       await load();
-      showToast(`Audit complete for ${lead.name} — Score: ${result.score}/100`);
+      showToast(`Audit complete for ${lead.companyName} — Score: ${result.score}/100`);
     } catch {
       showToast("AI audit failed — check API connection", "error");
     } finally {
@@ -164,21 +194,24 @@ export function useLeads(showToast: (msg: string, type?: "success" | "error") =>
   }, [leads, load, showToast]);
 
   // ── AI Email & Send ─────────────────────────────────────────────────────────
-  const handleSendEmail = useCallback(async (leadId: string, emailType: FollowUpKey) => {
+  const handleSendEmail = useCallback(async (
+    leadId:    string,
+    emailType: FollowUpKey,
+  ) => {
     const lead = leads.find((l) => l.id === leadId);
     if (!lead) return;
 
-    setAiLoading(`Generating email for ${lead.name}...`);
+    setAiLoading(`Generating email for ${lead.companyName}...`);
     try {
-      const previousBodies = lead.mailHistory
-        .filter((m) => m.bodySnapshot)
-        .map((m) => m.bodySnapshot!);
-      const result = await generateEmail(lead, emailType, previousBodies);
+      // mailHistory is optional — use safe accessor
+      const previousBodies = getMailHistory(lead)
+        .filter((m: MailEntry) => m.bodySnapshot)
+        .map((m: MailEntry) => m.bodySnapshot!);
 
-      // Record in Firestore
-      await recordEmailSent(lead.firestoreId || lead.id, emailType, result.body);
+      const result = await generateEmail(lead, emailType, previousBodies);
+      await recordEmailSent(leadId, emailType, result.body);
       await load();
-      showToast(`${emailType} email sent to ${lead.name}`);
+      showToast(`${emailType} email sent to ${lead.companyName}`);
       return result;
     } catch {
       showToast("Failed to send email", "error");
@@ -188,17 +221,22 @@ export function useLeads(showToast: (msg: string, type?: "success" | "error") =>
   }, [leads, load, showToast]);
 
   const handleSendBatchEmails = useCallback(async (
-    targetLeads: Lead[],
-    emailType: FollowUpKey,
+    targetLeads: FirestoreLead[],
+    emailType:   FollowUpKey,
   ) => {
     setAiLoading(`Generating ${targetLeads.length} emails...`);
     try {
       const emails = await generateBatchEmails(targetLeads, emailType);
-      const entries = targetLeads.map((l) => ({
-        leadId: l.firestoreId || l.id,
-        emailType,
-        bodySnapshot: emails.get(l.id)?.body,
-      }));
+
+      // id is optional on FirestoreLead — filter out entries without one
+      const entries = targetLeads
+        .filter((l): l is FirestoreLead & { id: string } => Boolean(l.id))
+        .map((l) => ({
+          leadId:       l.id,
+          emailType,
+          bodySnapshot: emails.get(l.id)?.body,
+        }));
+
       await recordBatchEmailsSent(entries);
       clearSelection();
       await load();
@@ -214,10 +252,11 @@ export function useLeads(showToast: (msg: string, type?: "success" | "error") =>
   const dueFollowUps = useMemo(() => getDueFollowUps(leads), [leads]);
 
   return {
-    leads, filtered, loading, search, setSearch,
+    leads, filtered, loading,
+    search, setSearch,
     filterStatus, setFilterStatus,
     stats, selectedLeads, dueFollowUps,
-    aiLoading,
+    aiLoading, selectedIds,
     toggleSelect, toggleSelectAll, clearSelection,
     handleAddLead, handleAddBatch,
     handleDeleteLead, handleDeleteSelected,
@@ -228,22 +267,29 @@ export function useLeads(showToast: (msg: string, type?: "success" | "error") =>
 
 // ── Pure helper ───────────────────────────────────────────────────────────────
 
-function getDueFollowUps(leads: Lead[]): DueFollowUp[] {
+function getDueFollowUps(leads: FirestoreLead[]): DueFollowUp[] {
   const result: DueFollowUp[] = [];
-  for (const lead of leads) {
-    if (lead.mailHistory.length === 0) continue;
-    if (lead.status === "completed" || lead.status === "not-interested") continue;
 
-    const lastMail = lead.mailHistory[lead.mailHistory.length - 1];
+  for (const lead of leads) {
+    // Skip completed / lost statuses
+    if (lead.status === "closed" || lead.status === "lost") continue;
+
+    const hist = getMailHistory(lead);
+    if (hist.length === 0) continue;
+
+    const lastMail = hist[hist.length - 1];
+    if (!lastMail) continue;
+
     const days = daysAgo(lastMail.date);
-    const idx = FOLLOW_UP_SEQUENCE.findIndex((s) => s.key === lead.status);
+    const idx  = FOLLOW_UP_SEQUENCE.findIndex((s) => s.key === lead.status);
 
     if (idx >= 0 && idx < FOLLOW_UP_SEQUENCE.length - 1) {
       const next = FOLLOW_UP_SEQUENCE[idx + 1];
-      if (days >= next.daysAfter) {
+      if (next && days >= next.daysAfter) {
         result.push({ lead, nextStep: next, daysSinceLastEmail: days });
       }
     }
   }
+
   return result.sort((a, b) => b.daysSinceLastEmail - a.daysSinceLastEmail);
 }
