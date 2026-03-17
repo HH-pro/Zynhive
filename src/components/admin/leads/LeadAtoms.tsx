@@ -1,26 +1,21 @@
 // ─── src/components/admin/leads/LeadAtoms.tsx ───────────────────────────────
-// LeadStatus and LeadSource are not exported from types/leads.ts.
-// We derive them directly from FirestoreLead fields.
 import type { FirestoreLead } from "../../../types/leads";
-import { STATUS_COLORS, FOLLOW_UP_SEQUENCE } from "../../../lib/lead-constants";
+import { STATUS_COLORS } from "../../../lib/lead-constants";
 
-// Derived types — no phantom imports needed
 type LeadStatus = FirestoreLead["status"];
 
 // ── Status Badge ──────────────────────────────────────────────────────────────
 
 export function StatusBadge({ status }: { status: LeadStatus }) {
   const sc = STATUS_COLORS[status] ?? STATUS_COLORS["new"];
-  const label =
-    FOLLOW_UP_SEQUENCE.find((s) => s.key === status)?.label
-    ?? (status.charAt(0).toUpperCase() + status.slice(1));
+  // FIX: FOLLOW_UP_SEQUENCE keys (FollowUpKey) never overlap LeadStatus values,
+  // so .find() always returned undefined. Capitalise the status string directly.
+  const label = status.charAt(0).toUpperCase() + status.slice(1).replace(/-/g, " ");
 
   return (
-    <span
-      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg
         font-mono text-[10px] font-bold tracking-wide whitespace-nowrap"
-      style={{ background: sc.bg, color: sc.text, border: `1px solid ${sc.border}` }}
-    >
+      style={{ background: sc.bg, color: sc.text, border: `1px solid ${sc.border}` }}>
       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: sc.text }} />
       {label}
     </span>
@@ -28,7 +23,6 @@ export function StatusBadge({ status }: { status: LeadStatus }) {
 }
 
 // ── Source Badge ──────────────────────────────────────────────────────────────
-// LeadSource is just a string in FirestoreLead — no union type exported.
 
 const SOURCE_ICON_MAP: Record<string, string> = {
   "Google Maps": "📍",
@@ -64,17 +58,15 @@ export function IssueTags({
   compact?:            boolean;
 }) {
   const issues: string[] = [];
-  if (!hasChatbot)                                        issues.push("No Chatbot");
-  if (!hasQuickResponse)                                  issues.push("Slow Response");
-  if (hasLeadForm      !== undefined && !hasLeadForm)     issues.push("No Lead Form");
-  if (hasMobileOptimized !== undefined && !hasMobileOptimized) issues.push("Not Mobile Opt.");
+  if (!hasChatbot)                                               issues.push("No Chatbot");
+  if (!hasQuickResponse)                                         issues.push("Slow Response");
+  if (hasLeadForm      !== undefined && !hasLeadForm)            issues.push("No Lead Form");
+  if (hasMobileOptimized !== undefined && !hasMobileOptimized)   issues.push("Not Mobile Opt.");
 
   if (issues.length === 0) {
     return (
-      <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[9px] font-bold"
-        style={{ background: "var(--green-pale)", color: "var(--green)", border: "1px solid rgba(16,185,129,0.2)" }}
-      >
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[9px] font-bold"
+        style={{ background: "var(--green-pale)", color: "var(--green)", border: "1px solid rgba(16,185,129,0.2)" }}>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
           <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
         </svg>
@@ -104,10 +96,8 @@ export function IssueTags({
 
 function IssueTag({ label }: { label: string }) {
   return (
-    <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[9px] font-bold whitespace-nowrap"
-      style={{ background: "var(--red-pale)", color: "var(--red)", border: "1px solid rgba(239,68,68,0.2)" }}
-    >
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[9px] font-bold whitespace-nowrap"
+      style={{ background: "var(--red-pale)", color: "var(--red)", border: "1px solid rgba(239,68,68,0.2)" }}>
       <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
         <circle cx="4" cy="4" r="3" stroke="currentColor" strokeWidth="0.8" />
         <path d="M4 2.5v2M4 5.5h.005" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" />
@@ -121,19 +111,10 @@ function IssueTag({ label }: { label: string }) {
 
 export function AiLoadingOverlay({ message }: { message: string }) {
   return (
-    <div
-      className="fixed inset-0 z-[200] flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}
-    >
-      <div
-        className="flex flex-col items-center gap-4 p-8 rounded-2xl"
-        style={{
-          background: "var(--bg-surface)",
-          border:     "1px solid var(--border2)",
-          boxShadow:  "var(--shadow-lg)",
-          animation:  "fadeScaleIn .3s cubic-bezier(0.16,1,0.3,1) both",
-        }}
-      >
+    <div className="fixed inset-0 z-[200] flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}>
+      <div className="flex flex-col items-center gap-4 p-8 rounded-2xl"
+        style={{ background: "var(--bg-surface)", border: "1px solid var(--border2)", boxShadow: "var(--shadow-lg)", animation: "fadeScaleIn .3s cubic-bezier(0.16,1,0.3,1) both" }}>
         <div className="relative w-12 h-12">
           <div className="absolute inset-0 rounded-full border-2 border-t-transparent animate-spin"
             style={{ borderColor: "var(--border2)", borderTopColor: "var(--accent)" }} />
