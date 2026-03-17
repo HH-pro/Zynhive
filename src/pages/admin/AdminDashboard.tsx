@@ -126,12 +126,7 @@ const Ic = {
       <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  Logout: () => (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-      <path d="M8.5 4.5L11 6.5l-2.5 2M5 6.5h6M5 2H2.5A1 1 0 001.5 3v7a1 1 0 001 1H5"
-        stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
+
   Plus: () => (
     <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
       <path d="M5.5 1v9M1 5.5h9" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
@@ -871,19 +866,10 @@ export function AdminDashboard({ user }: Props) {
               {user.email?.[0]?.toUpperCase() ?? "A"}
             </div>
             {sidebarOpen && (
-              <>
-                <div className="flex-1 min-w-0">
-                  <p className="font-mono text-[10px] truncate" style={{ color: "var(--ink2)" }}>{user.email}</p>
-                  <p className="font-mono text-[8px] tracking-[0.12em] uppercase mt-0.5" style={{ color: "var(--ink4)" }}>Administrator</p>
-                </div>
-                <button title="Sign out" onClick={() => adminLogout()}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
-                  style={{ background: "transparent", border: "none", color: "var(--ink4)", cursor: "pointer" }}
-                  onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(239,68,68,0.1)"; el.style.color = "#F87171"; }}
-                  onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink4)"; }}>
-                  <Ic.Logout />
-                </button>
-              </>
+              <div className="flex-1 min-w-0">
+                <p className="font-mono text-[10px] truncate" style={{ color: "var(--ink2)" }}>{user.email}</p>
+                <p className="font-mono text-[8px] tracking-[0.12em] uppercase mt-0.5" style={{ color: "var(--ink4)" }}>Administrator</p>
+              </div>
             )}
           </div>
         </aside>
