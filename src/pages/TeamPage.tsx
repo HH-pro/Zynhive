@@ -1,27 +1,44 @@
 // ─── src/pages/TeamPage.tsx ──────────────────────────────────────────────────
 import { useState, useEffect, useCallback } from "react";
-import { useReveal }                          from "../hooks/index";
-import { fetchMembers, type FirestoreMember } from "../lib/firebase";
-import { SectionHead, LinkButton }            from "../components/ui/index";
-import { CTASection }                         from "../sections/HomeSections";
-import type { TeamMember }                    from "../lib/types";
+import { useReveal }                         from "../hooks/index";
+import { fetchMembers }                      from "../lib/firebase";
+import { SectionHead, LinkButton }           from "../components/ui/index";
+import { CTASection }                        from "../sections/HomeSections";
 
-// ── normalise Firestore doc → local TeamMember shape ─────────────────────────
-function toMember(fm: FirestoreMember): TeamMember {
+// ── Local shape — self-contained so we don't depend on lib/types.ts version ──
+interface TeamMember {
+  id:       string;
+  name:     string;
+  role:     string;
+  bio:      string;
+  initials: string;
+  color:    string;
+  imageUrl: string;
+  socials: {
+    linkedin:  string;
+    twitter:   string;
+    github:    string;
+    instagram: string;
+  };
+}
+
+// ── Normalise Firestore doc → TeamMember ─────────────────────────────────────
+// Typed as `any` so it compiles regardless of what FirestoreMember exports.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toMember(fm: any): TeamMember {
   return {
-    id:       fm.id ?? fm.name,
+    id:       fm.id       ?? fm.name  ?? "",
     name:     fm.name     || "Unknown",
     role:     fm.role     || "",
     bio:      fm.bio      || "",
-    initials: fm.initials || (fm.name?.slice(0, 2).toUpperCase() ?? "??"),
+    initials: fm.initials || (typeof fm.name === "string" ? fm.name.slice(0, 2).toUpperCase() : "??"),
     color:    fm.color    || "#3B6EF8",
     imageUrl: fm.imageUrl || "",
-    // Merge optional sub-fields so TeamMember.socials is always fully typed
     socials: {
       linkedin:  fm.socials?.linkedin  ?? "",
       twitter:   fm.socials?.twitter   ?? "",
       github:    fm.socials?.github    ?? "",
-    
+      instagram: fm.socials?.instagram ?? "",
     },
   };
 }
