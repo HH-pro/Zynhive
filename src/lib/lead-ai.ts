@@ -5,10 +5,6 @@ import type { FirestoreLead, AuditResult, FollowUpKey } from "../types/leads";
 // CONFIG
 // ══════════════════════════════════════════════════════════════════════════════
 
-// ══════════════════════════════════════════════════════════════════════════════
-// CONFIG
-// ══════════════════════════════════════════════════════════════════════════════
-
 const OPENROUTER_KEY: string = import.meta.env.VITE_OPENROUTER_API_KEY ?? "";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
