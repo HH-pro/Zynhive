@@ -56,7 +56,7 @@ export function AdminLogin({ onSuccess }: Props) {
               ZynHive<span style={{ color: "var(--accent)" }}>.</span>
             </span>
           </div>
-          <p className="font-mono text-[11px] tracking-[0.15em] uppercase" style={{ color: "var(--ink4)" }}>Admin Portal</p>
+          <p className="font-mono text-[11px] tracking-[0.15em] uppercase" style={{ color: "var(--ink4)" }}>Testing Phase Admin Portal</p>
         </div>
 
         {/* Card */}
