@@ -16,7 +16,7 @@ import { sendEmail } from "../../lib/email-sender";
 import type { FirestoreLead, LeadUpdate, MailEntry, AuditResult, FollowUpKey } from "../../types/leads";
 import { scrapeGoogleMaps, type ScrapedLead } from "../../lib/maps-scraper";
 
-const HASDATA_KEY    =  "4e3a5305-53d5-4a8f-a0ab-3b738d500a20";
+const HASDATA_KEY    = import.meta.env.VITE_HASDATA_API_KEY    ?? "";
 const OUTSCRAPER_KEY = import.meta.env.VITE_OUTSCRAPER_API_KEY ?? "";
 
 // ═══════════════════════════════════════════════════════════════════════════════
