@@ -13,65 +13,76 @@ import type { User }          from "firebase/auth";
 interface Props { user: User; }
 type Tab = "projects" | "leads" | "team" | "analytics";
 
-// ─── Light theme CSS ──────────────────────────────────────────────────────────
-// Page bg: grey (#F2F4F8)  |  Sidebar/Header/Cards: white (#FFFFFF)
-const THEME_CSS = `
-  :root {
-    --bg:           #F2F4F8;
-    --bg-alt:       #E8EBF2;
-    --bg-surface:   #F2F4F8;
-    --bg-panel:     #FFFFFF;
-    --bg-card:      #FFFFFF;
-    --border:       rgba(0,0,0,0.07);
-    --border2:      rgba(0,0,0,0.12);
-    --ink:          #111827;
-    --ink2:         #374151;
-    --ink3:         #6B7280;
-    --ink4:         #9CA3AF;
-    --accent:       #4F6EF7;
-    --accent2:      #6366F1;
-    --cyan:         #06B6D4;
-    --gold:         #F59E0B;
-    --green:        #10B981;
-    --red:          #EF4444;
-    --purple:       #8B5CF6;
-    --accent-pale:  rgba(79,110,247,0.08);
-    --accent-pale2: rgba(79,110,247,0.15);
-    --accent-dim:   rgba(79,110,247,0.22);
-  }
-  @keyframes fadeScaleIn {
-    from { opacity: 0; transform: scale(0.94); }
-    to   { opacity: 1; transform: scale(1); }
-  }
-  @keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
-  }
-  @keyframes toastIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
+// ─── Theme management ─────────────────────────────────────────────────────────
+// Reads/writes data-theme on <html> so index.css variables auto-apply site-wide.
+function getStoredTheme(): boolean {
+  try { return localStorage.getItem("admin-theme") === "dark"; } catch { return false; }
+}
+function applyTheme(dark: boolean) {
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  try { localStorage.setItem("admin-theme", dark ? "dark" : "light"); } catch { /* ignore */ }
+}
+
+// ─── ThemeToggle ─────────────────────────────────────────────────────────────
+export function ThemeToggle({ dark, onToggle }: { dark: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      className="relative w-[52px] h-7 rounded-full border-[1.5px] border-[var(--border2)] bg-[var(--bg-panel)] cursor-none overflow-hidden flex-shrink-0 transition-all duration-300 hover:border-[var(--accent)] hover:shadow-[0_0_0_3px_var(--accent-pale)]"
+    >
+      {/* Sun / moon icons */}
+      <div className="absolute inset-0 flex items-center justify-between px-1.5 pointer-events-none">
+        <span
+          className="text-[11px] leading-none transition-opacity duration-300"
+          style={{ opacity: dark ? 0.35 : 1 }}
+        >☀</span>
+        <span
+          className="text-[11px] leading-none transition-opacity duration-300"
+          style={{ opacity: dark ? 1 : 0.35 }}
+        >☽</span>
+      </div>
+      {/* Sliding thumb */}
+      <div
+        className="absolute top-[3px] left-[3px] w-5 h-5 rounded-full bg-[var(--accent)] shadow"
+        style={{
+          transform: dark ? "translateX(24px)" : "translateX(0)",
+          transition: "transform 380ms cubic-bezier(0.16,1,0.3,1)",
+        }}
+      />
+    </button>
+  );
+}
+
+// ─── Admin-only CSS keyframes (not in index.css) ───────────────────────────
+// index.css now owns all token variables. We only inject the dashboard-specific
+// keyframes that aren't already defined there.
+const ADMIN_KEYFRAMES = `
+  @keyframes spinLoader {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
   }
 `;
 
-function ThemeInjector() {
+function KeyframeInjector() {
   useEffect(() => {
     const el = document.createElement("style");
-    el.textContent = THEME_CSS;
+    el.textContent = ADMIN_KEYFRAMES;
     document.head.appendChild(el);
     return () => el.remove();
   }, []);
   return null;
 }
 
-// ─── Color tokens ─────────────────────────────────────────────────────────────
+// ─── Color tokens (derived from CSS vars — kept for inline use) ───────────────
 const C = {
-  accent:  "#4F6EF7",
-  cyan:    "#06B6D4",
-  gold:    "#F59E0B",
-  green:   "#10B981",
-  red:     "#EF4444",
-  purple:  "#8B5CF6",
-  accent2: "#6366F1",
+  accent:  "var(--accent)",
+  cyan:    "var(--cyan)",
+  gold:    "var(--gold)",
+  green:   "var(--green)",
+  red:     "var(--red)",
+  purple:  "var(--purple)",
+  accent2: "var(--accent2)",
 } as const;
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -201,15 +212,14 @@ const CTA_LABELS: Record<Tab, string> = {
 // SHARED ATOMS
 // ═════════════════════════════════════════════════════════════════════════════
 
-/** Icon button — neutral hover, accent/danger variants */
 function IconBtn({
   children, title, onClick, danger = false, accent = false, size = 30,
 }: {
   children: React.ReactNode; title?: string; onClick?: () => void;
   danger?: boolean; accent?: boolean; size?: number;
 }) {
-  const hBg  = danger ? "#FCEBEB"           : accent ? "var(--accent-pale)"  : "var(--bg-alt)";
-  const hClr = danger ? "#A32D2D"           : accent ? "var(--accent)"       : "var(--ink2)";
+  const hBg  = danger ? "rgba(239,68,68,0.1)"   : accent ? "var(--accent-pale)"  : "var(--bg-alt)";
+  const hClr = danger ? "var(--red)"             : accent ? "var(--accent)"       : "var(--ink2)";
   return (
     <button title={title} onClick={onClick}
       className="flex items-center justify-center rounded-lg transition-all duration-150 flex-shrink-0"
@@ -221,7 +231,6 @@ function IconBtn({
   );
 }
 
-/** Solid blue CTA button */
 function PrimaryBtn({ children, onClick, small = false }: { children: React.ReactNode; onClick?: () => void; small?: boolean }) {
   return (
     <button onClick={onClick}
@@ -239,7 +248,6 @@ function PrimaryBtn({ children, onClick, small = false }: { children: React.Reac
   );
 }
 
-/** White card with grey border */
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={`rounded-xl ${className}`}
@@ -249,7 +257,6 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
   );
 }
 
-/** Stat card — icon top-right, big number, sub-label, optional trend */
 function StatCard({
   label, value, sub, iconBg, iconColor, icon, trend,
 }: {
@@ -270,14 +277,15 @@ function StatCard({
         <div className="text-[22px] font-medium leading-none mb-1.5" style={{ color: "var(--ink)" }}>
           {value}
         </div>
-        {trend && (
+        {trend ? (
           <span className="flex items-center gap-1 text-[11px]"
             style={{ color: trend.up ? "#0F6E56" : "#A32D2D" }}>
             {trend.up ? <Ic.TrendUp /> : <Ic.TrendDown />}
             {trend.text}
           </span>
+        ) : (
+          <span className="text-[11px]" style={{ color: "var(--ink4)" }}>{sub}</span>
         )}
-        {!trend && <span className="text-[11px]" style={{ color: "var(--ink4)" }}>{sub}</span>}
       </div>
     </Card>
   );
@@ -291,14 +299,17 @@ function Toast({ msg, type, onClose }: { msg: string; type: "success" | "error";
     <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-xl"
       style={{
         background: "var(--bg-card)",
-        border:     `0.5px solid ${isOk ? "var(--border2)" : "#F7C1C1"}`,
-        color:      isOk ? "var(--ink2)" : "#A32D2D",
+        border:     `0.5px solid ${isOk ? "var(--border2)" : "rgba(239,68,68,0.3)"}`,
+        color:      isOk ? "var(--ink2)" : "var(--red)",
         boxShadow:  "0 4px 24px rgba(0,0,0,0.12)",
         animation:  "toastIn .3s cubic-bezier(0.16,1,0.3,1) both",
         fontFamily: "'DM Sans',sans-serif", fontSize: 13,
       }}>
       <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-        style={{ background: isOk ? "#E1F5EE" : "#FCEBEB", color: isOk ? "#0F6E56" : "#A32D2D" }}>
+        style={{
+          background: isOk ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.12)",
+          color:      isOk ? "var(--green)"           : "var(--red)",
+        }}>
         {isOk ? "✓" : "✕"}
       </div>
       {msg}
@@ -310,15 +321,20 @@ function Toast({ msg, type, onClose }: { msg: string; type: "success" | "error";
 function DeleteConfirm({ title, onConfirm, onCancel }: { title: string; onConfirm: () => void; onCancel: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
       onClick={onCancel}>
       <div className="w-full max-w-[360px] rounded-2xl p-7 text-center"
-        style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", boxShadow: "0 16px 48px rgba(0,0,0,0.14)", animation: "fadeScaleIn .22s cubic-bezier(0.16,1,0.3,1) both" }}
+        style={{
+          background: "var(--bg-card)",
+          border: "0.5px solid var(--border2)",
+          boxShadow: "0 16px 48px rgba(0,0,0,0.22)",
+          animation: "fadeScaleIn .22s cubic-bezier(0.16,1,0.3,1) both",
+        }}
         onClick={(e) => e.stopPropagation()}>
         <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4"
-          style={{ background: "#FCEBEB", border: "0.5px solid #F7C1C1" }}>
+          style={{ background: "rgba(239,68,68,0.1)", border: "0.5px solid rgba(239,68,68,0.25)" }}>
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-            <path d="M3 7h14M8 7V4.5h4V7M6 7l1 11h6l1-11" stroke="#A32D2D" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M3 7h14M8 7V4.5h4V7M6 7l1 11h6l1-11" stroke="var(--red)" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         </div>
         <h3 className="font-medium text-[16px] mb-1.5" style={{ color: "var(--ink)" }}>Delete project?</h3>
@@ -326,14 +342,14 @@ function DeleteConfirm({ title, onConfirm, onCancel }: { title: string; onConfir
           "<strong style={{ color: "var(--ink2)" }}>{title}</strong>" will be permanently removed.
         </p>
         <div className="flex gap-2.5">
-          <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg text-[13px] font-medium transition-colors"
+          <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg text-[13px] font-medium"
             style={{ border: "0.5px solid var(--border2)", color: "var(--ink3)", background: "transparent", cursor: "pointer" }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
             Cancel
           </button>
           <button onClick={onConfirm} className="flex-1 py-2.5 rounded-lg text-[13px] font-medium text-white"
-            style={{ background: "#E24B4A", border: "none", cursor: "pointer" }}
+            style={{ background: "var(--red)", border: "none", cursor: "pointer" }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.88"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
             Delete
@@ -362,7 +378,6 @@ function ProfileDropdown({ email, onLogout }: { email: string; onLogout: () => v
         style={{ background: open ? "var(--bg-alt)" : "transparent", border: "0.5px solid var(--border2)", cursor: "pointer" }}
         onMouseEnter={(e) => { if (!open) (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)"; }}
         onMouseLeave={(e) => { if (!open) (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
-        {/* Avatar circle */}
         <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium flex-shrink-0"
           style={{ background: "var(--accent-pale)", color: "var(--accent)" }}>
           {email?.[0]?.toUpperCase() ?? "A"}
@@ -375,7 +390,13 @@ function ProfileDropdown({ email, onLogout }: { email: string; onLogout: () => v
 
       {open && (
         <div className="absolute top-full right-0 mt-1.5 rounded-xl overflow-hidden z-50"
-          style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", minWidth: 162, boxShadow: "0 8px 28px rgba(0,0,0,0.1)", animation: "fadeScaleIn .16s cubic-bezier(0.16,1,0.3,1) both" }}>
+          style={{
+            background: "var(--bg-card)",
+            border: "0.5px solid var(--border2)",
+            minWidth: 162,
+            boxShadow: "0 8px 28px rgba(0,0,0,0.15)",
+            animation: "fadeScaleIn .16s cubic-bezier(0.16,1,0.3,1) both",
+          }}>
           {["View profile", "Account settings"].map((label) => (
             <button key={label} onClick={() => setOpen(false)}
               className="w-full text-left px-4 py-2.5 text-[12px] block transition-colors"
@@ -388,8 +409,8 @@ function ProfileDropdown({ email, onLogout }: { email: string; onLogout: () => v
           <div style={{ height: "0.5px", background: "var(--border)", margin: "3px 0" }}/>
           <button onClick={onLogout}
             className="w-full text-left px-4 py-2.5 text-[12px] block transition-colors"
-            style={{ color: "#A32D2D", background: "transparent", border: "none", cursor: "pointer" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#FCEBEB"; }}
+            style={{ color: "var(--red)", background: "transparent", border: "none", cursor: "pointer" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.08)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
             Sign out
           </button>
@@ -414,16 +435,19 @@ function ProjectRow({ project, onEdit, onDelete }: {
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}>
 
-      {/* Logo */}
       <div className="w-9 h-9 rounded-xl flex-shrink-0 overflow-hidden"
-        style={{ background: `${project.color}12`, border: `1px solid ${project.color}25`, transition: "transform .2s", transform: hov ? "scale(1.06)" : "scale(1)" }}>
+        style={{
+          background: `${project.color}12`,
+          border: `1px solid ${project.color}25`,
+          transition: "transform .2s",
+          transform: hov ? "scale(1.06)" : "scale(1)",
+        }}>
         {project.imageUrl
           ? <img src={getCloudinaryThumb(project.imageUrl, 72, 72)} alt={project.title} className="w-full h-full object-cover" loading="lazy"/>
           : <div className="w-full h-full flex items-center justify-center text-base">{project.emoji}</div>
         }
       </div>
 
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <span className="font-medium text-[13px] truncate" style={{ color: "var(--ink)" }}>{project.title}</span>
@@ -448,13 +472,11 @@ function ProjectRow({ project, onEdit, onDelete }: {
         </div>
       </div>
 
-      {/* Result */}
       <div className="hidden lg:flex items-center gap-1.5 max-w-[190px] flex-shrink-0">
         <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: project.color }}/>
         <span className="text-[12px] truncate" style={{ color: "var(--ink3)" }}>{project.result}</span>
       </div>
 
-      {/* Actions */}
       <div className={`flex items-center gap-1 flex-shrink-0 transition-opacity duration-150 ${hov ? "opacity-100" : "opacity-0"}`}>
         <IconBtn title="Edit"   accent onClick={onEdit}><Ic.Edit /></IconBtn>
         <IconBtn title="Delete" danger  onClick={onDelete}><Ic.Trash /></IconBtn>
@@ -486,8 +508,6 @@ function ProjectsTab({
 
   return (
     <div className="p-5 flex flex-col gap-5">
-
-      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Total projects" value={stats.total}      sub="all categories"  iconBg="#E6F1FB" iconColor="#185FA5" icon={<Ic.Projects />}/>
         <StatCard label="Featured"       value={stats.featured}   sub="on homepage"     iconBg="#EEEDFE" iconColor="#3C3489" icon={<Ic.Star />}/>
@@ -495,21 +515,20 @@ function ProjectsTab({
         <StatCard label="AI projects"    value={stats.aiProjects} sub="ML & LLM builds" iconBg="#FAEEDA" iconColor="#854F0B" icon={<Ic.Ai />}/>
       </div>
 
-      {/* Search bar */}
       <div className="flex items-center gap-2.5 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--ink4)" }}>
             <Ic.Search />
           </div>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search projects…"
-            className="w-full pl-9 pr-4 py-2 rounded-lg text-[13px] transition-colors"
-            style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", color: "var(--ink)", outline: "none", cursor: "text" }}
+            className="w-full pl-9 pr-4 py-2 rounded-lg text-[13px]"
+            style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", color: "var(--ink)", outline: "none", cursor: "text", transition: "border-color .2s" }}
             onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; }}
             onBlur={(e)  => { (e.target as HTMLInputElement).style.borderColor = "var(--border2)"; }}
           />
         </div>
         {search && (
-          <button onClick={() => setSearch("")} className="text-[12px] px-3 py-2 rounded-lg transition-colors"
+          <button onClick={() => setSearch("")} className="text-[12px] px-3 py-2 rounded-lg"
             style={{ color: "var(--ink3)", border: "0.5px solid var(--border2)", cursor: "pointer", background: "var(--bg-card)" }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-card)"; }}>
@@ -523,9 +542,7 @@ function ProjectsTab({
         </div>
       </div>
 
-      {/* Table */}
       <Card>
-        {/* Column headers */}
         <div className="flex items-center gap-4 px-5 py-3"
           style={{ background: "var(--bg-alt)", borderBottom: "0.5px solid var(--border)", borderRadius: "12px 12px 0 0" }}>
           <span className="text-[10px] font-medium uppercase tracking-widest ml-13 flex-1" style={{ color: "var(--ink4)" }}>Project</span>
@@ -533,11 +550,14 @@ function ProjectsTab({
           <span className="text-[10px] font-medium uppercase tracking-widest text-right" style={{ color: "var(--ink4)", width: 72 }}>Actions</span>
         </div>
 
-        {/* Rows */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: "var(--border2)", borderTopColor: C.accent }}/>
+            <div className="w-8 h-8 rounded-full border-2"
+              style={{
+                borderColor: "var(--border2)",
+                borderTopColor: "var(--accent)",
+                animation: "spinLoader 0.7s linear infinite",
+              }}/>
             <span className="text-[12px]" style={{ color: "var(--ink4)" }}>Loading…</span>
           </div>
         ) : filtered.length === 0 ? (
@@ -558,7 +578,7 @@ function ProjectsTab({
               </p>
             </div>
             {search
-              ? <button onClick={() => setSearch("")} className="text-[12px] px-4 py-2 rounded-lg transition-colors"
+              ? <button onClick={() => setSearch("")} className="text-[12px] px-4 py-2 rounded-lg"
                   style={{ color: "var(--ink3)", border: "0.5px solid var(--border2)", cursor: "pointer", background: "var(--bg-card)" }}>
                   Clear search
                 </button>
@@ -587,21 +607,23 @@ function AnalyticsTab({ projects }: { projects: FirestoreProject[] }) {
   const maxCount = Math.max(...Object.values(byCategory), 1);
 
   const catColors: Record<string, string> = {
-    "AI Development": "#378ADD", "Web Application": "#7F77DD",
-    "Mobile App": C.purple, "UI/UX Design": "#BA7517",
-    "Digital Marketing": "#639922", "Software Consulting": C.accent2,
+    "AI Development":       "#378ADD",
+    "Web Application":      "#7F77DD",
+    "Mobile App":           "#8B5CF6",
+    "UI/UX Design":         "#BA7517",
+    "Digital Marketing":    "#639922",
+    "Software Consulting":  "#6366F1",
   };
 
   const summaryStats = useMemo(() => [
-    { label: "Featured",   value: projects.filter((p) => p.featured).length,        iconBg: "#E6F1FB", iconColor: "#185FA5" },
-    { label: "With image", value: projects.filter((p) => p.imageUrl).length,         iconBg: "#EEEDFE", iconColor: "#3C3489" },
-    { label: "Categories", value: Object.keys(byCategory).length,                    iconBg: "#EAF3DE", iconColor: "#3B6D11" },
-    { label: "Total tags", value: projects.reduce((a, p) => a + p.tags.length, 0),  iconBg: "#FAEEDA", iconColor: "#854F0B" },
+    { label: "Featured",   value: projects.filter((p) => p.featured).length,       iconBg: "#E6F1FB", iconColor: "#185FA5" },
+    { label: "With image", value: projects.filter((p) => p.imageUrl).length,        iconBg: "#EEEDFE", iconColor: "#3C3489" },
+    { label: "Categories", value: Object.keys(byCategory).length,                   iconBg: "#EAF3DE", iconColor: "#3B6D11" },
+    { label: "Total tags", value: projects.reduce((a, p) => a + p.tags.length, 0), iconBg: "#FAEEDA", iconColor: "#854F0B" },
   ], [projects, byCategory]);
 
   return (
     <div className="p-5 flex flex-col gap-5">
-      {/* Mini stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {summaryStats.map(({ label, value, iconBg, iconColor }) => (
           <Card key={label}>
@@ -613,14 +635,13 @@ function AnalyticsTab({ projects }: { projects: FirestoreProject[] }) {
         ))}
       </div>
 
-      {/* Category bars */}
       <Card>
         <div className="p-5">
           <h3 className="font-medium text-[14px] mb-5" style={{ color: "var(--ink)" }}>Projects by category</h3>
           {Object.keys(byCategory).length > 0 ? (
             <div className="flex flex-col gap-4">
               {Object.entries(byCategory).sort(([, a], [, b]) => b - a).map(([cat, count]) => {
-                const color = catColors[cat] || C.accent;
+                const color = catColors[cat] || "var(--accent)";
                 return (
                   <div key={cat}>
                     <div className="flex items-center justify-between mb-2">
@@ -644,7 +665,6 @@ function AnalyticsTab({ projects }: { projects: FirestoreProject[] }) {
         </div>
       </Card>
 
-      {/* Top projects */}
       <Card>
         <div className="p-5">
           <h3 className="font-medium text-[14px] mb-4" style={{ color: "var(--ink)" }}>Top performing projects</h3>
@@ -652,8 +672,8 @@ function AnalyticsTab({ projects }: { projects: FirestoreProject[] }) {
             <div className="flex flex-col gap-1.5">
               {projects.filter((p) => p.result).slice(0, 5).map((p, i) => (
                 <div key={p.id}
-                  className="flex items-center gap-3 p-3 rounded-lg transition-colors duration-150 cursor-default"
-                  style={{ background: "transparent" }}
+                  className="flex items-center gap-3 p-3 rounded-lg cursor-default"
+                  style={{ background: "transparent", transition: "background .15s" }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)"; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
                   <span className="text-[11px] w-5 text-center flex-shrink-0"
@@ -696,6 +716,23 @@ export function AdminDashboard({ user }: Props) {
   const [sidebarOpen,  setSidebarOpen]  = useState(true);
   const [toast,        setToast]        = useState<{ msg: string; type: "success" | "error" } | null>(null);
 
+  // ── Dark mode — persisted in localStorage, applied to <html> ──────────────
+  const [dark, setDark] = useState<boolean>(() => getStoredTheme());
+
+  useEffect(() => {
+    // Apply on mount (in case of SSR mismatch or cold load)
+    applyTheme(dark);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleThemeToggle = useCallback(() => {
+    setDark((prev) => {
+      const next = !prev;
+      applyTheme(next);
+      return next;
+    });
+  }, []);
+
+  // ── Data ──────────────────────────────────────────────────────────────────
   const showToast = useCallback((msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
   }, []);
@@ -730,7 +767,7 @@ export function AdminDashboard({ user }: Props) {
 
   return (
     <>
-      <ThemeInjector />
+      <KeyframeInjector />
       <link
         href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
         rel="stylesheet"
@@ -751,8 +788,6 @@ export function AdminDashboard({ user }: Props) {
           {/* ── Logo row ── */}
           <div className="flex items-center flex-shrink-0"
             style={{ height: 52, borderBottom: "0.5px solid var(--border)", padding: sidebarOpen ? "0 12px" : "0", justifyContent: sidebarOpen ? "flex-start" : "center", gap: sidebarOpen ? 9 : 0 }}>
-
-            {/* Logo mark — always visible, clickable to toggle */}
             <div className="w-[28px] h-[28px] rounded-lg flex items-center justify-center flex-shrink-0 cursor-pointer"
               style={{ background: "var(--accent)" }}
               onClick={() => setSidebarOpen((o) => !o)}
@@ -761,40 +796,23 @@ export function AdminDashboard({ user }: Props) {
                 <path d="M2 7l4 4 6-6" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-
-            {/* Brand name */}
             {sidebarOpen && (
               <div className="min-w-0 flex-1 overflow-hidden">
-                <div className="font-medium text-[14px] leading-tight whitespace-nowrap" style={{ color: "var(--ink)" }}>
-                  ZynHive
-                </div>
+                <div className="font-medium text-[14px] leading-tight whitespace-nowrap" style={{ color: "var(--ink)" }}>ZynHive</div>
                 <div className="text-[10px]" style={{ color: "var(--ink4)" }}>Admin panel</div>
               </div>
             )}
-
-            {/* Toggle button */}
             <button
               onClick={() => setSidebarOpen((o) => !o)}
-              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
               className="flex items-center justify-center rounded-lg transition-all duration-150 flex-shrink-0"
-              style={{
-                width: 26, height: 26,
-                background: "transparent",
-                border: "0.5px solid var(--border2)",
-                color: "var(--ink4)", cursor: "pointer",
-                marginLeft: sidebarOpen ? 0 : 8,
-                display: sidebarOpen ? "flex" : "none",
-              }}
+              style={{ width: 26, height: 26, background: "transparent", border: "0.5px solid var(--border2)", color: "var(--ink4)", cursor: "pointer", display: sidebarOpen ? "flex" : "none" }}
               onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--accent-pale)"; el.style.borderColor = "var(--accent-pale2)"; el.style.color = "var(--accent)"; }}
               onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.borderColor = "var(--border2)"; el.style.color = "var(--ink4)"; }}>
               <Ic.ChevronLeft />
             </button>
-
-            {/* Expand button — only shown when collapsed */}
             {!sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(true)}
-                title="Expand sidebar"
                 className="flex items-center justify-center rounded-lg transition-all duration-150 flex-shrink-0"
                 style={{ width: 26, height: 26, background: "transparent", border: "0.5px solid var(--border2)", color: "var(--ink4)", cursor: "pointer", marginLeft: 6 }}
                 onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--accent-pale)"; el.style.borderColor = "var(--accent-pale2)"; el.style.color = "var(--accent)"; }}
@@ -804,14 +822,12 @@ export function AdminDashboard({ user }: Props) {
             )}
           </div>
 
-          {/* Section label */}
           {sidebarOpen && (
             <div className="px-4 pt-3.5 pb-1">
               <span className="text-[10px] uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Main menu</span>
             </div>
           )}
 
-          {/* ── Nav items ── */}
           <nav className="flex flex-col flex-1 overflow-hidden"
             style={{ gap: 1, padding: sidebarOpen ? "4px 8px" : "8px 6px" }}>
             {NAV_ITEMS.map((item) => {
@@ -831,28 +847,12 @@ export function AdminDashboard({ user }: Props) {
                     cursor: "pointer", textAlign: "left",
                     fontWeight: active ? 500 : 400,
                   }}
-                  onMouseEnter={(e) => {
-                    if (!active) {
-                      const el = e.currentTarget as HTMLElement;
-                      el.style.background = "var(--bg-alt)";
-                      el.style.color      = "var(--ink2)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) {
-                      const el = e.currentTarget as HTMLElement;
-                      el.style.background = "transparent";
-                      el.style.color      = "var(--ink3)";
-                    }
-                  }}>
-
+                  onMouseEnter={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "var(--bg-alt)"; el.style.color = "var(--ink2)"; } }}
+                  onMouseLeave={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink3)"; } }}>
                   <span className="flex-shrink-0">{item.icon}</span>
-
                   {sidebarOpen && (
                     <>
-                      <span className="text-[13px] flex-1 whitespace-nowrap overflow-hidden text-ellipsis">
-                        {item.label}
-                      </span>
+                      <span className="text-[13px] flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
                       {item.badge && (
                         <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
                           style={{ background: "var(--accent)", color: "white" }}>
@@ -861,21 +861,16 @@ export function AdminDashboard({ user }: Props) {
                       )}
                     </>
                   )}
-
-                  {/* Collapsed: small badge dot */}
                   {!sidebarOpen && item.badge && (
-                    <span className="absolute top-1.5 right-1 w-1.5 h-1.5 rounded-full"
-                      style={{ background: "var(--accent)" }}/>
+                    <span className="absolute top-1.5 right-1 w-1.5 h-1.5 rounded-full" style={{ background: "var(--accent)" }}/>
                   )}
                 </button>
               );
             })}
           </nav>
 
-          {/* Divider */}
           <div style={{ height: "0.5px", background: "var(--border)", margin: "6px 10px" }}/>
 
-          {/* ── User row ── */}
           <div className="flex-shrink-0 flex items-center gap-2.5 overflow-hidden"
             style={{ padding: sidebarOpen ? "10px 14px" : "10px 0", justifyContent: sidebarOpen ? "flex-start" : "center" }}>
             <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 font-medium text-[11px]"
@@ -898,16 +893,12 @@ export function AdminDashboard({ user }: Props) {
           <header className="flex items-center justify-between px-5 flex-shrink-0"
             style={{ height: 52, background: "var(--bg-panel)", borderBottom: "0.5px solid var(--border)" }}>
 
-            {/* Breadcrumb */}
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] hidden sm:block" style={{ color: "var(--ink4)" }}>ZynHive</span>
               <span className="hidden sm:flex items-center" style={{ color: "var(--ink4)" }}><Ic.Breadcrumb /></span>
-              <span className="font-medium text-[14px]" style={{ color: "var(--ink)" }}>
-                {activeNavItem?.label}
-              </span>
+              <span className="font-medium text-[14px]" style={{ color: "var(--ink)" }}>{activeNavItem?.label}</span>
             </div>
 
-            {/* Inline search — projects tab only */}
             {tab === "projects" && (
               <div className="relative flex-1 max-w-[240px] mx-4 hidden md:block">
                 <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--ink4)" }}>
@@ -915,36 +906,34 @@ export function AdminDashboard({ user }: Props) {
                 </div>
                 <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search projects…"
-                  className="w-full rounded-lg text-[12px] transition-colors"
-                  style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border)", color: "var(--ink)", outline: "none", padding: "6px 12px 6px 28px", fontFamily: "inherit" }}
+                  className="w-full rounded-lg text-[12px]"
+                  style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border)", color: "var(--ink)", outline: "none", padding: "6px 12px 6px 28px", fontFamily: "inherit", transition: "border-color .2s" }}
                   onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; }}
                   onBlur={(e)  => { (e.target as HTMLInputElement).style.borderColor = "var(--border)"; }}
                 />
               </div>
             )}
 
-            {/* Right actions */}
             <div className="flex items-center gap-2 ml-auto">
-              {/* Live pill */}
               <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg"
                 style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border)" }}>
-                <div className="w-1.5 h-1.5 rounded-full" style={{ background: C.green }}/>
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--green)" }}/>
                 <span className="text-[11px]" style={{ color: "var(--ink4)" }}>
                   <span style={{ color: "var(--accent)", fontWeight: 500 }}>{projects.length}</span> projects
                 </span>
               </div>
 
-              {/* Bell */}
               <div className="relative">
                 <IconBtn title="Notifications" size={30}><Ic.Bell /></IconBtn>
                 <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full pointer-events-none"
-                  style={{ background: "#E24B4A", border: "1.5px solid var(--bg-panel)" }}/>
+                  style={{ background: "var(--red)", border: "1.5px solid var(--bg-panel)" }}/>
               </div>
 
-              {/* Profile dropdown */}
+              {/* ── Theme toggle ── */}
+              <ThemeToggle dark={dark} onToggle={handleThemeToggle} />
+
               <ProfileDropdown email={user.email ?? ""} onLogout={() => adminLogout()} />
 
-              {/* CTA */}
               {ctaLabel && (
                 <PrimaryBtn onClick={handleCta}>
                   <Ic.Plus />
