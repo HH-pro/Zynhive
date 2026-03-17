@@ -1,19 +1,20 @@
 // ─── src/lib/maps-scraper.ts ──────────────────────────────────────────────────
-// Production Google Maps Lead Scraper
-// Uses real APIs to extract actual business data
-//
-// FREE APIs used (priority order):
-//   1. HasData API     — 1,000 free calls/month — hasdata.com (no credit card)
-//   2. Outscraper API  — 200 free calls/month   — outscraper.com
-//   3. OpenRouter AI   — fallback (generates sample data if APIs unavailable)
+// Google Maps Lead Scraper — HasData API only
 //
 // Setup .env:
-//   VITE_HASDATA_API_KEY=your_key     ← hasdata.com/dashboard
-//   VITE_OUTSCRAPER_API_KEY=your_key  ← app.outscraper.com/profile
+//   VITE_HASDATA_API_KEY=your_key   ← app.hasdata.com (free 1,000 credits/month)
+//
+// Endpoint : GET https://api.hasdata.com/scrape/google-maps/search
+// Params   : q (required), ll (optional GPS), gl, hl, start
+// Auth     : x-api-key header
+// Cost     : 5 credits per request
 
 const HASDATA_KEY    = import.meta.env.VITE_HASDATA_API_KEY    ?? "";
-const OUTSCRAPER_KEY = import.meta.env.VITE_OUTSCRAPER_API_KEY ?? "";
 const OPENROUTER_KEY = import.meta.env.VITE_OPENROUTER_API_KEY ?? "";
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TYPES
+// ══════════════════════════════════════════════════════════════════════════════
 
 export interface ScrapedLead {
   companyName: string;
@@ -32,22 +33,43 @@ export interface ScrapedLead {
   facebook:    string;
 }
 
+export interface ScrapeOptions {
+  keyword:  string;
+  location: string;
+  limit?:   number;
+}
+
+export interface ScrapeResult {
+  leads:   ScrapedLead[];
+  source:  "hasdata" | "ai-sample";
+  total:   number;
+  error?:  string;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
-// METHOD 1: HasData API (Best — structured JSON, fast)
-// Get free key: https://hasdata.com (1000 free calls/month)
+// METHOD 1 — HasData API (real Google Maps data)
+// Docs: https://docs.hasdata.com/apis/google-maps/search
 // ══════════════════════════════════════════════════════════════════════════════
 
 async function scrapeViaHasData(
-  keyword: string,
+  keyword:  string,
   location: string,
-  limit = 20,
+  limit:    number,
 ): Promise<ScrapedLead[]> {
   if (!HASDATA_KEY) throw new Error("HasData API key missing");
 
-  const query    = encodeURIComponent(`${keyword} in ${location}`);
-  const url      = `https://api.hasdata.com/scrape/google-maps/search?query=${query}&limit=${limit}`;
+  // HasData uses `q` (not `query`) — combining keyword + location gives best results
+  const params = new URLSearchParams({
+    q:  `${keyword} in ${location}`,
+    hl: "en",
+  });
+
+  const url = `https://api.hasdata.com/scrape/google-maps/search?${params.toString()}`;
+
+  console.log("[Scraper] HasData request:", url);
 
   const res = await fetch(url, {
+    method:  "GET",
     headers: {
       "x-api-key":    HASDATA_KEY,
       "Content-Type": "application/json",
@@ -55,89 +77,54 @@ async function scrapeViaHasData(
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`HasData ${res.status}: ${err}`);
+    const body = await res.text().catch(() => "");
+    throw new Error(`HasData ${res.status}: ${body}`);
   }
 
   const data = await res.json();
-  const places = data.localResults ?? data.results ?? [];
 
-  return places.map((p: any): ScrapedLead => ({
-    companyName: p.title        ?? p.name        ?? "",
-    email:       p.email        ?? extractEmail(p.website) ?? "",
-    phone:       p.phoneNumber  ?? p.phone        ?? "",
-    website:     cleanUrl(p.website ?? ""),
-    address:     p.address      ?? p.fullAddress  ?? "",
-    country:     extractCountry(p.address ?? "", location),
-    city:        extractCity(p.address ?? "", location),
-    rating:      p.rating       ?? 0,
-    reviews:     p.reviewsCount ?? p.reviews      ?? 0,
-    category:    p.type         ?? p.category     ?? keyword,
-    leadSource:  "Google Maps",
-    mapsUrl:     p.placeUrl     ?? p.url          ?? "",
-    instagram:   p.instagram    ?? "",
-    facebook:    p.facebook     ?? "",
-  })).filter((l: ScrapedLead) => l.companyName);
+  // HasData returns results under `localResults`
+  const places: any[] = data.localResults ?? data.results ?? [];
+
+  if (!places.length) {
+    throw new Error("HasData returned 0 results — try a different keyword or location");
+  }
+
+  return places
+    .slice(0, limit)
+    .map((p: any): ScrapedLead => ({
+      companyName: p.title        ?? p.name           ?? "",
+      email:       p.email        ?? "",
+      phone:       p.phoneNumber  ?? p.phone           ?? "",
+      website:     cleanUrl(p.website ?? ""),
+      address:     p.address      ?? p.fullAddress     ?? "",
+      country:     extractCountry(p.address ?? p.fullAddress ?? "", location),
+      city:        extractCity(p.address    ?? p.fullAddress ?? "", location),
+      rating:      Number(p.rating)       || 0,
+      reviews:     Number(p.reviewsCount  ?? p.reviews) || 0,
+      category:    p.type         ?? p.category        ?? keyword,
+      leadSource:  "Google Maps",
+      mapsUrl:     p.placeUrl     ?? p.url             ?? "",
+      instagram:   p.instagram    ?? "",
+      facebook:    p.facebook     ?? "",
+    }))
+    .filter((l) => l.companyName.trim() !== "");
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// METHOD 2: Outscraper API (Good — email extraction included)
-// Get free key: https://app.outscraper.com/profile (200 free/month)
-// ══════════════════════════════════════════════════════════════════════════════
-
-async function scrapeViaOutscraper(
-  keyword: string,
-  location: string,
-  limit = 20,
-): Promise<ScrapedLead[]> {
-  if (!OUTSCRAPER_KEY) throw new Error("Outscraper API key missing");
-
-  const query = `${keyword} ${location}`;
-  const url   = `https://api.app.outscraper.com/maps/search-v3?query=${encodeURIComponent(query)}&limit=${limit}&async=false`;
-
-  const res = await fetch(url, {
-    headers: {
-      "X-API-KEY":    OUTSCRAPER_KEY,
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!res.ok) throw new Error(`Outscraper ${res.status}`);
-
-  const data   = await res.json();
-  const places = data.data?.[0] ?? [];
-
-  return places.map((p: any): ScrapedLead => ({
-    companyName: p.name             ?? "",
-    email:       p.email            ?? p.emails_and_contacts?.[0]?.value ?? "",
-    phone:       p.phone            ?? p.international_phone ?? "",
-    website:     cleanUrl(p.site    ?? p.website ?? ""),
-    address:     p.full_address     ?? p.address ?? "",
-    country:     p.country          ?? extractCountry(p.full_address ?? "", location),
-    city:        p.city             ?? extractCity(p.full_address ?? "", location),
-    rating:      p.rating           ?? 0,
-    reviews:     p.reviews          ?? p.reviews_count ?? 0,
-    category:    p.type             ?? keyword,
-    leadSource:  "Google Maps",
-    mapsUrl:     p.place_link       ?? p.google_maps_url ?? "",
-    instagram:   p.instagram        ?? "",
-    facebook:    p.facebook         ?? "",
-  })).filter((l: ScrapedLead) => l.companyName);
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// METHOD 3: OpenRouter AI Fallback (sample data when APIs not available)
+// METHOD 2 — OpenRouter AI fallback (sample data only, no real scraping)
+// Only runs when VITE_HASDATA_API_KEY is NOT set
 // ══════════════════════════════════════════════════════════════════════════════
 
 async function scrapeViaAI(
-  keyword: string,
+  keyword:  string,
   location: string,
-  limit = 10,
+  limit:    number,
 ): Promise<ScrapedLead[]> {
-  if (!OPENROUTER_KEY) throw new Error("No API keys available");
+  if (!OPENROUTER_KEY) throw new Error("No API keys configured");
 
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
+    method:  "POST",
     headers: {
       "Content-Type":  "application/json",
       "Authorization": `Bearer ${OPENROUTER_KEY}`,
@@ -148,22 +135,24 @@ async function scrapeViaAI(
       model:       "openrouter/auto",
       max_tokens:  2000,
       temperature: 0.3,
-      messages: [{
-        role:    "system",
-        content: "Generate realistic business data. Return ONLY valid JSON array, no explanation.",
-      }, {
-        role:    "user",
-        content: `Generate ${limit} realistic ${keyword} business leads in ${location}.
+      messages: [
+        {
+          role:    "system",
+          content: "Generate realistic business data for a CRM demo. Return ONLY a valid JSON array, no explanation, no markdown.",
+        },
+        {
+          role:    "user",
+          content: `Generate ${Math.min(limit, 10)} realistic ${keyword} business leads in ${location}.
 
-Return JSON array:
+Return a JSON array like this:
 [{
-  "companyName": "Real-sounding business name",
-  "email": "contact@domain.com",
-  "phone": "+country_code_number",
-  "website": "https://domain.com",
-  "address": "Street, City, Country",
-  "country": "${location.split(",").pop()?.trim() || location}",
-  "city": "${location.split(",")[0]?.trim() || location}",
+  "companyName": "Example Business",
+  "email": "contact@example.com",
+  "phone": "+92-300-0000000",
+  "website": "https://example.com",
+  "address": "123 Street, City, Country",
+  "country": "${location.split(",").pop()?.trim() ?? location}",
+  "city": "${location.split(",")[0]?.trim() ?? location}",
   "rating": 4.2,
   "reviews": 87,
   "category": "${keyword}",
@@ -172,79 +161,67 @@ Return JSON array:
   "instagram": "",
   "facebook": ""
 }]`,
-      }],
+        },
+      ],
     }),
   });
 
   if (!res.ok) throw new Error(`AI fallback failed: ${res.status}`);
+
   const data    = await res.json();
-  const content = data.choices?.[0]?.message?.content ?? "";
+  const content: string = data.choices?.[0]?.message?.content ?? "";
 
-  // Parse JSON
+  // Parse the JSON array out of the response
   let s = content.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-  const arrStart = s.indexOf("[");
-  if (arrStart > 0) s = s.slice(arrStart);
-  const arrEnd = s.lastIndexOf("]");
-  if (arrEnd >= 0) s = s.slice(0, arrEnd + 1);
+  const start = s.indexOf("[");
+  if (start > 0) s = s.slice(start);
+  const end = s.lastIndexOf("]");
+  if (end >= 0) s = s.slice(0, end + 1);
 
-  return JSON.parse(s);
+  return JSON.parse(s) as ScrapedLead[];
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// MAIN EXPORT — tries each method in order
+// MAIN EXPORT
 // ══════════════════════════════════════════════════════════════════════════════
 
-export interface ScrapeOptions {
-  keyword:  string;
-  location: string;
-  limit?:   number;
-}
-
-export interface ScrapeResult {
-  leads:    ScrapedLead[];
-  source:   "hasdata" | "outscraper" | "ai-sample";
-  total:    number;
-  error?:   string;
-}
-
-export async function scrapeGoogleMaps(
-  opts: ScrapeOptions,
-): Promise<ScrapeResult> {
+export async function scrapeGoogleMaps(opts: ScrapeOptions): Promise<ScrapeResult> {
   const { keyword, location, limit = 20 } = opts;
 
-  // Method 1 — HasData (real data)
+  // ── HasData (real data) ───────────────────────────────────────────────────
   if (HASDATA_KEY) {
     try {
-      console.log("[Scraper] Trying HasData API…");
+      console.log("[Scraper] Using HasData API…");
       const leads = await scrapeViaHasData(keyword, location, limit);
-      console.log(`[Scraper] HasData: ${leads.length} results`);
+      console.log(`[Scraper] HasData returned ${leads.length} results`);
       return { leads, source: "hasdata", total: leads.length };
     } catch (err) {
-      console.warn("[Scraper] HasData failed:", err);
+      console.error("[Scraper] HasData failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      // Surface the real error to the UI — don't silently fall through
+      return {
+        leads:  [],
+        source: "hasdata",
+        total:  0,
+        error:  `HasData error: ${msg}`,
+      };
     }
   }
 
-  // Method 2 — Outscraper (real data)
-  if (OUTSCRAPER_KEY) {
-    try {
-      console.log("[Scraper] Trying Outscraper API…");
-      const leads = await scrapeViaOutscraper(keyword, location, limit);
-      console.log(`[Scraper] Outscraper: ${leads.length} results`);
-      return { leads, source: "outscraper", total: leads.length };
-    } catch (err) {
-      console.warn("[Scraper] Outscraper failed:", err);
-    }
+  // ── AI sample fallback (no real key set) ─────────────────────────────────
+  console.log("[Scraper] No HasData key — falling back to AI sample data");
+  try {
+    const leads = await scrapeViaAI(keyword, location, limit);
+    return {
+      leads,
+      source: "ai-sample",
+      total:  leads.length,
+      error:  "Using AI-generated sample data. Add VITE_HASDATA_API_KEY for real Google Maps data.",
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { leads: [], source: "ai-sample", total: 0, error: msg };
   }
-
-  // Method 3 — AI sample (fallback)
-  console.log("[Scraper] Using AI sample data (no real API keys set)");
-  const leads = await scrapeViaAI(keyword, location, Math.min(limit, 10));
-  return {
-    leads,
-    source: "ai-sample",
-    total:  leads.length,
-    error:  "Using AI-generated sample data. Add VITE_HASDATA_API_KEY for real Google Maps data.",
-  };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -253,23 +230,21 @@ export async function scrapeGoogleMaps(
 
 function cleanUrl(url: string): string {
   if (!url) return "";
-  if (!url.startsWith("http")) url = "https://" + url;
+  const withProtocol = url.startsWith("http") ? url : `https://${url}`;
   try {
-    return new URL(url).origin;
+    return new URL(withProtocol).origin;
   } catch {
     return url;
   }
 }
 
-function extractEmail(website: string): string {
-  // Email usually not on Maps — return empty, user can audit later
-  return "";
-}
-
 function extractCity(address: string, fallback: string): string {
   if (!address) return fallback.split(",")[0]?.trim() ?? fallback;
   const parts = address.split(",");
-  return parts.length >= 2 ? parts[parts.length - 2]?.trim() : fallback;
+  // Second-to-last part is usually city
+  return parts.length >= 2
+    ? (parts[parts.length - 2]?.trim() ?? fallback)
+    : fallback;
 }
 
 function extractCountry(address: string, fallback: string): string {
