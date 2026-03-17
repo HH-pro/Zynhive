@@ -22,7 +22,7 @@ export function Cursor() {
           position: fixed;
           width: 10px;
           height: 10px;
-          background: #a78bfa;
+          background: #0f27b1;
           border-radius: 50%;
           transform: translate(-50%, -50%);
           pointer-events: none;
