@@ -1,5 +1,5 @@
 // ─── src/lib/lead-constants.ts ───────────────────────────────────────────────
-import type { FollowUpKey, FollowUpStep, FirestoreLead } from "../types/leads";
+import type { FollowUpStep, FirestoreLead } from "../types/leads";
 
 // LeadStatus and LeadSource — derived locally, not exported from types/leads
 type LeadStatus = FirestoreLead["status"];
