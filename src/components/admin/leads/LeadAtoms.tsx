@@ -1,6 +1,4 @@
 // ─── src/components/admin/leads/LeadAtoms.tsx ───────────────────────────────
-// Small reusable atoms: StatusBadge, IssueTags, SourceBadge, etc.
-
 import type { LeadStatus, LeadSource } from "../../../types/leads";
 import { STATUS_COLORS, FOLLOW_UP_SEQUENCE } from "../../../lib/lead-constants";
 
@@ -18,10 +16,7 @@ export function StatusBadge({ status }: { status: LeadStatus }) {
         font-mono text-[10px] font-bold tracking-wide whitespace-nowrap"
       style={{ background: sc.bg, color: sc.text, border: `1px solid ${sc.border}` }}
     >
-      <span
-        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-        style={{ background: sc.text }}
-      />
+      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: sc.text }} />
       {label}
     </span>
   );
@@ -30,30 +25,33 @@ export function StatusBadge({ status }: { status: LeadStatus }) {
 // ── Issue Tags ────────────────────────────────────────────────────────────────
 
 export function IssueTags({
-  hasChatbot, hasQuickResponse, hasLeadForm, hasMobileOptimized,
+  hasChatbot,
+  hasQuickResponse,
+  hasLeadForm,
+  hasMobileOptimized,
   compact = false,
 }: {
   hasChatbot: boolean;
   hasQuickResponse: boolean;
+  // ── FIX: keep as optional but use explicit undefined check, not `=== false` ──
   hasLeadForm?: boolean;
   hasMobileOptimized?: boolean;
   compact?: boolean;
 }) {
-  const issues = [];
-  if (!hasChatbot)        issues.push("No Chatbot");
-  if (!hasQuickResponse)  issues.push("Slow Response");
-  if (hasLeadForm === false)       issues.push("No Lead Form");
-  if (hasMobileOptimized === false) issues.push("Not Mobile Opt.");
+  const issues: string[] = [];
+  if (!hasChatbot)                      issues.push("No Chatbot");
+  if (!hasQuickResponse)                issues.push("Slow Response");
+  if (hasLeadForm !== undefined && !hasLeadForm)           issues.push("No Lead Form");
+  if (hasMobileOptimized !== undefined && !hasMobileOptimized) issues.push("Not Mobile Opt.");
 
   if (issues.length === 0) {
     return (
       <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md
-          font-mono text-[9px] font-bold"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[9px] font-bold"
         style={{
-          background: "rgba(34,197,94,0.08)",
-          color: "#86efac",
-          border: "1px solid rgba(34,197,94,0.2)",
+          background: "rgba(16,185,129,0.10)",
+          color: "var(--green)",
+          border: "1px solid rgba(16,185,129,0.2)",
         }}
       >
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -90,11 +88,10 @@ export function IssueTags({
 function IssueTag({ label }: { label: string }) {
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md
-        font-mono text-[9px] font-bold whitespace-nowrap"
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[9px] font-bold whitespace-nowrap"
       style={{
-        background: "rgba(239,68,68,0.08)",
-        color: "#fca5a5",
+        background: "var(--red-pale)",
+        color: "var(--red)",
         border: "1px solid rgba(239,68,68,0.2)",
       }}
     >
@@ -107,7 +104,7 @@ function IssueTag({ label }: { label: string }) {
   );
 }
 
-// ── Source Badge ───────────────────────────────────────────────────────────────
+// ── Source Badge ──────────────────────────────────────────────────────────────
 
 const SOURCE_ICONS: Record<LeadSource, string> = {
   "Google Maps": "📍",
@@ -120,10 +117,7 @@ const SOURCE_ICONS: Record<LeadSource, string> = {
 
 export function SourceBadge({ source }: { source: LeadSource }) {
   return (
-    <span
-      className="inline-flex items-center gap-1.5 font-mono text-[10px]"
-      style={{ color: "var(--ink3)" }}
-    >
+    <span className="inline-flex items-center gap-1.5 font-mono text-[10px]" style={{ color: "var(--ink3)" }}>
       <span className="text-xs">{SOURCE_ICONS[source] ?? "📌"}</span>
       {source}
     </span>
@@ -143,7 +137,7 @@ export function AiLoadingOverlay({ message }: { message: string }) {
         style={{
           background: "var(--bg-surface)",
           border: "1px solid var(--border2)",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+          boxShadow: "var(--shadow-lg)",
           animation: "fadeScaleIn .3s cubic-bezier(0.16,1,0.3,1) both",
         }}
       >
@@ -204,6 +198,7 @@ export function EmptyState({
           style={{
             background: "linear-gradient(135deg, var(--accent), var(--cyan))",
             cursor: "pointer",
+            border: "none",
           }}
         >
           {action.label}
