@@ -1018,21 +1018,7 @@ export function AdminDashboard({ user }: Props) {
 
               <ProfileDropdown email={user.email ?? ""} onLogout={() => adminLogout()} />
 
-              {ctaLabel && !isMobile && (
-                <PrimaryBtn onClick={handleCta}>
-                  <Ic.Plus />
-                  {ctaLabel}
-                </PrimaryBtn>
-              )}
 
-              {/* Mobile CTA: icon only */}
-              {ctaLabel && isMobile && (
-                <button onClick={handleCta}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: "var(--accent)", border: "none", cursor: "pointer" }}>
-                  <Ic.Plus />
-                </button>
-              )}
             </div>
           </header>
 
