@@ -889,23 +889,29 @@ export function AdminDashboard({ user }: Props) {
               const active = tab === item.id;
               return (
                 <button key={item.id} onClick={() => switchTab(item.id)} title={item.label}
-                  className="flex items-center w-full relative rounded-lg"
                   style={{
-                    gap:            effectiveSidebarOpen ? 9 : 0,
-                    padding:        effectiveSidebarOpen ? "8px 10px" : "10px 0",
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    position: "relative",
+                    borderRadius: 9,
+                    gap:            effectiveSidebarOpen ? 10 : 0,
+                    padding:        effectiveSidebarOpen ? "9px 10px" : "10px 0",
                     justifyContent: effectiveSidebarOpen ? "flex-start" : "center",
                     background:     active ? "var(--accent-pale)" : "transparent",
                     color:          active ? "var(--accent)"      : "var(--ink3)",
                     border:         active ? "0.5px solid var(--accent-pale2)" : "0.5px solid transparent",
                     cursor: "pointer", fontWeight: active ? 600 : 400,
                     transition: "all .15s",
+                    textAlign: "left",
+                    lineHeight: 1,
                   }}
                   onMouseEnter={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "var(--bg-alt)"; el.style.color = "var(--ink2)"; } }}
                   onMouseLeave={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink3)"; } }}>
-                  <span className="flex-shrink-0">{item.icon}</span>
+                  <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>{item.icon}</span>
                   {effectiveSidebarOpen && (
                     <>
-                      <span className="text-[13px] flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
+                      <span style={{ fontSize: 13, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1, paddingTop: 1 }}>{item.label}</span>
                       {item.badge && (
                         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
                           style={{ background: "var(--accent)", color: "white" }}>
