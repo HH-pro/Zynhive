@@ -40,6 +40,14 @@
   --ink3:         #4A5280;
   --ink4:         #8A92B8;
 
+  /* ── Admin dashboard surface tokens ────────────────────────── */
+  --bg:           #F2F4F8;
+  --bg-card:      #FFFFFF;
+  --green:        #10B981;
+  --red:          #EF4444;
+  --gold:         #F59E0B;
+  --purple:       #8B5CF6;
+
   /* ── Hero (dark navy panel) ─────────────────────────────────── */
   --hero-bg:      #020842;
   --hero-text:    #F4F6FF;
@@ -69,7 +77,10 @@
   --teal:         var(--cyan);
 }
 
-/* ══ DARK THEME ═════════════════════════════════════════════════════════════ */
+/* ══ DARK THEME ═════════════════════════════════════════════════════════════
+   Applied via  html[data-theme="dark"]
+   The AdminDashboard sets this on <html> when the ThemeToggle fires.
+   ══════════════════════════════════════════════════════════════════════════ */
 [data-theme="dark"] {
   --bg-base:      #010420;
   --bg-alt:       #020730;
@@ -95,6 +106,14 @@
   --ink2:         #B8C3F0;
   --ink3:         #7885C0;
   --ink4:         #3D4880;
+
+  /* ── Admin dashboard surface tokens (dark) ─────────────────── */
+  --bg:           #010420;
+  --bg-card:      #0D1440;
+  --green:        #34D399;
+  --red:          #F87171;
+  --gold:         #FBB74B;
+  --purple:       #A78BFA;
 
   --hero-bg:      #010420;
   --hero-text:    #E8EDFF;
@@ -129,8 +148,25 @@ body {
   cursor: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: -0.01em;          /* Poppins looks tighter at -0.01em */
+  letter-spacing: -0.01em;
   transition: background 0.45s ease, color 0.45s ease;
+}
+
+/* ── Theme transition — smooth token swap on every surface ──────────────── */
+*,
+*::before,
+*::after {
+  transition:
+    background-color 0.35s ease,
+    border-color     0.35s ease,
+    color            0.25s ease,
+    box-shadow       0.25s ease;
+}
+/* but don't slow down transform / opacity animations */
+[class*="animate-"],
+[style*="animation"],
+[style*="transform"] {
+  transition: none !important;
 }
 
 ::selection { background: var(--accent-pale2); color: var(--accent); }
@@ -223,17 +259,15 @@ body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: v
   from { opacity: 0; transform: scale(0.94); }
   to   { opacity: 1; transform: scale(1); }
 }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-/* ══ TYPOGRAPHY SCALE (Poppins) ═════════════════════════════════════════════
-   display  → Poppins 700/800  — hero headings, section titles
-   body     → Poppins 300/400  — paragraph text, descriptions
-   mono     → JetBrains Mono   — code, tags, badges, labels
-   ══════════════════════════════════════════════════════════════════════════ */
+/* ══ TYPOGRAPHY SCALE (Poppins) ════════════════════════════════════════════ */
 .font-display { font-family: 'Poppins', sans-serif; }
 .font-body    { font-family: 'Poppins', sans-serif; font-weight: 300; }
 .font-mono    { font-family: 'JetBrains Mono', monospace; }
-
-/* Backward-compat aliases so old .font-syne / .font-outfit still work */
 .font-syne    { font-family: 'Poppins', sans-serif; font-weight: 700; }
 .font-outfit  { font-family: 'Poppins', sans-serif; }
 
@@ -253,16 +287,16 @@ body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: v
 }
 
 /* ══ UTILITY CLASSES ════════════════════════════════════════════════════════ */
-.text-accent { color: var(--accent);  }
-.text-ink    { color: var(--ink);     }
-.text-ink2   { color: var(--ink2);    }
-.text-ink3   { color: var(--ink3);    }
-.text-ink4   { color: var(--ink4);    }
-.text-navy   { color: var(--navy);    }
-.text-cyan   { color: var(--cyan);    }
-.bg-surface  { background: var(--bg-surface); }
-.bg-panel    { background: var(--bg-panel);   }
-.border-token { border-color: var(--border);  }
+.text-accent  { color: var(--accent);  }
+.text-ink     { color: var(--ink);     }
+.text-ink2    { color: var(--ink2);    }
+.text-ink3    { color: var(--ink3);    }
+.text-ink4    { color: var(--ink4);    }
+.text-navy    { color: var(--navy);    }
+.text-cyan    { color: var(--cyan);    }
+.bg-surface   { background: var(--bg-surface); }
+.bg-panel     { background: var(--bg-panel);   }
+.border-token { border-color: var(--border);   }
 
 /* ── Shimmer ─────────────────────────────────────────────────────────────── */
 .shimmer {
@@ -349,7 +383,7 @@ body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: v
 }
 .input-field.error { border-color: #ef4444; }
 
-/* ── Pulse ring (used on live/verified dots) ─────────────────────────────── */
+/* ── Pulse ring ──────────────────────────────────────────────────────────── */
 .pulse-ring { animation: pulseRing 2s ease-out infinite; }
 
 /* ── Card top-accent bar ─────────────────────────────────────────────────── */
@@ -357,29 +391,11 @@ body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: v
   background: linear-gradient(90deg, transparent, var(--accent), var(--cyan2), transparent);
 }
 
-/* ══ POPPINS WEIGHT OVERRIDES ═══════════════════════════════════════════════
-   Poppins needs slightly different weight assignments vs Outfit:
-   - Light (300)  → descriptive text, subtitles
-   - Regular (400) → body copy, labels
-   - Medium (500)  → UI labels, nav links, tags
-   - SemiBold (600)→ card titles, section subheadings
-   - Bold (700)    → headings, CTAs
-   - ExtraBold (800)→ hero display text
-   ══════════════════════════════════════════════════════════════════════════ */
-
-/* Hero h1 / large display → ExtraBold for impact */
+/* ══ POPPINS WEIGHT OVERRIDES ═══════════════════════════════════════════════ */
 h1 { font-weight: 800; letter-spacing: -0.03em; }
-
-/* Section headings → Bold */
 h2 { font-weight: 700; letter-spacing: -0.025em; }
-
-/* Card/component headings → SemiBold */
 h3, h4 { font-weight: 600; letter-spacing: -0.015em; }
-
-/* Body text → Light for elegance */
 p { font-weight: 300; line-height: 1.8; }
-
-/* Nav, buttons, labels → Medium */
 button, a, label {
   font-family: 'Poppins', sans-serif;
   font-weight: 500;
