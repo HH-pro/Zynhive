@@ -5,7 +5,6 @@ import {
 } from "react";
 import {
   fetchLeads, createLead, updateLead, deleteLead,
-  type FirestoreLead,
 } from "../../lib/firebase";
 import { uploadToCloudinary } from "../../lib/cloudinary";
 import {
@@ -13,7 +12,8 @@ import {
   AI_ENABLED,
 } from "../../lib/lead-ai";
 import { sendEmail } from "../../lib/email-sender";
-import type { MailEntry, AuditResult, FollowUpKey } from "../../types/leads";
+// FirestoreLead is the single source of truth — import from types/leads, not firebase
+import type { FirestoreLead, LeadUpdate, MailEntry, AuditResult, FollowUpKey } from "../../types/leads";
 import { scrapeGoogleMaps, type ScrapedLead } from "../../lib/maps-scraper";
 
 const HASDATA_KEY    = import.meta.env.VITE_HASDATA_API_KEY    ?? "";
@@ -140,8 +140,7 @@ function getNextEmailType(lead: FirestoreLead): FollowUpKey | null {
   return null;
 }
 
-// ── Partial update type — omit readonly/auto fields ───────────────────────────
-type LeadUpdate = Partial<Omit<FirestoreLead, "id" | "createdAt" | "updatedAt">>;
+// LeadUpdate is imported from types/leads — see import block above
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SUB-COMPONENTS
