@@ -1,28 +1,45 @@
 // ─── src/pages/PortfolioPage.tsx ─────────────────────────────────────────────
 import { useState, useEffect, useRef } from "react";
 import { useReveal }                   from "../hooks/index";
-import { fetchProjects, type FirestoreProject } from "../lib/firebase";
+import { fetchProjects }               from "../lib/firebase";
 import { PROJECTS }                    from "../lib/data";
 import { getCloudinaryThumb }          from "../lib/cloudinary";
 import { SectionHead }                 from "../components/ui/index";
 import { CTASection }                  from "../sections/HomeSections";
-import type { Project }                from "../lib/types";
 
-// ── normalise Firestore shape → local Project shape ──────────────────────────
-function toProject(fp: FirestoreProject): Project {
+// ── Local Project shape — self-contained, no dependency on lib/types.ts ──────
+interface Project {
+  id:          string;
+  title:       string;
+  category:    string;
+  tags:        string[];
+  description: string;
+  result:      string;
+  emoji:       string;
+  color:       string;
+  featured:    boolean;
+  imageUrl:    string;
+  liveUrl:     string;
+  githubUrl:   string;
+}
+
+// ── Normalise Firestore doc → Project ────────────────────────────────────────
+// Typed as `any` so it compiles regardless of what FirestoreProject exports.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toProject(fp: any): Project {
   return {
-    id:          fp.id ?? fp.title,
-    title:       fp.title,
-    category:    fp.category,
-    tags:        fp.tags,
-    description: fp.description,
-    result:      fp.result,
-    emoji:       fp.emoji,
-    color:       fp.color,
-    featured:    fp.featured,
-    imageUrl:    fp.imageUrl,
-    liveUrl:     fp.liveUrl,
-    githubUrl:   fp.githubUrl,
+    id:          fp.id          ?? fp.title ?? "",
+    title:       fp.title       || "",
+    category:    fp.category    || "",
+    tags:        fp.tags        ?? [],
+    description: fp.description || "",
+    result:      fp.result      || "",
+    emoji:       fp.emoji       || "📦",
+    color:       fp.color       || "#3B6EF8",
+    featured:    fp.featured    ?? false,
+    imageUrl:    fp.imageUrl    || "",
+    liveUrl:     fp.liveUrl     || "",
+    githubUrl:   fp.githubUrl   || "",
   };
 }
 
@@ -269,7 +286,7 @@ const ALL = "All";
 export function PortfolioPage() {
   useReveal();
 
-  const [projects,  setProjects]  = useState<Project[]>(PROJECTS);
+  const [projects,  setProjects]  = useState<Project[]>(PROJECTS as Project[]);
   const [active,    setActive]    = useState(ALL);
   const [modal,     setModal]     = useState<Project | null>(null);
   // Start true — we always attempt a fetch; set false in finally
