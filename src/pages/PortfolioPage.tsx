@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useReveal }                   from "../hooks/index";
 import { fetchProjects, type FirestoreProject } from "../lib/firebase";
-import { PROJECTS }                    from "../lib/data";           // static fallback
+import { PROJECTS }                    from "../lib/data";
 import { getCloudinaryThumb }          from "../lib/cloudinary";
 import { SectionHead }                 from "../components/ui/index";
 import { CTASection }                  from "../sections/HomeSections";
@@ -26,19 +26,29 @@ function toProject(fp: FirestoreProject): Project {
   };
 }
 
-// ─── Project Card (upgraded) ─────────────────────────────────────────────────
+// Reveal delay classes — must be static strings for Tailwind to include them
+const REVEAL_DELAYS = ["reveal-d1", "reveal-d2", "reveal-d3"] as const;
+
+// ─── Project Card ─────────────────────────────────────────────────────────────
 function PortfolioCard({
   project,
   index,
   onClick,
 }: { project: Project; index: number; onClick: (p: Project) => void }) {
+  const delayClass = REVEAL_DELAYS[index % 3];
+
   return (
     <div
       onClick={() => onClick(project)}
       className={`group relative rounded-2xl border border-[var(--border)] overflow-hidden cursor-pointer
-        transition-all duration-500 hover:border-[rgba(59,110,248,0.35)] hover:-translate-y-1
-        reveal reveal-d${(index % 3) + 1}`}
+        transition-all duration-500 hover:-translate-y-1 reveal ${delayClass}`}
       style={{ background: "var(--bg-panel)" }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = "rgba(59,110,248,0.35)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+      }}
     >
       {/* Image / Emoji panel */}
       <div
@@ -60,8 +70,7 @@ function PortfolioCard({
 
         {/* Overlay on hover */}
         <div
-          className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100
-            transition-all duration-300"
+          className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
           style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
         >
           <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-white/10 text-white text-[12px] font-mono">
@@ -74,16 +83,14 @@ function PortfolioCard({
 
         {/* Featured badge */}
         {project.featured && (
-          <div className="absolute top-3 left-3 px-2 py-1 rounded-lg text-[9px] font-mono font-bold
-            tracking-widest uppercase text-white"
+          <div className="absolute top-3 left-3 px-2 py-1 rounded-lg text-[9px] font-mono font-bold tracking-widest uppercase text-white"
             style={{ background: "linear-gradient(90deg, var(--accent), var(--cyan))" }}>
             Featured
           </div>
         )}
 
         {/* Category badge */}
-        <div className="absolute top-3 right-3 px-2 py-1 rounded-lg text-[9px] font-mono text-white/80
-          border border-white/15 backdrop-blur-sm"
+        <div className="absolute top-3 right-3 px-2 py-1 rounded-lg text-[9px] font-mono text-white/80 border border-white/15 backdrop-blur-sm"
           style={{ background: "rgba(0,0,0,0.4)" }}>
           {project.category}
         </div>
@@ -112,8 +119,8 @@ function PortfolioCard({
         {/* Tags */}
         <div className="flex flex-wrap gap-1.5">
           {project.tags.map((t) => (
-            <span key={t} className="font-mono text-[10px] px-2 py-1 rounded-lg border border-[var(--border2)]
-              text-[var(--ink4)]" style={{ background: "var(--bg-surface)" }}>
+            <span key={t} className="font-mono text-[10px] px-2 py-1 rounded-lg border border-[var(--border2)] text-[var(--ink4)]"
+              style={{ background: "var(--bg-surface)" }}>
               {t}
             </span>
           ))}
@@ -124,10 +131,7 @@ function PortfolioCard({
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
-function ProjectDetailModal({
-  project,
-  onClose,
-}: { project: Project; onClose: () => void }) {
+function ProjectDetailModal({ project, onClose }: { project: Project; onClose: () => void }) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -148,12 +152,11 @@ function ProjectDetailModal({
       onClick={(e) => e.target === overlayRef.current && onClose()}
     >
       <div
-        className="relative w-full max-w-[680px] max-h-[90vh] overflow-y-auto rounded-3xl
-          border border-[var(--border)]"
+        className="relative w-full max-w-[680px] max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--border)]"
         style={{
-          background: "var(--bg-panel)",
-          boxShadow: "0 32px 100px rgba(0,0,0,0.5)",
-          animation: "fadeScaleIn .3s cubic-bezier(0.16,1,0.3,1) both",
+          background:  "var(--bg-panel)",
+          boxShadow:   "0 32px 100px rgba(0,0,0,0.5)",
+          animation:   "fadeScaleIn .3s cubic-bezier(0.16,1,0.3,1) both",
         }}
       >
         {/* Close */}
@@ -174,12 +177,12 @@ function ProjectDetailModal({
         >
           {project.imageUrl ? (
             <img src={getCloudinaryThumb(project.imageUrl, 1360, 448)} alt={project.title}
-              className="w-full h-full object-cover" />
+              className="w-full h-full object-cover"/>
           ) : (
             <span className="text-8xl">{project.emoji}</span>
           )}
           <div className="absolute inset-0"
-            style={{ background: "linear-gradient(to top, var(--bg-panel), transparent 60%)" }} />
+            style={{ background: "linear-gradient(to top, var(--bg-panel), transparent 60%)" }}/>
         </div>
 
         {/* Body */}
@@ -201,7 +204,7 @@ function ProjectDetailModal({
 
           <p className="text-[15px] text-[var(--ink3)] leading-[1.85] font-body mb-6">{project.description}</p>
 
-          {/* Result highlight */}
+          {/* Result */}
           <div className="rounded-2xl p-5 mb-6 flex items-center gap-4"
             style={{ background: `${project.color}10`, border: `1px solid ${project.color}20` }}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -221,8 +224,8 @@ function ProjectDetailModal({
           {/* Tags */}
           <div className="flex flex-wrap gap-2 mb-6">
             {project.tags.map((t) => (
-              <span key={t} className="font-mono text-[11px] px-3 py-1.5 rounded-xl border border-[var(--border2)]
-                text-[var(--ink3)]" style={{ background: "var(--bg-surface)" }}>
+              <span key={t} className="font-mono text-[11px] px-3 py-1.5 rounded-xl border border-[var(--border2)] text-[var(--ink3)]"
+                style={{ background: "var(--bg-surface)" }}>
                 {t}
               </span>
             ))}
@@ -266,13 +269,13 @@ const ALL = "All";
 export function PortfolioPage() {
   useReveal();
 
-  const [projects,  setProjects]  = useState<Project[]>(PROJECTS); // static first
+  const [projects,  setProjects]  = useState<Project[]>(PROJECTS);
   const [active,    setActive]    = useState(ALL);
   const [modal,     setModal]     = useState<Project | null>(null);
+  // Start true — we always attempt a fetch; set false in finally
   const [isLoading, setIsLoading] = useState(true);
   const [view,      setView]      = useState<"grid" | "list">("grid");
 
-  // Fetch live from Firestore, fall back to static data
   useEffect(() => {
     fetchProjects()
       .then((fps) => {
@@ -292,57 +295,41 @@ export function PortfolioPage() {
         className="relative min-h-[55vh] flex items-end px-8 md:px-14 pb-20 pt-44 overflow-hidden"
         style={{ background: "var(--hero-bg)" }}
       >
-        {/* Grid */}
         <div className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: "linear-gradient(rgba(59,110,248,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,110,248,0.04) 1px,transparent 1px)",
             backgroundSize: "64px 64px",
             maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%)",
-          }} />
-
-        {/* Bottom fade */}
+          }}/>
         <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-          style={{ background: "linear-gradient(to bottom, transparent, var(--bg-base))" }} />
-
-        {/* Glow */}
+          style={{ background: "linear-gradient(to bottom, transparent, var(--bg-base))" }}/>
         <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] pointer-events-none"
-          style={{ background: "radial-gradient(ellipse, rgba(59,110,248,0.09) 0%, transparent 65%)" }} />
+          style={{ background: "radial-gradient(ellipse, rgba(59,110,248,0.09) 0%, transparent 65%)" }}/>
 
         <div className="relative z-10 max-w-4xl" style={{ animation: "heroUp .8s cubic-bezier(0.16,1,0.3,1) both" }}>
-          {/* Tag */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-6 rounded-full
-            border border-[var(--accent-pale2)] bg-[var(--accent-pale)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]"
-              style={{ animation: "bPulse 2s infinite" }} />
-            <span className="font-mono text-[10px] text-[var(--accent)] tracking-[0.14em] uppercase">
-              Our Work
-            </span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-6 rounded-full border border-[var(--accent-pale2)] bg-[var(--accent-pale)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" style={{ animation: "bPulse 2s infinite" }}/>
+            <span className="font-mono text-[10px] text-[var(--accent)] tracking-[0.14em] uppercase">Our Work</span>
           </div>
 
           <h1
             className="font-display font-extrabold leading-none tracking-tight mb-5"
-            style={{
-              fontSize: "clamp(40px,7vw,88px)",
-              color: "var(--hero-text)",
-            }}
+            style={{ fontSize: "clamp(40px,7vw,88px)", color: "var(--hero-text)" }}
           >
-            Work that<br />
+            Work that<br/>
             <em className="not-italic" style={{ color: "var(--accent)" }}>speaks for itself.</em>
           </h1>
 
-          <p className="text-[17px] font-light leading-relaxed max-w-xl"
-            style={{ color: "var(--hero-muted)" }}>
-            {projects.length}+ projects across AI, web, mobile, design, and growth.
-            Every one built to win.
+          <p className="text-[17px] font-light leading-relaxed max-w-xl" style={{ color: "var(--hero-muted)" }}>
+            {projects.length}+ projects across AI, web, mobile, design, and growth. Every one built to win.
           </p>
 
-          {/* Hero stat pills */}
           <div className="flex flex-wrap gap-3 mt-8">
             {[
-              { label: "AI Projects",    val: projects.filter((p) => p.category === "AI Development").length  },
-              { label: "Web Apps",       val: projects.filter((p) => p.category === "Web Application").length },
-              { label: "Mobile Apps",    val: projects.filter((p) => p.category === "Mobile App").length      },
-              { label: "Featured Work",  val: projects.filter((p) => p.featured).length                       },
+              { label: "AI Projects",   val: projects.filter((p) => p.category === "AI Development").length  },
+              { label: "Web Apps",      val: projects.filter((p) => p.category === "Web Application").length },
+              { label: "Mobile Apps",   val: projects.filter((p) => p.category === "Mobile App").length      },
+              { label: "Featured Work", val: projects.filter((p) => p.featured).length                       },
             ].map(({ label, val }) => (
               <div key={label} className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[var(--border)]"
                 style={{ background: "var(--bg-panel)" }}>
@@ -366,13 +353,24 @@ export function PortfolioPage() {
                 <button
                   key={cat}
                   onClick={() => setActive(cat)}
-                  className={`font-mono text-[11px] tracking-wider uppercase px-4 py-2 rounded-full
-                    border transition-all duration-200 ${
+                  className="font-mono text-[11px] tracking-wider uppercase px-4 py-2 rounded-full border transition-all duration-200"
+                  style={
                     active === cat
-                      ? "border-[var(--accent)] text-white"
-                      : "bg-[var(--bg-surface)] border-[var(--border2)] text-[var(--ink3)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                  }`}
-                  style={active === cat ? { background: "linear-gradient(135deg, var(--accent), var(--cyan))" } : {}}
+                      ? { background: "linear-gradient(135deg, var(--accent), var(--cyan))", borderColor: "transparent", color: "white" }
+                      : { background: "var(--bg-surface)", borderColor: "var(--border2)", color: "var(--ink3)" }
+                  }
+                  onMouseEnter={(e) => {
+                    if (active !== cat) {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
+                      (e.currentTarget as HTMLElement).style.color = "var(--accent)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (active !== cat) {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--border2)";
+                      (e.currentTarget as HTMLElement).style.color = "var(--ink3)";
+                    }
+                  }}
                 >
                   {cat}
                   {cat !== ALL && (
@@ -389,10 +387,12 @@ export function PortfolioPage() {
               style={{ background: "var(--bg-surface)" }}>
               {(["grid", "list"] as const).map((v) => (
                 <button key={v} onClick={() => setView(v)}
-                  className={`px-3 py-1.5 rounded-lg transition-all duration-200 ${
-                    view === v ? "text-white" : "text-[var(--ink4)] hover:text-[var(--ink3)]"
-                  }`}
-                  style={view === v ? { background: "linear-gradient(135deg, var(--accent), var(--cyan))" } : {}}>
+                  className="px-3 py-1.5 rounded-lg transition-all duration-200"
+                  style={
+                    view === v
+                      ? { background: "linear-gradient(135deg, var(--accent), var(--cyan))", color: "white" }
+                      : { background: "transparent", color: "var(--ink4)" }
+                  }>
                   {v === "grid" ? (
                     <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                       <rect x="1" y="1" width="4.5" height="4.5" rx="1" stroke="currentColor" strokeWidth="1"/>
@@ -418,11 +418,11 @@ export function PortfolioPage() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="rounded-2xl border border-[var(--border)] overflow-hidden"
                   style={{ background: "var(--bg-panel)" }}>
-                  <div className="h-48 bg-[var(--bg-surface)] animate-pulse" />
+                  <div className="h-48 animate-pulse" style={{ background: "var(--bg-surface)" }}/>
                   <div className="p-5 flex flex-col gap-3">
-                    <div className="h-5 w-3/4 rounded-lg bg-[var(--bg-surface)] animate-pulse" />
-                    <div className="h-4 rounded-lg bg-[var(--bg-surface)] animate-pulse" />
-                    <div className="h-4 w-2/3 rounded-lg bg-[var(--bg-surface)] animate-pulse" />
+                    <div className="h-5 rounded-lg animate-pulse" style={{ width: "75%", background: "var(--bg-surface)" }}/>
+                    <div className="h-4 rounded-lg animate-pulse" style={{ background: "var(--bg-surface)" }}/>
+                    <div className="h-4 rounded-lg animate-pulse" style={{ width: "66%", background: "var(--bg-surface)" }}/>
                   </div>
                 </div>
               ))}
@@ -441,52 +441,60 @@ export function PortfolioPage() {
           {/* List view */}
           {!isLoading && view === "list" && (
             <div className="flex flex-col gap-3 mb-12">
-              {filtered.map((p, i) => (
-                <div
-                  key={p.id}
-                  onClick={() => setModal(p)}
-                  className={`group flex items-center gap-5 p-4 rounded-2xl border border-[var(--border)]
-                    cursor-pointer hover:border-[var(--accent)]/30 transition-all duration-300
-                    reveal reveal-d${(i % 3) + 1}`}
-                  style={{ background: "var(--bg-panel)" }}
-                >
+              {filtered.map((p, i) => {
+                const delayClass = REVEAL_DELAYS[i % 3];
+                return (
                   <div
-                    className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
-                    style={{ background: `${p.color}18` }}
+                    key={p.id}
+                    onClick={() => setModal(p)}
+                    className={`group flex items-center gap-5 p-4 rounded-2xl border border-[var(--border)]
+                      cursor-pointer transition-all duration-300 reveal ${delayClass}`}
+                    style={{ background: "var(--bg-panel)" }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "rgba(59,110,248,0.3)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+                    }}
                   >
-                    {p.imageUrl ? (
-                      <img src={getCloudinaryThumb(p.imageUrl, 112, 112)} alt={p.title}
-                        className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-2xl">{p.emoji}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className="font-display text-[15px] font-bold text-[var(--ink)] truncate">{p.title}</h3>
-                      {p.featured && (
-                        <span className="px-1.5 py-0.5 rounded text-[8px] font-mono tracking-widest uppercase text-white flex-shrink-0"
-                          style={{ background: "linear-gradient(90deg, var(--accent), var(--cyan))" }}>
-                          Featured
-                        </span>
+                    <div
+                      className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
+                      style={{ background: `${p.color}18` }}
+                    >
+                      {p.imageUrl ? (
+                        <img src={getCloudinaryThumb(p.imageUrl, 112, 112)} alt={p.title}
+                          className="w-full h-full object-cover"/>
+                      ) : (
+                        <span className="text-2xl">{p.emoji}</span>
                       )}
                     </div>
-                    <p className="text-[12px] text-[var(--ink4)] line-clamp-1 font-body">{p.description}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h3 className="font-display text-[15px] font-bold text-[var(--ink)] truncate">{p.title}</h3>
+                        {p.featured && (
+                          <span className="px-1.5 py-0.5 rounded text-[8px] font-mono tracking-widest uppercase text-white flex-shrink-0"
+                            style={{ background: "linear-gradient(90deg, var(--accent), var(--cyan))" }}>
+                            Featured
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[12px] text-[var(--ink4)] line-clamp-1 font-body">{p.description}</p>
+                    </div>
+                    <div className="hidden md:flex items-center gap-1.5 flex-shrink-0 text-[11px] font-mono"
+                      style={{ color: p.color }}>
+                      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                        <path d="M1 8.5l3-4 3 2 3-5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                      </svg>
+                      {p.result}
+                    </div>
+                    <div className="flex-shrink-0 text-[var(--ink4)] group-hover:text-[var(--accent)] transition-colors">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
                   </div>
-                  <div className="hidden md:flex items-center gap-1.5 flex-shrink-0 text-[11px] font-mono"
-                    style={{ color: p.color }}>
-                    <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                      <path d="M1 8.5l3-4 3 2 3-5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                    </svg>
-                    {p.result}
-                  </div>
-                  <div className="flex-shrink-0 text-[var(--ink4)] group-hover:text-[var(--accent)] transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
