@@ -21,7 +21,7 @@ function toMember(fm: FirestoreMember): TeamMember {
       linkedin:  fm.socials?.linkedin  ?? "",
       twitter:   fm.socials?.twitter   ?? "",
       github:    fm.socials?.github    ?? "",
-      instagram: fm.socials?.instagram ?? "",
+    
     },
   };
 }
