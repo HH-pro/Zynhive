@@ -29,7 +29,6 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
   const [error,     setError]     = useState("");
   const fileRef                   = useRef<HTMLInputElement>(null);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
   function field(key: keyof typeof EMPTY, val: unknown) {
     setForm((f) => ({ ...f, [key]: val }));
   }
@@ -77,7 +76,6 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
     }
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end"
       style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
@@ -114,7 +112,7 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 p-6 flex-1">
 
-          {/* ── IMAGE UPLOAD ─────────────────────────────────────────────── */}
+          {/* IMAGE UPLOAD */}
           <div className="flex flex-col gap-2">
             <Label>Cover Image</Label>
             <div
@@ -154,7 +152,7 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
           </div>
 
-          {/* ── TITLE ─────────────────────────────────────────────────────── */}
+          {/* TITLE + EMOJI */}
           <div className="grid grid-cols-[1fr_auto] gap-3">
             <div className="flex flex-col gap-1.5">
               <Label>Project Title *</Label>
@@ -165,8 +163,6 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
                 required
               />
             </div>
-
-            {/* Emoji picker */}
             <div className="flex flex-col gap-1.5">
               <Label>Icon</Label>
               <div className="relative group">
@@ -191,7 +187,7 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
             </div>
           </div>
 
-          {/* ── CATEGORY + COLOR ──────────────────────────────────────────── */}
+          {/* CATEGORY + COLOR */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label>Category *</Label>
@@ -207,19 +203,26 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Accent Color</Label>
+              {/* ── FIX: removed invalid ringOffsetColor inline style prop ── */}
               <div className="flex gap-1.5 flex-wrap">
                 {COLOR_OPTIONS.map((c) => (
-                  <button key={c} type="button" onClick={() => field("color", c)}
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => field("color", c)}
                     className={`w-7 h-7 rounded-full transition-all duration-200 ${
-                      form.color === c ? "ring-2 ring-offset-2 ring-[var(--accent)] scale-110" : "hover:scale-105"
+                      form.color === c
+                        ? "ring-2 ring-offset-2 ring-[var(--accent)] scale-110"
+                        : "hover:scale-105"
                     }`}
-                    style={{ background: c, ringOffsetColor: "var(--bg-panel)" }} />
+                    style={{ background: c }}
+                  />
                 ))}
               </div>
             </div>
           </div>
 
-          {/* ── DESCRIPTION ───────────────────────────────────────────────── */}
+          {/* DESCRIPTION */}
           <div className="flex flex-col gap-1.5">
             <Label>Description *</Label>
             <textarea
@@ -235,7 +238,7 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
             />
           </div>
 
-          {/* ── RESULT ────────────────────────────────────────────────────── */}
+          {/* RESULT */}
           <div className="flex flex-col gap-1.5">
             <Label>Key Result *</Label>
             <Input
@@ -246,7 +249,7 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
             />
           </div>
 
-          {/* ── TAGS ──────────────────────────────────────────────────────── */}
+          {/* TAGS */}
           <div className="flex flex-col gap-1.5">
             <Label>Tags</Label>
             <div className="flex gap-2">
@@ -279,7 +282,7 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
             )}
           </div>
 
-          {/* ── LINKS ─────────────────────────────────────────────────────── */}
+          {/* LINKS */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label>Live URL</Label>
@@ -291,14 +294,15 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
             </div>
           </div>
 
-          {/* ── FEATURED ──────────────────────────────────────────────────── */}
+          {/* FEATURED TOGGLE */}
           <label className="flex items-center gap-3 cursor-pointer">
             <div
               onClick={() => field("featured", !form.featured)}
-              className={`relative w-10 h-6 rounded-full transition-colors duration-300 flex-shrink-0 ${
-                form.featured ? "" : "bg-[var(--border2)]"
-              }`}
-              style={form.featured ? { background: "linear-gradient(135deg, var(--accent), var(--cyan))" } : {}}
+              className="relative w-10 h-6 rounded-full transition-colors duration-300 flex-shrink-0"
+              style={form.featured
+                ? { background: "linear-gradient(135deg, var(--accent), var(--cyan))" }
+                : { background: "var(--border2)" }
+              }
             >
               <span
                 className="absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-300"
@@ -311,7 +315,7 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
           {/* Error */}
           {error && (
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border text-[13px]"
-              style={{ background: "rgba(255,80,80,0.08)", border: "1px solid rgba(255,80,80,0.2)", color: "#FF6B6B" }}>
+              style={{ background: "var(--red-pale)", border: "1px solid rgba(239,68,68,0.25)", color: "var(--red)" }}>
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                 <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" strokeWidth="1"/>
                 <path d="M6.5 4v3M6.5 9h.01" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
@@ -324,7 +328,8 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose}
               className="flex-1 py-3 rounded-xl text-[14px] font-medium border border-[var(--border2)]
-                text-[var(--ink3)] hover:text-[var(--ink)] hover:border-[var(--ink3)] transition-all">
+                text-[var(--ink3)] hover:text-[var(--ink)] hover:border-[var(--ink3)] transition-all"
+              style={{ background: "transparent", cursor: "pointer" }}>
               Cancel
             </button>
             <button
@@ -332,7 +337,7 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
               disabled={saving || uploading}
               className="flex-1 py-3 rounded-xl text-[14px] font-semibold text-white
                 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300"
-              style={{ background: "linear-gradient(135deg, var(--accent), var(--cyan))" }}
+              style={{ background: "linear-gradient(135deg, var(--accent), var(--cyan))", cursor: "pointer" }}
             >
               {saving ? (
                 <span className="flex items-center justify-center gap-2">
@@ -350,7 +355,6 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
   );
 }
 
-// ── Tiny reusable atoms ───────────────────────────────────────────────────────
 function Label({ children }: { children: React.ReactNode }) {
   return (
     <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-[var(--ink3)]">
