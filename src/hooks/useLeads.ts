@@ -172,8 +172,14 @@ export function useLeads(
     setAiLoading(`Auditing ${lead.website}...`);
     try {
       const result: AuditResult = await auditWebsite(lead.website);
-      const update: LeadUpdate = { auditData: result };
-      await updateLeadAudit(leadId, update);
+      // updateLeadAudit expects the flat shape it was designed for
+      await updateLeadAudit(leadId, {
+        hasChatbot:         result.hasChatbot,
+        hasQuickResponse:   result.hasQuickResponse,
+        hasLeadForm:        result.hasLeadForm,
+        hasMobileOptimized: result.hasMobileOptimized,
+        aiAuditSummary:     result.summary,
+      });
       await load();
       showToast(`Audit complete for ${lead.companyName} — Score: ${result.score}/100`);
     } catch {
