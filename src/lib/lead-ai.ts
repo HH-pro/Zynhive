@@ -11,13 +11,23 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 // openrouter/free = auto-picks best available free model — kabhi 404 nahi aata
 // ✅ FINAL FIX — yeh kabhi 404 nahi dega
 const MODELS = [
-  "openrouter/free",                              // auto-picks best available — PRIMARY
+  "openrouter/free",                               // auto-picks best available — PRIMARY
   "mistralai/mistral-small-3.1-24b-instruct:free", // confirmed working fallback
   "deepseek/deepseek-chat-v3-0324:free",           // confirmed working fallback
   "nvidia/llama-3.1-nemotron-nano-8b-v1:free",     // lightweight fallback
 ];
 
 export const AI_ENABLED = Boolean(OPENROUTER_KEY);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+
+/** Strip newlines / carriage returns so they can't break a JSON string value */
+function sanitize(val: string | null | undefined, maxLen = 300): string {
+  if (!val) return "N/A";
+  return val.replace(/[\r\n\t]+/g, " ").replace(/"/g, "'").trim().slice(0, maxLen);
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CORE CALLER — auto retry + model rotation on 429
@@ -49,7 +59,7 @@ async function callAI(
       body: JSON.stringify({
         model,
         messages,
-        max_tokens:  1024,
+        max_tokens:  1200,   // bumped from 1024 — prevents mid-string truncation
         temperature: 0.7,
       }),
     });
@@ -97,17 +107,51 @@ async function callAI(
   }
 }
 
-// ── JSON parser ───────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// JSON PARSER — hardened against truncation & unterminated strings
+// ══════════════════════════════════════════════════════════════════════════════
+
 function parseAIJSON<T>(raw: string): T {
+  // Strip markdown code fences
   let s = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-  const obj   = s.indexOf("{");
-  const arr   = s.indexOf("[");
-  const start = arr >= 0 && (arr < obj || obj < 0) ? arr : obj;
+
+  // Find the outermost JSON object or array
+  const objIdx = s.indexOf("{");
+  const arrIdx = s.indexOf("[");
+  const start  = arrIdx >= 0 && (arrIdx < objIdx || objIdx < 0) ? arrIdx : objIdx;
   if (start > 0) s = s.slice(start);
+
   const isArr = s.startsWith("[");
   const end   = s.lastIndexOf(isArr ? "]" : "}");
   if (end >= 0) s = s.slice(0, end + 1);
-  return JSON.parse(s);
+
+  // First attempt — clean parse
+  try {
+    return JSON.parse(s);
+  } catch {
+    // ── Repair truncated / unterminated JSON ─────────────────────────────────
+    // 1. Remove trailing comma before closing brace/bracket
+    s = s.replace(/,\s*([\]}])/g, "$1");
+
+    // 2. If the last character is not a closing brace/bracket, the response was
+    //    cut off mid-string. Close the open string and the object.
+    const last = s[s.length - 1];
+    if (last !== "}" && last !== "]") {
+      // Count unclosed quotes to decide if we're inside a string
+      const quoteCount = (s.match(/(?<!\\)"/g) ?? []).length;
+      if (quoteCount % 2 !== 0) {
+        // Odd number of quotes → we're inside an unterminated string
+        s += '"';
+      }
+      // Close any open nested objects first, then the root
+      const openBraces   = (s.match(/{/g) ?? []).length - (s.match(/}/g) ?? []).length;
+      const openBrackets = (s.match(/\[/g) ?? []).length - (s.match(/\]/g) ?? []).length;
+      s += "]".repeat(Math.max(0, openBrackets));
+      s += "}".repeat(Math.max(0, openBraces));
+    }
+
+    return JSON.parse(s);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -172,10 +216,31 @@ export async function generateEmail(
   const followUpNum = isInitial ? 1 : parseInt((emailType as string).split("-")[1]) + 1;
   const isFinal     = emailType === "followup-5";
 
+  // ── Safe previous-email context (sanitized, capped per entry) ────────────
   const prevCtx = previousEmails.length > 0
-    ? `\n\nPrevious emails (do not repeat, build on these):\n${previousEmails
-        .map((e, i) => `--- #${i + 1} ---\n${e}`).join("\n\n")}`
+    ? "\n\nPrevious emails (do not repeat, build on these):\n" +
+      previousEmails
+        .map((e, i) => `--- #${i + 1} ---\n${sanitize(e, 400)}`)
+        .join("\n\n")
     : "";
+
+  // ── Build prompt lines safely — no raw multi-line values in the string ───
+  const promptLines = [
+    `Write ${isInitial ? "a cold outreach email" : `follow-up #${followUpNum}`}:`,
+    "",
+    `Company: ${sanitize(lead.companyName)}`,
+    `Website: ${sanitize(lead.website)}`,
+    `Email: ${sanitize(lead.email)}`,
+    `Country: ${sanitize(lead.country)}`,
+    `Issues: ${issues.length ? issues.join(", ") : "general digital improvement needed"}`,
+    `Context: ${sanitize(audit?.summary || lead.proposal)}`,
+    prevCtx,
+    "",
+    !isInitial ? "Reference previous emails. Be shorter, add mild urgency." : "",
+    isFinal    ? "Final follow-up. Be graceful, leave door open, no pressure." : "",
+    "",
+    'Return ONLY valid JSON: {"subject":"...","body":"..."}',
+  ].filter((line) => line !== "");
 
   const raw = await callAI([
     {
@@ -185,7 +250,7 @@ export async function generateEmail(
 Rules:
 - Body max 120 words
 - No filler phrases
-- Reference specific website issues
+- Reference specific website issues if available
 - One clear low-commitment CTA
 - Professional but human — not salesy
 - Plain text only, no HTML
@@ -193,16 +258,7 @@ Rules:
     },
     {
       role: "user",
-      content: "Write " + (isInitial ? "a cold outreach email" : `follow-up #${followUpNum}`) + ":\n\n" +
-        "Company: " + lead.companyName + "\n" +
-        "Website: " + (lead.website || "N/A") + "\n" +
-        "Email: " + lead.email + "\n" +
-        "Country: " + (lead.country || "N/A") + "\n" +
-        "Issues: " + (issues.length ? issues.join(", ") : "general digital improvement needed") + "\n" +
-        "Context: " + (audit?.summary || lead.proposal || "N/A") + prevCtx + "\n\n" +
-        (!isInitial ? "Reference previous emails. Be shorter, add mild urgency.\n" : "") +
-        (isFinal ? "Final follow-up. Be graceful, leave door open, no pressure.\n" : "") + "\n" +
-        'Return ONLY JSON: {"subject":"...","body":"..."}'
+      content: promptLines.join("\n"),
     },
   ]);
 
@@ -231,8 +287,8 @@ export async function generateBatchEmails(
     } catch (err) {
       console.error(`[AI] Email failed for ${lead.companyName}:`, err);
       results.set(lead.id!, {
-        subject: `Quick question for ${lead.companyName}`,
-        body:    `Hi ${lead.companyName} Team,\n\nI wanted to reach out about improving your online presence. Would you be open to a quick chat?\n\nBest regards`,
+        subject: `Quick question for ${sanitize(lead.companyName, 60)}`,
+        body:    `Hi ${sanitize(lead.companyName, 60)} Team,\n\nI wanted to reach out about improving your online presence. Would you be open to a quick chat?\n\nBest regards`,
       });
     }
     // 3s gap between each — stays well within rate limits
@@ -268,8 +324,8 @@ export async function searchLeadsAI(
     {
       role: "user",
       content: `Generate 6 realistic business leads:
-Industry: ${keyword}
-Location: ${location}
+Industry: ${sanitize(keyword, 100)}
+Location: ${sanitize(location, 100)}
 
 Return JSON array only:
 [{
@@ -277,8 +333,8 @@ Return JSON array only:
   "email": "contact@example.com",
   "phone": "+1234567890",
   "website": "https://example.com",
-  "country": "${location.split(",").pop()?.trim() || location}",
-  "city": "${location.split(",")[0]?.trim() || location}",
+  "country": "${sanitize(location.split(",").pop()?.trim() || location, 60)}",
+  "city": "${sanitize(location.split(",")[0]?.trim() || location, 60)}",
   "leadSource": "AI Search"
 }]`,
     },
