@@ -36,6 +36,14 @@ export interface AuditResult {
   score:              number;
 }
 
+// ── Follow-up step shape ──────────────────────────────────────────────────────
+// Defined here so lead-constants.ts can import it without a circular dep
+export interface FollowUpStep {
+  key:       FollowUpKey;
+  label:     string;
+  daysAfter: number;
+}
+
 // ── Main lead document — stored in Firestore ──────────────────────────────────
 // createdAt / updatedAt come back as Firestore Timestamp from the server,
 // but we always .toDate().toISOString() them before storing in React state,
