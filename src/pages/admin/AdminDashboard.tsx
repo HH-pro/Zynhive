@@ -776,16 +776,20 @@ export function AdminDashboard({ user }: Props) {
         {/* ══════════ SIDEBAR ══════════ */}
         <aside
           className="flex flex-col flex-shrink-0 transition-all duration-300 relative"
-          style={{ width: sidebarOpen ? 220 : 56, background: "var(--bg-panel)", borderRight: "1px solid var(--border)" }}>
+          style={{ width: sidebarOpen ? 220 : 52, background: "var(--bg-panel)", borderRight: "1px solid var(--border)" }}>
 
-          {/* Accent glow on right edge */}
+          {/* Right-edge accent glow */}
           <div className="absolute top-0 right-0 bottom-0 w-px pointer-events-none"
-            style={{ background: "linear-gradient(180deg,transparent,rgba(59,130,246,0.25) 40%,rgba(6,182,212,0.15) 60%,transparent)" }}/>
+            style={{ background: "linear-gradient(180deg,transparent,rgba(59,130,246,0.22) 40%,rgba(6,182,212,0.12) 60%,transparent)" }}/>
 
-          {/* Logo */}
-          <div className="flex items-center h-14 px-3.5 gap-2.5 overflow-hidden flex-shrink-0"
-            style={{ borderBottom: "1px solid var(--border)" }}>
-            <div className="relative w-7 h-7 flex-shrink-0">
+          {/* ── LOGO ROW ── */}
+          <div className="flex items-center h-14 flex-shrink-0 overflow-hidden"
+            style={{ borderBottom: "1px solid var(--border)", padding: sidebarOpen ? "0 14px" : "0 10px" }}>
+
+            {/* Logo mark — always visible */}
+            <div className="relative w-7 h-7 flex-shrink-0 cursor-pointer"
+              onClick={() => setSidebarOpen((o) => !o)}
+              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}>
               <div className="absolute inset-0 rounded-lg"
                 style={{ background: "linear-gradient(135deg,#3B82F6,#06B6D4)", boxShadow: "0 0 14px rgba(59,130,246,0.4)" }}/>
               <div className="absolute inset-[2px] rounded-md" style={{ background: "var(--bg-panel)" }}/>
@@ -793,52 +797,97 @@ export function AdminDashboard({ user }: Props) {
                 <span className="font-mono font-black text-[9px]" style={{ color: "#60A5FA" }}>ZH</span>
               </div>
             </div>
+
+            {/* Brand name — only when expanded */}
             {sidebarOpen && (
-              <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="min-w-0 flex-1 overflow-hidden ml-2.5">
                 <div className="font-black text-[14px] tracking-tight leading-none whitespace-nowrap" style={{ color: "var(--ink)" }}>
                   ZynHive<span style={{ color: C.accent }}>.</span>
                 </div>
                 <div className="font-mono text-[8px] tracking-[0.15em] uppercase mt-0.5" style={{ color: "var(--ink4)" }}>Admin</div>
               </div>
             )}
-            <button onClick={() => setSidebarOpen((o) => !o)}
-              className="flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center ml-auto transition-all"
-              style={{ background: "transparent", border: "none", color: "var(--ink4)", cursor: "pointer" }}
-              onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.06)"; el.style.color = "var(--ink)"; }}
-              onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink4)"; }}>
+
+            {/* Toggle button — always visible, floats to the right when expanded */}
+            <button
+              onClick={() => setSidebarOpen((o) => !o)}
+              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+              className="flex-shrink-0 flex items-center justify-center rounded-lg transition-all duration-150"
+              style={{
+                width: 28, height: 28, marginLeft: sidebarOpen ? "auto" : 6,
+                background: "transparent", border: "1px solid var(--border2)",
+                color: "var(--ink4)", cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = "rgba(59,130,246,0.1)";
+                el.style.borderColor = "rgba(59,130,246,0.3)";
+                el.style.color = "var(--accent)";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = "transparent";
+                el.style.borderColor = "var(--border2)";
+                el.style.color = "var(--ink4)";
+              }}>
               {sidebarOpen ? <Ic.ChevronLeft /> : <Ic.ChevronRight />}
             </button>
           </div>
 
-          {/* Section label */}
+          {/* Section label — only when expanded */}
           {sidebarOpen && (
             <div className="px-4 pt-4 pb-1">
               <span className="font-mono text-[8px] tracking-[0.22em] uppercase" style={{ color: "var(--ink4)" }}>Navigation</span>
             </div>
           )}
 
-          {/* Nav */}
-          <nav className="flex flex-col gap-0.5 px-2 pt-1 flex-1">
+          {/* ── NAV ITEMS ── */}
+          <nav className="flex flex-col flex-1 overflow-hidden"
+            style={{ gap: 2, padding: sidebarOpen ? "4px 8px" : "8px 6px" }}>
             {NAV_ITEMS.map((item) => {
               const active = tab === item.id;
               return (
-                <button key={item.id}
+                <button
+                  key={item.id}
                   onClick={() => switchTab(item.id)}
-                  title={!sidebarOpen ? item.label : undefined}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-200 w-full relative overflow-hidden"
+                  title={item.label}
+                  className="flex items-center transition-all duration-200 w-full relative overflow-hidden rounded-xl"
                   style={{
+                    gap:        sidebarOpen ? 10 : 0,
+                    padding:    sidebarOpen ? "9px 10px 9px 12px" : "10px 0",
+                    justifyContent: sidebarOpen ? "flex-start" : "center",
                     background: active ? "rgba(59,130,246,0.12)" : "transparent",
                     color:      active ? "#60A5FA"                : "var(--ink4)",
                     border:     active ? "1px solid rgba(59,130,246,0.2)" : "1px solid transparent",
-                    cursor: "pointer", textAlign: "left",
+                    cursor:     "pointer", textAlign: "left",
                   }}
-                  onMouseEnter={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.04)"; el.style.color = "var(--ink2)"; } }}
-                  onMouseLeave={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink4)"; } }}>
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.background = "rgba(255,255,255,0.04)";
+                      el.style.color      = "var(--ink2)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.background = "transparent";
+                      el.style.color      = "var(--ink4)";
+                    }
+                  }}>
+
+                  {/* Active left-bar indicator */}
                   {active && (
                     <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full"
                       style={{ background: C.accent, boxShadow: `0 0 8px ${C.accent}` }}/>
                   )}
-                  <span className="flex-shrink-0 ml-0.5">{item.icon}</span>
+
+                  {/* Icon — always visible, centred when collapsed */}
+                  <span className="flex-shrink-0" style={{ marginLeft: active ? 2 : 0 }}>
+                    {item.icon}
+                  </span>
+
+                  {/* Label + badge — only when expanded */}
                   {sidebarOpen && (
                     <>
                       <span className="font-medium text-[13px] flex-1 whitespace-nowrap overflow-hidden text-ellipsis">
@@ -852,17 +901,25 @@ export function AdminDashboard({ user }: Props) {
                       )}
                     </>
                   )}
+
+                  {/* Collapsed badge dot */}
+                  {!sidebarOpen && item.badge && (
+                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
+                      style={{ background: C.accent }}/>
+                  )}
                 </button>
               );
             })}
           </nav>
 
-          <div className="mx-3 my-2" style={{ height: "0.5px", background: "var(--border)" }}/>
+          {/* Divider */}
+          <div style={{ height: "0.5px", background: "var(--border)", margin: "6px 10px" }}/>
 
-          {/* User */}
-          <div className="p-2.5 flex items-center gap-2.5 overflow-hidden flex-shrink-0">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-[11px] text-white"
-              style={{ background: "linear-gradient(135deg,#3B82F6,#06B6D4)", boxShadow: "0 0 12px rgba(59,130,246,0.3)" }}>
+          {/* ── USER ROW ── */}
+          <div className="flex-shrink-0 flex items-center gap-2.5 overflow-hidden"
+            style={{ padding: sidebarOpen ? "10px 14px" : "10px 8px", justifyContent: sidebarOpen ? "flex-start" : "center" }}>
+            <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-[10px] text-white"
+              style={{ background: "linear-gradient(135deg,#3B82F6,#06B6D4)", flexShrink: 0 }}>
               {user.email?.[0]?.toUpperCase() ?? "A"}
             </div>
             {sidebarOpen && (
