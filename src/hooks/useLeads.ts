@@ -1,10 +1,10 @@
 // ─── src/hooks/useLeads.ts ───────────────────────────────────────────────────
 import { useState, useEffect, useCallback, useMemo } from "react";
 // FirestoreLead is the single source of truth — always import from types/leads
-import type { FirestoreLead, LeadUpdate, NewLead, AuditResult, FollowUpKey, MailEntry } from "../types/leads";
+import type { FirestoreLead, NewLead, AuditResult, FollowUpKey, MailEntry } from "../types/leads";
 import { FOLLOW_UP_SEQUENCE } from "../lib/lead-constants";
 import {
-  fetchLeads, addLead, addLeadsBatch, updateLead,
+  fetchLeads, addLead, addLeadsBatch,
   deleteLead, deleteLeadsBatch,
   recordEmailSent, recordBatchEmailsSent, updateLeadAudit,
 } from "../lib/lead-firebase";
@@ -277,7 +277,8 @@ function getDueFollowUps(leads: FirestoreLead[]): DueFollowUp[] {
     if (!lastMail) continue;
 
     const days = daysAgo(lastMail.date);
-    const idx  = FOLLOW_UP_SEQUENCE.findIndex((s) => s.key === lead.status);
+    // Compare against lastMail.type (a FollowUpKey), not lead.status (a CRM status)
+    const idx  = FOLLOW_UP_SEQUENCE.findIndex((s) => s.key === lastMail.type);
 
     if (idx >= 0 && idx < FOLLOW_UP_SEQUENCE.length - 1) {
       const next = FOLLOW_UP_SEQUENCE[idx + 1];
