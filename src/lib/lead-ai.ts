@@ -193,19 +193,16 @@ Rules:
     },
     {
       role: "user",
-      content: `Write ${isInitial ? "a cold outreach email" : `follow-up #${followUpNum}`}:
-
-Company: ${lead.companyName}
-Website: ${lead.website || "N/A"}
-Email: ${lead.email}
-Country: ${lead.country || "N/A"}
-Issues: ${issues.length ? issues.join(", ") : "general digital improvement needed"}
-Context: ${audit?.summary || lead.proposal || "N/A"}${prevCtx}
-
-${!isInitial ? "Reference previous emails. Be shorter, add mild urgency." : ""}
-${isFinal    ? "Final follow-up. Be graceful, leave door open, no pressure." : ""}
-
-Return ONLY JSON: {"subject":"...","body":"..."}`,
+      content: "Write " + (isInitial ? "a cold outreach email" : `follow-up #${followUpNum}`) + ":\n\n" +
+        "Company: " + lead.companyName + "\n" +
+        "Website: " + (lead.website || "N/A") + "\n" +
+        "Email: " + lead.email + "\n" +
+        "Country: " + (lead.country || "N/A") + "\n" +
+        "Issues: " + (issues.length ? issues.join(", ") : "general digital improvement needed") + "\n" +
+        "Context: " + (audit?.summary || lead.proposal || "N/A") + prevCtx + "\n\n" +
+        (!isInitial ? "Reference previous emails. Be shorter, add mild urgency.\n" : "") +
+        (isFinal ? "Final follow-up. Be graceful, leave door open, no pressure.\n" : "") + "\n" +
+        'Return ONLY JSON: {"subject":"...","body":"..."}'
     },
   ]);
 
@@ -229,7 +226,8 @@ export async function generateBatchEmails(
       const prev = (lead.mailHistory ?? [])
         .filter((m) => m.bodySnapshot)
         .map((m) => m.bodySnapshot!);
-      results.set(lead.id!, await generateEmail(lead, emailType, prev));
+      const email = await generateEmail(lead, emailType, prev);
+      results.set(lead.id!, email);
     } catch (err) {
       console.error(`[AI] Email failed for ${lead.companyName}:`, err);
       results.set(lead.id!, {
