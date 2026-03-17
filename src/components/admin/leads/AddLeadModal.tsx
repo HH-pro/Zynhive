@@ -1,6 +1,4 @@
 // ─── src/components/admin/leads/AddLeadModal.tsx ────────────────────────────
-// Modal to add a single lead manually or search via AI
-
 import { useState } from "react";
 import type { Lead, LeadSource } from "../../../types/leads";
 import { LEAD_SOURCES, DEFAULT_CATEGORIES } from "../../../lib/lead-constants";
@@ -12,25 +10,53 @@ interface Props {
   onAddBatch: (leads: Omit<Lead, "id" | "selected" | "firestoreId">[]) => Promise<void>;
 }
 
-const emptyForm = {
+// ── FIX: explicit type instead of inferred, so index access is type-safe ──────
+type LeadForm = {
+  name: string;
+  email: string;
+  phone: string;
+  website: string;
+  instagram: string;
+  source: LeadSource;
+  category: string;
+  hasChatbot: boolean;
+  hasQuickResponse: boolean;
+  hasLeadForm: boolean;
+  hasMobileOptimized: boolean;
+  notes: string;
+};
+
+const emptyForm: LeadForm = {
   name: "", email: "", phone: "", website: "", instagram: "",
-  source: "Google Maps" as LeadSource,
+  source: "Google Maps",
   category: "", hasChatbot: false, hasQuickResponse: false,
   hasLeadForm: false, hasMobileOptimized: false, notes: "",
 };
 
+// Checkbox fields — explicitly typed so `form[key]` resolves to boolean safely
+type BooleanLeadFormKey = "hasChatbot" | "hasQuickResponse" | "hasLeadForm" | "hasMobileOptimized";
+
+const CHECKBOX_FIELDS: { key: BooleanLeadFormKey; label: string }[] = [
+  { key: "hasChatbot",        label: "Has Chatbot" },
+  { key: "hasQuickResponse",  label: "Has Quick Response" },
+  { key: "hasLeadForm",       label: "Has Lead Form" },
+  { key: "hasMobileOptimized", label: "Mobile Optimized" },
+];
+
 export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
   const [mode, setMode] = useState<"manual" | "ai-search">("manual");
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<LeadForm>(emptyForm);
   const [saving, setSaving] = useState(false);
 
-  // AI Search state
-  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchKeyword,  setSearchKeyword]  = useState("");
   const [searchLocation, setSearchLocation] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<(SearchResult & { selected: boolean })[]>([]);
+  const [searching,      setSearching]      = useState(false);
+  const [searchResults,  setSearchResults]  = useState<(SearchResult & { selected: boolean })[]>([]);
 
-  const set = (key: string, val: unknown) => setForm((p) => ({ ...p, [key]: val }));
+  // ── FIX: typed setter avoids implicit `any` on value ──────────────────────
+  function set<K extends keyof LeadForm>(key: K, val: LeadForm[K]) {
+    setForm((p) => ({ ...p, [key]: val }));
+  }
 
   async function handleSubmitManual() {
     if (!form.name || !form.email) return;
@@ -104,7 +130,7 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ color: "var(--ink4)", cursor: "pointer" }}
+            style={{ color: "var(--ink4)", cursor: "pointer", background: "transparent", border: "none" }}
           >
             ✕
           </button>
@@ -119,10 +145,10 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
             <button
               key={m}
               onClick={() => setMode(m)}
-              className="flex-1 py-2.5 rounded-lg font-mono text-[11px] font-semibold
-                transition-all duration-200"
+              className="flex-1 py-2.5 rounded-lg font-mono text-[11px] font-semibold transition-all duration-200"
               style={{
                 cursor: "pointer",
+                border: "none",
                 background: mode === m
                   ? "linear-gradient(135deg, var(--accent), var(--cyan))"
                   : "transparent",
@@ -134,7 +160,7 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
           ))}
         </div>
 
-        {/* ── Manual Mode ────────────────────────────────────────────────── */}
+        {/* ── Manual Mode ── */}
         {mode === "manual" && (
           <>
             <div className="grid grid-cols-2 gap-3">
@@ -153,7 +179,7 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
                   style={{ color: "var(--ink4)" }}>Source</label>
                 <select
                   value={form.source}
-                  onChange={(e) => set("source", e.target.value)}
+                  onChange={(e) => set("source", e.target.value as LeadSource)}
                   className="py-2 px-3 rounded-lg text-[13px]"
                   style={{
                     background: "var(--bg-alt)", border: "1px solid var(--border2)",
@@ -180,18 +206,13 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
                 </select>
               </div>
 
-              {/* Checkboxes */}
+              {/* ── FIX: use explicit CHECKBOX_FIELDS array — no more dynamic index access ── */}
               <div className="col-span-2 flex flex-wrap gap-4 py-2">
-                {([
-                  ["hasChatbot", "Has Chatbot"],
-                  ["hasQuickResponse", "Has Quick Response"],
-                  ["hasLeadForm", "Has Lead Form"],
-                  ["hasMobileOptimized", "Mobile Optimized"],
-                ] as const).map(([key, label]) => (
+                {CHECKBOX_FIELDS.map(({ key, label }) => (
                   <label key={key} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={form[key] as boolean}
+                      checked={form[key]}
                       onChange={(e) => set(key, e.target.checked)}
                       className="w-4 h-4 rounded"
                       style={{ accentColor: "var(--accent)" }}
@@ -203,7 +224,6 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
                 ))}
               </div>
 
-              {/* Notes */}
               <div className="col-span-2 flex flex-col gap-1">
                 <label className="font-mono text-[10px] font-semibold uppercase tracking-widest"
                   style={{ color: "var(--ink4)" }}>Notes</label>
@@ -235,6 +255,7 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
                 style={{
                   background: "linear-gradient(135deg, var(--accent), var(--cyan))",
                   cursor: saving ? "wait" : "pointer",
+                  border: "none",
                 }}
               >
                 {saving ? "Adding…" : "Add Lead"}
@@ -243,7 +264,7 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
           </>
         )}
 
-        {/* ── AI Search Mode ─────────────────────────────────────────────── */}
+        {/* ── AI Search Mode ── */}
         {mode === "ai-search" && (
           <>
             <div className="grid grid-cols-2 gap-3 mb-4">
@@ -268,6 +289,7 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
               style={{
                 background: "linear-gradient(135deg, var(--accent), var(--cyan))",
                 cursor: searching ? "wait" : "pointer",
+                border: "none",
               }}
             >
               {searching ? (
@@ -280,12 +302,9 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
               )}
             </button>
 
-            {/* Results */}
             {searchResults.length > 0 && (
-              <div
-                className="rounded-xl overflow-hidden mb-4"
-                style={{ border: "1px solid var(--border2)" }}
-              >
+              <div className="rounded-xl overflow-hidden mb-4"
+                style={{ border: "1px solid var(--border2)" }}>
                 <div className="flex items-center justify-between px-4 py-2.5"
                   style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--border2)" }}>
                   <span className="font-mono text-[10px] uppercase tracking-widest" style={{ color: "var(--ink4)" }}>
@@ -313,11 +332,11 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
                     <input
                       type="checkbox"
                       checked={r.selected}
-                      onChange={() => {
+                      onChange={() =>
                         setSearchResults((p) =>
                           p.map((x, j) => (j === i ? { ...x, selected: !x.selected } : x)),
-                        );
-                      }}
+                        )
+                      }
                       className="w-4 h-4 flex-shrink-0"
                       style={{ accentColor: "var(--accent)" }}
                     />
@@ -353,6 +372,7 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
                   style={{
                     background: "linear-gradient(135deg, var(--accent), var(--cyan))",
                     cursor: saving ? "wait" : "pointer",
+                    border: "none",
                   }}
                 >
                   {saving
@@ -367,8 +387,6 @@ export function AddLeadModal({ onClose, onAdd, onAddBatch }: Props) {
     </div>
   );
 }
-
-// ── Tiny form field helper ────────────────────────────────────────────────────
 
 function FormField({
   label, value, onChange, placeholder,
