@@ -359,11 +359,7 @@ export function PortfolioPage() {
       >
         {/* Grid */}
         <div className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: "linear-gradient(rgba(59,110,248,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,110,248,0.05) 1px,transparent 1px)",
-            backgroundSize: "64px 64px",
-            maskImage: "radial-gradient(ellipse 90% 80% at 50% 40%, black 20%, transparent 100%)",
-          }}/>
+         
 
         {/* Glows */}
         <div className="absolute top-1/3 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] pointer-events-none"
