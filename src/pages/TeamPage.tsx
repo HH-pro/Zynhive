@@ -246,7 +246,7 @@ export function TeamPage() {
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section
         className="relative min-h-[60vh] flex items-end px-4 sm:px-6 lg:px-14 pb-16 sm:pb-20 pt-40 sm:pt-44 overflow-hidden"
-        style={{ background: "var(--hero-bg)" }}
+        style={{ background: "var(--bg-base)" }}
       >
         {/* Grid pattern */}
         <div className="absolute inset-0 pointer-events-none"
