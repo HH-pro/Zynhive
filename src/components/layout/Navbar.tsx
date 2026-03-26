@@ -94,7 +94,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
             style={{
               height: scrolled ? 32 : 40,
               width: "auto",
-              maxWidth: 160,
+              maxWidth: 260,
               transition: "height .35s var(--ease), opacity .2s ease",
             }}
           />
