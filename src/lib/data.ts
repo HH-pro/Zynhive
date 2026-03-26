@@ -16,6 +16,7 @@ export const SITE_CONFIG = {
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
 export const NAV_LINKS: NavLink[] = [
+  { label: "Home",      href: "/"          },
   { label: "Services",  href: "/services"  },
   { label: "Portfolio", href: "/portfolio" },
   { label: "About",     href: "/about"     },
