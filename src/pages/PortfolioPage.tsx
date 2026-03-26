@@ -361,7 +361,6 @@ export function PortfolioPage() {
         <div className="absolute inset-0 pointer-events-none"
           style={{
             backgroundSize: "64px 64px",
-            maskImage: "radial-gradient(ellipse 90% 80% at 50% 40%, black 20%, transparent 100%)",
           }}/>
 
         {/* Glows */}
