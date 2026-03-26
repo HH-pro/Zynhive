@@ -358,8 +358,7 @@ export function PortfolioPage() {
         style={{ background: "var(--hero-bg)" }}
       >
         {/* Grid */}
-        <div className="absolute inset-0 pointer-events-none"
-         
+        
 
         {/* Glows */}
         <div className="absolute top-1/3 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] pointer-events-none"
