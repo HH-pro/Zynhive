@@ -355,10 +355,24 @@ export function PortfolioPage() {
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section
         className="relative min-h-[60vh] flex items-end px-4 sm:px-6 lg:px-14 pb-16 sm:pb-20 pt-40 sm:pt-44 overflow-hidden"
-        style={{ background: "var(--bg-base)" }}
+        style={{ background: "var(--hero-bg)" }}
       >
-        {/* Bottom fade into next section */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+        {/* Grid */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: "linear-gradient(rgba(59,110,248,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,110,248,0.05) 1px,transparent 1px)",
+            backgroundSize: "64px 64px",
+            maskImage: "radial-gradient(ellipse 90% 80% at 50% 40%, black 20%, transparent 100%)",
+          }}/>
+
+        {/* Glows */}
+        <div className="absolute top-1/3 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] pointer-events-none"
+          style={{ background: "radial-gradient(ellipse, rgba(59,110,248,0.11) 0%, transparent 60%)" }}/>
+        <div className="absolute top-2/3 right-1/4 w-[400px] h-[300px] pointer-events-none"
+          style={{ background: "radial-gradient(ellipse, rgba(0,212,255,0.07) 0%, transparent 65%)" }}/>
+
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-36 pointer-events-none"
           style={{ background: "linear-gradient(to bottom, transparent, var(--bg-base))" }}/>
 
         <div className="relative z-10 max-w-4xl w-full"
@@ -373,13 +387,13 @@ export function PortfolioPage() {
 
           <h1
             className="font-syne font-extrabold leading-[0.95] tracking-tight mb-5"
-            style={{ fontSize: "clamp(38px,7vw,90px)", color: "var(--ink)" }}
+            style={{ fontSize: "clamp(38px,7vw,90px)", color: "var(--hero-text)" }}
           >
             Work that<br/>
             <em className="not-italic" style={{ color: "var(--accent)" }}>speaks for itself.</em>
           </h1>
 
-          <p className="text-[16px] sm:text-[18px] font-light leading-relaxed max-w-xl" style={{ color: "var(--ink3)" }}>
+          <p className="text-[16px] sm:text-[18px] font-light leading-relaxed max-w-xl" style={{ color: "var(--hero-muted)" }}>
             {projects.length}+ projects across AI, web, mobile, design, and growth. Every one built to win.
           </p>
 
@@ -393,9 +407,9 @@ export function PortfolioPage() {
             ].map(({ label, val }) => (
               <div key={label}
                 className="flex items-center gap-2.5 px-4 py-2 rounded-full border"
-                style={{ borderColor: "var(--border2)", background: "var(--bg-surface)" }}>
+                style={{ borderColor: "rgba(59,110,248,0.22)", background: "rgba(59,110,248,0.08)" }}>
                 <span className="font-syne text-[15px] font-bold" style={{ color: "var(--accent)" }}>{val}</span>
-                <span className="font-mono text-[10px]" style={{ color: "var(--ink4)" }}>{label}</span>
+                <span className="font-mono text-[10px]" style={{ color: "rgba(232,237,255,0.5)" }}>{label}</span>
               </div>
             ))}
           </div>
