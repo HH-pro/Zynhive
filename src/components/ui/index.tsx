@@ -89,7 +89,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center gap-2 font-semibold rounded-lg font-outfit cursor-none transition-all duration-200 disabled:opacity-50 ${SIZE_MAP[size]} ${VARIANT_MAP[variant]} ${className}`}
+      className={`inline-flex items-center gap-2 font-semibold rounded-lg font-outfit transition-all duration-200 disabled:opacity-50 ${SIZE_MAP[size]} ${VARIANT_MAP[variant]} ${className}`}
       disabled={loading || props.disabled}
       {...props}
     >
@@ -115,7 +115,7 @@ export function LinkButton({
   return (
     <a
       href={href}
-      className={`inline-flex items-center gap-2 font-semibold rounded-lg font-outfit cursor-none transition-all duration-200 ${SIZE_MAP[size]} ${VARIANT_MAP[variant]} ${className}`}
+      className={`inline-flex items-center gap-2 font-semibold rounded-lg font-outfit transition-all duration-200 ${SIZE_MAP[size]} ${VARIANT_MAP[variant]} ${className}`}
       {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
     >
       {children}

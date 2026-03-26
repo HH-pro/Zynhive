@@ -5,7 +5,7 @@ import {
   TESTIMONIALS, SITE_CONFIG, INTRO_BULLETS,
 } from "../lib/data";
 import { SectionHead, LinkButton } from "../components/ui/index";
-import {  WhatsAppIcon } from "../components/ui/Icons";
+import { WhatsAppIcon } from "../components/ui/Icons";
 import { ServiceCard } from "../components/ui/Cards";
 
 // ─── Animated Counter ─────────────────────────────────────────────────────────
@@ -30,15 +30,15 @@ export function MarqueeSection() {
   const items = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
   return (
     <div
-      className="overflow-hidden border-t border-b border-[var(--border)] py-4 relative"
+      className="overflow-hidden border-t border-b border-[var(--border)] py-3.5 relative"
       style={{ background: "var(--marquee-bg)" }}
     >
       <div
-        className="absolute left-0 top-0 h-full w-24 z-10 pointer-events-none"
+        className="absolute left-0 top-0 h-full w-16 sm:w-24 z-10 pointer-events-none"
         style={{ background: "linear-gradient(90deg, var(--marquee-bg), transparent)" }}
       />
       <div
-        className="absolute right-0 top-0 h-full w-24 z-10 pointer-events-none"
+        className="absolute right-0 top-0 h-full w-16 sm:w-24 z-10 pointer-events-none"
         style={{ background: "linear-gradient(-90deg, var(--marquee-bg), transparent)" }}
       />
       <div
@@ -48,14 +48,14 @@ export function MarqueeSection() {
         {items.map((item, i) => (
           <div
             key={i}
-            className="flex items-center gap-4 px-7 whitespace-nowrap"
-            style={{ color: "rgba(232,237,255,0.35)" }}
+            className="flex items-center gap-4 px-5 sm:px-7 whitespace-nowrap"
+            style={{ color: "var(--ink4)" }}
           >
             <span
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
               style={{ background: "var(--accent)" }}
             />
-            <span className="font-mono text-[10px] font-medium tracking-[0.18em] uppercase">
+            <span className="font-mono text-[9px] sm:text-[10px] font-medium tracking-[0.16em] sm:tracking-[0.18em] uppercase">
               {item}
             </span>
           </div>
@@ -73,7 +73,7 @@ export function IntroSection() {
   useEffect(() => {
     const obs = new IntersectionObserver(
       ([e]) => { if (e.isIntersecting) setVisible(true); },
-      { threshold: 0.15 }
+      { threshold: 0.1 }
     );
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
@@ -90,12 +90,12 @@ export function IntroSection() {
   ];
 
   return (
-    <section ref={ref} className="px-6 md:px-14 py-32 bg-[var(--bg-alt)]" id="about">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+    <section ref={ref} className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-alt)]" id="about">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-14 lg:gap-20 items-center">
 
         {/* ── Left ──────────────────────────────────────────────────────── */}
         <div className="reveal">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-7 rounded-full
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-6 rounded-full
             border border-[var(--accent-pale2)] bg-[var(--accent-pale)]">
             <span
               className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]"
@@ -107,15 +107,15 @@ export function IntroSection() {
           </div>
 
           <h2
-            className="font-display font-bold text-[var(--ink)] leading-[1.08] tracking-tight mb-5"
-            style={{ fontSize: "clamp(26px,3.2vw,48px)" }}
+            className="font-display font-bold text-[var(--ink)] leading-[1.08] tracking-tight mb-4 md:mb-5"
+            style={{ fontSize: "clamp(24px,3.2vw,48px)" }}
           >
             Where{" "}
             <span className="text-gradient-blue">Intelligence</span>
             <br />Meets Design Excellence
           </h2>
 
-          <p className="text-[15px] text-[var(--ink3)] leading-[1.9] mb-9 font-body max-w-[460px]">
+          <p className="text-[14px] sm:text-[15px] text-[var(--ink3)] leading-[1.85] mb-7 md:mb-9 font-body max-w-[480px]">
             ZynHive is an AI-first digital agency built for the intelligence era.
             We combine deep LLM expertise with sharp creative vision to build products
             that don't just work — they{" "}
@@ -123,11 +123,11 @@ export function IntroSection() {
             adapt, and grow with your business.
           </p>
 
-          <ul className="flex flex-col gap-3 mb-10">
+          <ul className="flex flex-col gap-2.5 md:gap-3 mb-8 md:mb-10">
             {INTRO_BULLETS.map((b, i) => (
               <li
                 key={i}
-                className={`flex items-center gap-3 text-[14px] text-[var(--ink2)] font-body reveal reveal-d${i + 1}`}
+                className={`flex items-center gap-3 text-[13px] sm:text-[14px] text-[var(--ink2)] font-body reveal reveal-d${i + 1}`}
               >
                 <div
                   className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0
@@ -150,11 +150,11 @@ export function IntroSection() {
             style={{ background: "var(--bg-surface)" }}
           >
             {stats.map(({ value, suffix, label }, i) => (
-              <div key={i} className="flex flex-col items-center py-5 px-3 text-center">
-                <span className="font-display text-[26px] font-bold leading-none mb-1 text-gradient-blue">
+              <div key={i} className="flex flex-col items-center py-4 sm:py-5 px-2 sm:px-3 text-center">
+                <span className="font-display text-[22px] sm:text-[26px] font-bold leading-none mb-1 text-gradient-blue">
                   {value}{suffix}
                 </span>
-                <span className="font-mono text-[9px] text-[var(--ink4)] tracking-[0.12em] uppercase">
+                <span className="font-mono text-[8px] sm:text-[9px] text-[var(--ink4)] tracking-[0.1em] sm:tracking-[0.12em] uppercase">
                   {label}
                 </span>
               </div>
@@ -163,11 +163,11 @@ export function IntroSection() {
         </div>
 
         {/* ── Right — Orbit visual ───────────────────────────────────────── */}
-        <div className="reveal reveal-d2 relative h-[420px] hidden lg:block">
+        <div className="reveal reveal-d2 relative h-[320px] md:h-[380px] lg:h-[420px] hidden md:block">
 
           {/* Glow core */}
           <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 rounded-full pointer-events-none"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 md:w-56 h-48 md:h-56 rounded-full pointer-events-none"
             style={{
               background: "radial-gradient(circle, var(--accent-pale) 0%, transparent 70%)",
               animation: "rPulse 4s ease-in-out infinite",
@@ -176,8 +176,13 @@ export function IntroSection() {
 
           {/* Ring 1 */}
           <div
-            className="absolute top-1/2 left-1/2 w-72 h-72 rounded-full border border-[var(--border2)]"
-            style={{ transform: "translate(-50%,-50%)", animation: "orbitSpin 18s linear infinite" }}
+            className="absolute top-1/2 left-1/2 rounded-full border border-[var(--border2)]"
+            style={{
+              width: "min(288px, 72%)",
+              height: "min(288px, 72%)",
+              transform: "translate(-50%,-50%)",
+              animation: "orbitSpin 18s linear infinite",
+            }}
           >
             <div
               className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[var(--accent)]"
@@ -187,8 +192,13 @@ export function IntroSection() {
 
           {/* Ring 2 */}
           <div
-            className="absolute top-1/2 left-1/2 w-[360px] h-[360px] rounded-full border border-[var(--border)]"
-            style={{ transform: "translate(-50%,-50%)", animation: "orbitSpin 26s linear infinite reverse" }}
+            className="absolute top-1/2 left-1/2 rounded-full border border-[var(--border)]"
+            style={{
+              width: "min(360px, 90%)",
+              height: "min(360px, 90%)",
+              transform: "translate(-50%,-50%)",
+              animation: "orbitSpin 26s linear infinite reverse",
+            }}
           >
             <div
               className="absolute -right-2 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[var(--cyan)]"
@@ -203,15 +213,15 @@ export function IntroSection() {
           {/* Center card */}
           <div
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10
-              w-44 h-44 rounded-2xl border border-[var(--border2)]
+              w-36 md:w-44 h-36 md:h-44 rounded-2xl border border-[var(--border2)]
               flex flex-col items-center justify-center gap-2"
             style={{ background: "var(--bg-surface)", boxShadow: "var(--shadow-lg)" }}
           >
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center mb-1"
+              className="w-10 md:w-12 h-10 md:h-12 rounded-xl flex items-center justify-center mb-1"
               style={{ background: "var(--accent-pale)", border: "1px solid var(--accent-pale2)" }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                 <circle cx="8"  cy="9"  r="2.5" stroke="var(--accent)"  strokeWidth="1.2"/>
                 <circle cx="16" cy="9"  r="2.5" stroke="var(--cyan)"   strokeWidth="1.2"/>
                 <circle cx="12" cy="17" r="2.5" stroke="var(--accent2)" strokeWidth="1.2"/>
@@ -220,21 +230,21 @@ export function IntroSection() {
               </svg>
             </div>
             <span className="font-mono text-[9px] text-[var(--accent)] tracking-[0.14em] uppercase">AI Core</span>
-            <span className="font-display text-[11px] font-semibold text-[var(--ink3)] text-center leading-tight px-4">
+            <span className="font-display text-[10px] md:text-[11px] font-semibold text-[var(--ink3)] text-center leading-tight px-3 md:px-4">
               Always Learning
             </span>
           </div>
 
-          {/* Floating chips */}
+          {/* Floating chips — responsive positions */}
           {[
-            { top: "4%",  left: "62%", label: "LLM Ready", val: "GPT-4o",  color: "var(--accent)",  delay: "0s"   },
-            { top: "70%", left: "58%", label: "Accuracy",   val: "97.3%",   color: "var(--cyan)",    delay: "1s"   },
+            { top: "4%",  left: "60%", label: "LLM Ready", val: "GPT-4o",  color: "var(--accent)",  delay: "0s"   },
+            { top: "70%", left: "56%", label: "Accuracy",   val: "97.3%",   color: "var(--cyan)",    delay: "1s"   },
             { top: "12%", left: "0%",  label: "Response",   val: "< 1ms",   color: "var(--accent2)", delay: "0.5s" },
-            { top: "66%", left: "-4%", label: "Uptime",     val: "99.9%",   color: "var(--accent)",  delay: "1.5s" },
+            { top: "66%", left: "-2%", label: "Uptime",     val: "99.9%",   color: "var(--accent)",  delay: "1.5s" },
           ].map((c, i) => (
             <div
               key={i}
-              className="absolute z-20 rounded-xl border border-[var(--border2)] px-3.5 py-2.5"
+              className="absolute z-20 rounded-xl border border-[var(--border2)] px-2.5 md:px-3.5 py-2 md:py-2.5"
               style={{
                 top: c.top, left: c.left,
                 background: "var(--bg-surface)",
@@ -242,8 +252,30 @@ export function IntroSection() {
                 animation: `float${i % 2 === 0 ? "A" : "B"} ${3.8 + i * 0.5}s ${c.delay} ease-in-out infinite`,
               }}
             >
-              <div className="font-mono text-[9px] text-[var(--ink4)] mb-0.5">{c.label}</div>
-              <div className="font-display text-[13px] font-bold" style={{ color: c.color }}>{c.val}</div>
+              <div className="font-mono text-[8px] md:text-[9px] text-[var(--ink4)] mb-0.5">{c.label}</div>
+              <div className="font-display text-[11px] md:text-[13px] font-bold" style={{ color: c.color }}>{c.val}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Mobile-only stats visual (replaces orbit on small screens) ── */}
+        <div className="md:hidden grid grid-cols-2 gap-3 reveal reveal-d2">
+          {[
+            { label: "LLM Ready",  val: "GPT-4o", color: "var(--accent)",  icon: "🤖" },
+            { label: "Accuracy",   val: "97.3%",  color: "var(--cyan)",    icon: "🎯" },
+            { label: "Response",   val: "< 1ms",  color: "var(--accent2)", icon: "⚡" },
+            { label: "Uptime",     val: "99.9%",  color: "var(--accent)",  icon: "🔒" },
+          ].map((c, i) => (
+            <div
+              key={i}
+              className="rounded-xl border border-[var(--border2)] px-4 py-3.5 flex items-center gap-3"
+              style={{ background: "var(--bg-surface)" }}
+            >
+              <span className="text-xl flex-shrink-0">{c.icon}</span>
+              <div>
+                <div className="font-mono text-[9px] text-[var(--ink4)] mb-0.5">{c.label}</div>
+                <div className="font-display text-[15px] font-bold" style={{ color: c.color }}>{c.val}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -257,7 +289,7 @@ export function IntroSection() {
 // ══ SERVICES PREVIEW ══════════════════════════════════════════════════════════
 export function ServicesPreviewSection() {
   return (
-    <section className="px-6 md:px-14 py-32 bg-[var(--bg-base)] relative overflow-hidden" id="services">
+    <section className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-base)] relative overflow-hidden" id="services">
 
       <div
         className="absolute inset-0 pointer-events-none"
@@ -267,7 +299,7 @@ export function ServicesPreviewSection() {
         }}
       />
       <div
-        className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full pointer-events-none"
+        className="absolute -top-32 -right-32 w-[400px] md:w-[500px] h-[400px] md:h-[500px] rounded-full pointer-events-none"
         style={{ background: "radial-gradient(circle, var(--accent-pale) 0%, transparent 65%)" }}
       />
 
@@ -287,12 +319,12 @@ export function ServicesPreviewSection() {
           ))}
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-2.5 reveal">
+        <div className="mt-8 md:mt-10 flex flex-wrap items-center justify-center gap-2 reveal">
           {["GPT-4o Powered", "LangChain", "RAG Pipelines", "Real-time AI", "Custom LLMs"].map((badge) => (
             <span
               key={badge}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
-                font-mono text-[10px] text-[var(--ink4)] tracking-[0.1em]
+                font-mono text-[10px] text-[var(--ink3)] tracking-[0.1em]
                 border border-[var(--border2)] bg-[var(--bg-surface)]"
             >
               <span className="w-1 h-1 rounded-full bg-[var(--accent)]" />
@@ -301,11 +333,11 @@ export function ServicesPreviewSection() {
           ))}
         </div>
 
-        <div className="mt-10 text-center reveal">
+        <div className="mt-8 md:mt-10 text-center reveal">
           <a
             href="/services"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl
-              font-display text-[14px] font-semibold tracking-tight
+            className="inline-flex items-center gap-2 px-6 md:px-7 py-3 md:py-3.5 rounded-2xl
+              font-display text-[13px] md:text-[14px] font-semibold tracking-tight
               transition-all duration-200 group"
             style={{
               color: "var(--accent)",
@@ -356,7 +388,7 @@ export function ProcessSection() {
   };
 
   return (
-    <section className="px-6 md:px-14 py-32 bg-[var(--bg-alt)]" id="process">
+    <section className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-alt)]" id="process">
       <div className="max-w-7xl mx-auto">
         <SectionHead
           tag="How We Work"
@@ -364,7 +396,25 @@ export function ProcessSection() {
           sub="Every stage is supercharged by AI. Faster delivery, fewer errors, better outcomes."
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-10 items-start">
+        {/* Mobile step indicator */}
+        <div className="lg:hidden flex items-center justify-center gap-2 mb-6">
+          {PROCESS_STEPS.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActive(i)}
+              className="rounded-full transition-all duration-300"
+              style={{
+                width: i === active ? 28 : 8,
+                height: 8,
+                background: i === active
+                  ? "linear-gradient(90deg, var(--accent), var(--cyan))"
+                  : "var(--border2)",
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 lg:gap-10 items-start">
 
           {/* Step list */}
           <div className="flex flex-col reveal">
@@ -372,12 +422,12 @@ export function ProcessSection() {
               <button
                 key={p.step}
                 onClick={() => setActive(i)}
-                className={`text-left flex gap-4 py-5 border-b border-[var(--border)] last:border-0
-                  transition-all duration-300 ${active === i ? "pl-3" : "pl-0 hover:pl-2"}`}
+                className={`text-left flex gap-3 md:gap-4 py-4 md:py-5 border-b border-[var(--border)] last:border-0
+                  transition-all duration-300 ${active === i ? "pl-2 sm:pl-3" : "pl-0 hover:pl-2"}`}
               >
                 <div
-                  className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center
-                    font-mono text-[11px] font-bold transition-all duration-300 mt-0.5 ${
+                  className={`flex-shrink-0 w-8 md:w-9 h-8 md:h-9 rounded-xl flex items-center justify-center
+                    font-mono text-[10px] md:text-[11px] font-bold transition-all duration-300 mt-0.5 ${
                     active === i
                       ? "text-white"
                       : "text-[var(--ink4)] border border-[var(--border2)] bg-[var(--bg-surface)]"
@@ -390,18 +440,18 @@ export function ProcessSection() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className={`font-display text-[15px] font-semibold leading-snug transition-colors duration-300 ${
+                  <div className={`font-display text-[14px] md:text-[15px] font-semibold leading-snug transition-colors duration-300 ${
                     active === i ? "text-[var(--ink)]" : "text-[var(--ink3)]"
                   }`}>
                     {p.title}
                   </div>
 
                   <div className={`overflow-hidden transition-all duration-[400ms] ${
-                    active === i ? "max-h-32 mt-3 opacity-100" : "max-h-0 opacity-0"
+                    active === i ? "max-h-40 mt-3 opacity-100" : "max-h-0 opacity-0"
                   }`}>
-                    <p className="text-[13px] text-[var(--ink3)] leading-relaxed font-body mb-3">{p.desc}</p>
+                    <p className="text-[12px] md:text-[13px] text-[var(--ink3)] leading-relaxed font-body mb-3">{p.desc}</p>
                     <div
-                      className="inline-flex items-start gap-2 px-3 py-2 rounded-xl text-[11px]
+                      className="inline-flex items-start gap-2 px-3 py-2 rounded-xl text-[10px] md:text-[11px]
                         border border-[var(--accent-pale2)] bg-[var(--accent-pale)]"
                     >
                       <span className="text-[var(--accent)] font-bold mt-0.5 flex-shrink-0">⚡</span>
@@ -421,9 +471,9 @@ export function ProcessSection() {
             ))}
           </div>
 
-          {/* Visual panel */}
+          {/* Visual panel — desktop only */}
           <div
-            className="relative rounded-2xl border border-[var(--border2)] min-h-[460px] hidden lg:flex
+            className="relative rounded-2xl border border-[var(--border2)] min-h-[380px] lg:min-h-[460px] hidden lg:flex
               items-center justify-center overflow-hidden sticky top-24 reveal reveal-d2"
             style={{ background: "var(--bg-surface)" }}
           >
@@ -463,7 +513,7 @@ export function ProcessSection() {
             </div>
 
             <div className="absolute bottom-8 left-0 right-0 px-8 z-10 text-center">
-              <p className="font-display text-[20px] font-bold text-[var(--ink)] tracking-tight mb-4">
+              <p className="font-display text-[18px] md:text-[20px] font-bold text-[var(--ink)] tracking-tight mb-4">
                 {step.title}
               </p>
               <div className="flex items-center justify-center gap-2">
@@ -506,17 +556,17 @@ export function TechSection() {
   const [tab, setTab] = useState(0);
 
   const categories = [
-    { label: "AI & Machine Learning", short: "AI",    items: TECH_STACK_AI,    color: "var(--accent)"  },
-    { label: "Web & Mobile",          short: "Web",   items: TECH_STACK_WEB,   color: "var(--cyan)"    },
-    { label: "Infrastructure",        short: "Infra", items: TECH_STACK_INFRA, color: "var(--accent2)" },
+    { label: "AI & Machine Learning", short: "AI & ML",  items: TECH_STACK_AI,    color: "var(--accent)"  },
+    { label: "Web & Mobile",          short: "Web",       items: TECH_STACK_WEB,   color: "var(--cyan)"    },
+    { label: "Infrastructure",        short: "Infra",     items: TECH_STACK_INFRA, color: "var(--accent2)" },
   ];
 
   const cur = categories[tab];
 
   return (
-    <section className="px-6 md:px-14 py-32 bg-[var(--bg-base)] relative overflow-hidden" id="tech">
+    <section className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-base)] relative overflow-hidden" id="tech">
       <div
-        className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full pointer-events-none"
+        className="absolute -bottom-24 -left-24 w-80 md:w-96 h-80 md:h-96 rounded-full pointer-events-none"
         style={{ background: "radial-gradient(circle, var(--accent-pale) 0%, transparent 70%)" }}
       />
 
@@ -528,14 +578,14 @@ export function TechSection() {
         />
 
         <div
-          className="flex gap-1 p-1.5 rounded-2xl mb-8 w-fit mx-auto reveal border border-[var(--border2)]"
+          className="flex gap-1 p-1.5 rounded-2xl mb-6 md:mb-8 w-fit mx-auto reveal border border-[var(--border2)]"
           style={{ background: "var(--bg-surface)" }}
         >
           {categories.map((c, i) => (
             <button
               key={c.short}
               onClick={() => setTab(i)}
-              className={`px-6 py-2.5 rounded-xl font-display text-[12px] font-semibold
+              className={`px-4 sm:px-5 md:px-6 py-2 md:py-2.5 rounded-xl font-display text-[11px] sm:text-[12px] font-semibold
                 transition-all duration-300 ${
                 tab === i ? "text-white" : "text-[var(--ink4)] hover:text-[var(--ink3)]"
               }`}
@@ -544,16 +594,17 @@ export function TechSection() {
                 boxShadow: "0 4px 16px var(--accent-dim)",
               } : {}}
             >
-              {c.short}
+              <span className="hidden sm:inline">{c.label}</span>
+              <span className="sm:hidden">{c.short}</span>
             </button>
           ))}
         </div>
 
         <div
-          className="rounded-2xl border border-[var(--border2)] p-8 reveal"
+          className="rounded-2xl border border-[var(--border2)] p-5 sm:p-6 md:p-8 reveal"
           style={{ background: "var(--bg-surface)" }}
         >
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-5 md:mb-6">
             <div
               className="w-2 h-2 rounded-full"
               style={{ background: cur.color, boxShadow: `0 0 8px ${cur.color}` }}
@@ -564,16 +615,16 @@ export function TechSection() {
             >
               {cur.label}
             </span>
-            <span className="font-mono text-[10px] text-[var(--ink4)]">
+            <span className="font-mono text-[10px] text-[var(--ink3)]">
               — {cur.items.length} technologies
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {cur.items.map((tech) => (
               <span
                 key={tech}
-                className="group relative font-mono text-[11px] px-4 py-2 rounded-xl
+                className="group relative font-mono text-[10px] sm:text-[11px] px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl
                   border border-[var(--border2)] text-[var(--ink3)] bg-[var(--bg-panel)]
                   hover:text-[var(--ink)] hover:border-[var(--border)] transition-all duration-200
                   overflow-hidden cursor-default"
@@ -588,8 +639,8 @@ export function TechSection() {
           </div>
 
           <div
-            className="mt-8 pt-6 border-t border-[var(--border)] flex items-center gap-3
-              px-4 py-3 rounded-xl bg-[var(--accent-pale)]"
+            className="mt-6 md:mt-8 pt-5 md:pt-6 border-t border-[var(--border)] flex items-center gap-3
+              px-3 md:px-4 py-2.5 md:py-3 rounded-xl bg-[var(--accent-pale)]"
           >
             <div
               className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
@@ -600,7 +651,7 @@ export function TechSection() {
                   stroke="var(--accent)" strokeWidth="0.8" strokeLinejoin="round" fill="var(--accent-pale2)"/>
               </svg>
             </div>
-            <p className="text-[12px] font-body text-[var(--ink3)] leading-relaxed">
+            <p className="text-[11px] sm:text-[12px] font-body text-[var(--ink3)] leading-relaxed">
               <span className="font-semibold text-[var(--accent)]">AI-first by design.</span>{" "}
               Every tool is evaluated for AI compatibility, automation potential, and long-term scalability.
             </p>
@@ -625,11 +676,11 @@ export function TestimonialsSection() {
   const t = TESTIMONIALS[active];
 
   return (
-    <section className="px-6 md:px-14 py-32 bg-[var(--bg-alt)] relative overflow-hidden" id="testimonials">
+    <section className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-alt)] relative overflow-hidden" id="testimonials">
       <div
-        className="absolute top-8 right-8 font-display text-[220px] leading-none
+        className="absolute top-8 right-4 md:right-8 font-display leading-none
           pointer-events-none select-none font-bold"
-        style={{ color: "var(--accent)", opacity: 0.04 }}
+        style={{ fontSize: "clamp(120px,15vw,220px)", color: "var(--accent)", opacity: 0.04 }}
       >
         "
       </div>
@@ -643,14 +694,14 @@ export function TestimonialsSection() {
 
         {/* Featured card */}
         <div
-          className="rounded-2xl border border-[var(--border2)] p-8 md:p-12 mb-5 reveal
+          className="rounded-2xl border border-[var(--border2)] p-5 sm:p-8 md:p-12 mb-4 md:mb-5 reveal
             relative overflow-hidden cursor-pointer"
           style={{ background: "var(--bg-surface)" }}
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
           <div
-            className="absolute top-0 left-0 w-[300px] h-[300px] pointer-events-none"
+            className="absolute top-0 left-0 w-[200px] md:w-[300px] h-[200px] md:h-[300px] pointer-events-none"
             style={{ background: "radial-gradient(circle, var(--accent-pale) 0%, transparent 65%)" }}
           />
           <div
@@ -659,33 +710,33 @@ export function TestimonialsSection() {
           />
 
           <div className="relative z-10 max-w-3xl">
-            <div className="flex gap-1 mb-6">
+            <div className="flex gap-1 mb-4 md:mb-6">
               {Array.from({ length: 5 }).map((_, i) => (
-                <svg key={i} width="14" height="14" viewBox="0 0 14 14" fill="var(--accent)">
+                <svg key={i} width="13" height="13" viewBox="0 0 14 14" fill="var(--accent)">
                   <path d="M7 1l1.6 3.4 3.7.5-2.7 2.6.6 3.7L7 9.3l-3.2 1.9.6-3.7L1.7 4.9l3.7-.5L7 1z"/>
                 </svg>
               ))}
             </div>
 
             <blockquote
-              className="font-display font-semibold text-[var(--ink)] leading-[1.55] mb-7
+              className="font-display font-semibold text-[var(--ink)] leading-[1.55] mb-5 md:mb-7
                 transition-all duration-500"
-              style={{ fontSize: "clamp(16px,2vw,22px)" }}
+              style={{ fontSize: "clamp(14px,2vw,22px)" }}
             >
               "{t.text}"
             </blockquote>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 md:gap-4">
               <div
-                className="w-11 h-11 rounded-full flex items-center justify-center
-                  text-sm font-bold text-white flex-shrink-0"
+                className="w-9 md:w-11 h-9 md:h-11 rounded-full flex items-center justify-center
+                  text-xs md:text-sm font-bold text-white flex-shrink-0"
                 style={{ background: "linear-gradient(135deg, var(--accent), var(--cyan))" }}
               >
                 {t.initials}
               </div>
               <div>
-                <div className="font-display text-[14px] font-bold text-[var(--ink)]">{t.name}</div>
-                <div className="font-mono text-[10px] text-[var(--ink4)] tracking-[0.08em]">
+                <div className="font-display text-[13px] md:text-[14px] font-bold text-[var(--ink)]">{t.name}</div>
+                <div className="font-mono text-[9px] md:text-[10px] text-[var(--ink4)] tracking-[0.08em]">
                   {t.role} · {t.company}
                 </div>
               </div>
@@ -694,12 +745,12 @@ export function TestimonialsSection() {
         </div>
 
         {/* Selector */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 reveal">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 reveal">
           {TESTIMONIALS.map((item, i) => (
             <button
               key={item.id}
               onClick={() => { setActive(i); setPaused(true); }}
-              className={`rounded-xl border p-3 text-left transition-all duration-300 ${
+              className={`rounded-xl border p-2.5 md:p-3 text-left transition-all duration-300 ${
                 active === i ? "border-[var(--accent)]" : "border-[var(--border)] hover:border-[var(--border2)]"
               }`}
               style={{ background: active === i ? "var(--accent-pale)" : "var(--bg-surface)" }}
@@ -715,11 +766,11 @@ export function TestimonialsSection() {
                 >
                   {item.initials}
                 </div>
-                <div>
-                  <div className="font-display text-[11px] font-semibold text-[var(--ink)] leading-none truncate">
+                <div className="min-w-0">
+                  <div className="font-display text-[10px] sm:text-[11px] font-semibold text-[var(--ink)] leading-none truncate">
                     {item.name.split(" ")[0]}
                   </div>
-                  <div className="font-mono text-[9px] text-[var(--ink4)] truncate">{item.company}</div>
+                  <div className="font-mono text-[9px] text-[var(--ink3)] truncate">{item.company}</div>
                 </div>
               </div>
             </button>
@@ -805,7 +856,7 @@ export function AICapabilitiesSection() {
   ];
 
   return (
-    <section className="px-6 md:px-14 py-32 bg-[var(--bg-base)] relative overflow-hidden" id="ai">
+    <section className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-base)] relative overflow-hidden" id="ai">
       <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.4 }}>
         <svg width="100%" height="100%">
           <defs>
@@ -817,7 +868,7 @@ export function AICapabilitiesSection() {
         </svg>
       </div>
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-px pointer-events-none"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] sm:w-[500px] h-px pointer-events-none"
         style={{ background: "linear-gradient(90deg, transparent, var(--accent), var(--cyan), transparent)" }}
       />
 
@@ -828,11 +879,11 @@ export function AICapabilitiesSection() {
           sub="From simple integrations to fully autonomous AI systems — we build what tomorrow demands."
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 lg:gap-5">
           {caps.map((cap, i) => (
             <div
               key={i}
-              className={`group relative rounded-2xl border border-[var(--border2)] p-6
+              className={`group relative rounded-2xl border border-[var(--border2)] p-4 sm:p-5 md:p-6
                 transition-all duration-500 overflow-hidden cursor-default
                 hover:-translate-y-0.5 hover:border-[var(--border)] reveal reveal-d${(i % 3) + 1}`}
               style={{ background: "var(--bg-surface)" }}
@@ -842,7 +893,7 @@ export function AICapabilitiesSection() {
                 style={{ background: `radial-gradient(ellipse at 20% 20%, ${cap.color}0d, transparent 60%)` }}
               />
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+                className="w-9 md:w-10 h-9 md:h-10 rounded-xl flex items-center justify-center mb-3 md:mb-4"
                 style={{
                   background: `${cap.color}14`,
                   color: cap.color,
@@ -851,10 +902,10 @@ export function AICapabilitiesSection() {
               >
                 {cap.icon}
               </div>
-              <h3 className="font-display text-[15px] font-bold text-[var(--ink)] mb-2">
+              <h3 className="font-display text-[14px] md:text-[15px] font-bold text-[var(--ink)] mb-1.5 md:mb-2">
                 {cap.title}
               </h3>
-              <p className="text-[13px] text-[var(--ink3)] leading-relaxed font-body">{cap.desc}</p>
+              <p className="text-[12px] md:text-[13px] text-[var(--ink3)] leading-relaxed font-body">{cap.desc}</p>
               <div
                 className="absolute bottom-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 style={{ background: `linear-gradient(90deg, transparent, ${cap.color}80, transparent)` }}
@@ -871,7 +922,7 @@ export function AICapabilitiesSection() {
 export function CTASection() {
   return (
     <section
-      className="relative px-6 md:px-14 py-32 grid place-items-center text-center overflow-hidden"
+      className="relative px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 grid place-items-center text-center overflow-hidden"
       style={{ background: "var(--navy)" }}
     >
       <div
@@ -884,12 +935,12 @@ export function CTASection() {
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
         style={{
-          width: 700, height: 450,
+          width: "min(700px,90vw)", height: 450,
           background: "radial-gradient(ellipse, rgba(59,110,248,0.2) 0%, transparent 65%)",
         }}
       />
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-px pointer-events-none"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] sm:w-[600px] h-px pointer-events-none"
         style={{ background: "linear-gradient(90deg, transparent, var(--accent), var(--cyan), transparent)" }}
       />
 
@@ -915,11 +966,11 @@ export function CTASection() {
         />
       ))}
 
-      <div className="relative z-10 max-w-2xl reveal">
+      <div className="relative z-10 w-full max-w-2xl reveal">
 
         {/* Badge */}
         <div
-          className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full border"
+          className="inline-flex items-center gap-2 px-4 py-2 mb-6 md:mb-8 rounded-full border"
           style={{ background: "rgba(91,139,255,0.08)", borderColor: "rgba(91,139,255,0.2)" }}
         >
           <span className="relative flex h-2 w-2">
@@ -932,7 +983,7 @@ export function CTASection() {
               style={{ background: "#00D4FF" }}
             />
           </span>
-          <span className="font-mono text-[10px] tracking-[0.16em] uppercase font-semibold"
+          <span className="font-mono text-[9px] sm:text-[10px] tracking-[0.14em] sm:tracking-[0.16em] uppercase font-semibold"
             style={{ color: "#00D4FF" }}>
             AI Systems Ready · Let's Build
           </span>
@@ -940,8 +991,8 @@ export function CTASection() {
 
         {/* Heading */}
         <h2
-          className="font-display font-bold leading-[1.05] tracking-tight mb-5"
-          style={{ fontSize: "clamp(30px,5vw,64px)", color: "#F4F6FF" }}
+          className="font-display font-bold leading-[1.05] tracking-tight mb-4 md:mb-5"
+          style={{ fontSize: "clamp(26px,5vw,64px)", color: "#F4F6FF" }}
         >
           Ready to{" "}
           <span
@@ -958,14 +1009,14 @@ export function CTASection() {
         </h2>
 
         <p
-          className="text-[15px] leading-[1.85] mb-10 font-body max-w-md mx-auto"
+          className="text-[13px] sm:text-[15px] leading-[1.85] mb-8 md:mb-10 font-body max-w-md mx-auto px-2"
           style={{ color: "rgba(232,237,255,0.58)" }}
         >
           One conversation. We'll map where AI creates the most leverage in your business
           and hand you a concrete plan — no fluff, no jargon, no sales pitch.
         </p>
 
-        <div className="flex gap-3 justify-center flex-wrap mb-12">
+        <div className="flex gap-3 justify-center flex-wrap mb-8 md:mb-12">
           <LinkButton href={SITE_CONFIG.whatsapp} variant="whatsapp" size="lg" external>
             <WhatsAppIcon className="w-4 h-4" />
             Chat on WhatsApp
@@ -977,7 +1028,7 @@ export function CTASection() {
 
         {/* Trust strip */}
         <div
-          className="flex flex-wrap justify-center gap-5 pt-7 border-t"
+          className="flex flex-wrap justify-center gap-4 md:gap-5 pt-5 md:pt-7 border-t"
           style={{ borderColor: "rgba(59,110,248,0.2)" }}
         >
           {[
@@ -988,10 +1039,10 @@ export function CTASection() {
           ].map(({ icon, text }) => (
             <div
               key={text}
-              className="flex items-center gap-2 text-[12px] font-body"
+              className="flex items-center gap-2 text-[11px] sm:text-[12px] font-body"
               style={{ color: "rgba(232,237,255,0.42)" }}
             >
-              <span style={{ fontSize: 14 }}>{icon}</span>
+              <span style={{ fontSize: 13 }}>{icon}</span>
               {text}
             </div>
           ))}

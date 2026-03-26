@@ -156,14 +156,18 @@ export function HeroSection() {
 
       {/* Available badge */}
       <div
-        className="absolute top-28 right-6 md:right-14 z-10 hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg-glass)] backdrop-blur-sm"
-        style={{ animation: "heroUp 1s 0.7s var(--ease) both" }}
+        className="absolute top-28 right-6 md:right-14 z-10 hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl backdrop-blur-sm"
+        style={{
+          animation: "heroUp 1s 0.7s var(--ease) both",
+          background: "rgba(255,255,255,0.07)",
+          border: "1px solid rgba(255,255,255,0.12)",
+        }}
       >
         <div
-          className="w-1.5 h-1.5 rounded-full bg-[var(--neon)]"
-          style={{ animation: "bPulse 2s infinite" }}
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ background: "#4ade80", animation: "bPulse 2s infinite", boxShadow: "0 0 6px #4ade80" }}
         />
-        <span className="font-mono text-[10px] text-[var(--ink4)] tracking-[0.1em] uppercase">
+        <span className="font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: "rgba(244,246,255,0.7)" }}>
           Available for projects
         </span>
       </div>
