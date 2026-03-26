@@ -93,7 +93,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
             className="object-contain transition-all duration-300 group-hover:opacity-85"
             style={{
               height: scrolled ? 32 : 40,
-              width: 25,
+              width: "auto",
               maxWidth: 260,
               transition: "height .35s var(--ease), opacity .2s ease",
             }}
