@@ -75,7 +75,6 @@ function Router({ path }: { path: string }) {
     case "/team":      return <TeamPage />;
     case "/contact":   return <ContactPage />;
     case "/admin":     return <AdminPage />;
-    default:           return <HomePage />;
   }
 }
 
