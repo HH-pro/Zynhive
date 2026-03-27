@@ -266,7 +266,7 @@ export function TeamPage() {
 
         {/* Bottom fade */}
         <div className="absolute bottom-0 left-0 right-0 h-36 pointer-events-none"
-          style={{ background: "linear-gradient(to bottom, transparent, var(--bg-base))" }}/>
+          style={{ background: "var(--bg-base)" }}/>
 
         <div className="relative z-10 max-w-3xl w-full"
           style={{ animation: "heroUp .8s cubic-bezier(0.16,1,0.3,1) both" }}>
