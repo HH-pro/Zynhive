@@ -3,6 +3,8 @@ import {
   MARQUEE_ITEMS, SERVICES, PROCESS_STEPS,
   TECH_STACK_AI, TECH_STACK_WEB, TECH_STACK_INFRA,
   TESTIMONIALS, SITE_CONFIG, INTRO_BULLETS,
+  TECH_STACK_DATA,
+  TECH_STACK_DEVOPS,
 } from "../lib/data";
 import { SectionHead, LinkButton } from "../components/ui/index";
 import { WhatsAppIcon } from "../components/ui/Icons";
@@ -550,7 +552,6 @@ export function ProcessSection() {
     </section>
   );
 }
-
 
 
 // ══ TECH STACK ════════════════════════════════════════════════════════════════
