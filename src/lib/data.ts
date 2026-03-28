@@ -11,7 +11,7 @@ export const SITE_CONFIG = {
   phone:       "+92 343 4783677",
   whatsapp:    "https://wa.me/923434783677",
   location:    "Lahore, Pakistan",
-  established: "2024",
+  established: "2025",
 };
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
