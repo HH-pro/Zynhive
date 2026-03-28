@@ -5,144 +5,315 @@ import { SectionHead } from "../components/ui/index";
 import { useState } from "react";
 
 const CONTACT_INFO = [
-  { label: "WhatsApp",  value: SITE_CONFIG.phone,    href: SITE_CONFIG.whatsapp, emoji: "💬", external: true },
-  { label: "Email",     value: SITE_CONFIG.email,    href: `mailto:${SITE_CONFIG.email}`, emoji: "📧", external: false },
-  { label: "Location",  value: SITE_CONFIG.location, href: "#", emoji: "📍", external: false },
+  { label: "WhatsApp",  value: SITE_CONFIG.phone,    href: SITE_CONFIG.whatsapp,           emoji: "💬", external: true  },
+  { label: "Email",     value: SITE_CONFIG.email,    href: `mailto:${SITE_CONFIG.email}`,  emoji: "📧", external: false },
+  { label: "Location",  value: SITE_CONFIG.location, href: "#",                            emoji: "📍", external: false },
 ];
 
 const FAQ = [
-  { q: "How long does a typical project take?",    a: "Most web and mobile projects ship in 6–10 weeks. AI integrations vary by complexity — typically 4–12 weeks." },
-  { q: "Do you work with startups or enterprises?", a: "Both. We calibrate our process to your stage. Startups get a lean, fast-moving approach. Enterprises get structured governance." },
-  { q: "What does your pricing look like?",         a: "We work on fixed-scope contracts so there are no surprises. After a discovery call we provide a detailed proposal within 48 hours." },
-  { q: "Can we work together if we're not in Pakistan?", a: "Absolutely — 70% of our clients are international. We operate across US, UK, EU, and GCC time zones." },
+  { q: "How long does a typical project take?",          a: "Most web and mobile projects ship in 6–10 weeks. Larger builds or complex integrations vary — after scoping we'll give you a realistic timeline upfront." },
+  { q: "Do you work with startups or enterprises?",      a: "Both. Startups get a lean, fast-moving approach focused on speed to market. Enterprises get structured delivery with proper documentation and governance." },
+  { q: "What does your pricing look like?",              a: "We work on fixed-scope contracts so there are no surprise invoices. After a discovery call we send a detailed proposal within 48 hours." },
+  { q: "Can we work together if we're not in Pakistan?", a: "Absolutely — 70% of our clients are international. We work across US, UK, EU, and GCC time zones without issue." },
 ];
 
 export function ContactPage() {
   useReveal();
+
   return (
     <main>
-      {/* Hero */}
+
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section
-        className="relative min-h-[48vh] flex items-end px-8 md:px-14 pb-16 pt-40 overflow-hidden"
+        className="relative min-h-[52vh] flex items-end px-8 md:px-14 pb-16 pt-40 overflow-hidden"
         style={{ background: "var(--hero-bg)" }}
       >
+        {/* Grid overlay */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            backgroundImage: "linear-gradient(rgba(201,125,10,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(201,125,10,.05) 1px,transparent 1px)",
+            backgroundImage:
+              "linear-gradient(rgba(201,125,10,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(201,125,10,.05) 1px,transparent 1px)",
             backgroundSize: "72px 72px",
-            maskImage: "radial-gradient(ellipse 90% 90% at 50% 50%,black 30%,transparent 100%)",
+            maskImage: "radial-gradient(ellipse 90% 90% at 50% 50%, black 30%, transparent 100%)",
           }}
         />
-        <div className="relative z-10 max-w-3xl" style={{ animation: "heroUp .8s cubic-bezier(0.16,1,0.3,1) both" }}>
+
+        {/* Radial glow */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 55% 60% at 15% 80%, var(--accent-dim) 0%, transparent 70%)",
+          }}
+        />
+
+        <div
+          className="relative z-10 max-w-3xl"
+          style={{ animation: "heroUp .8s cubic-bezier(0.16,1,0.3,1) both" }}
+        >
+          {/* Tag */}
           <div className="flex items-center gap-3 mb-5">
             <div className="w-5 h-px bg-[var(--accent)]" />
-            <span className="font-mono text-[11px] text-[var(--accent)] tracking-[0.12em] uppercase">Get In Touch</span>
+            <span className="font-mono text-[11px] text-[var(--accent)] tracking-[0.12em] uppercase">
+              Get In Touch
+            </span>
           </div>
-          <h1 className="font-syne text-[clamp(40px,6vw,80px)] font-extrabold leading-none tracking-tight mb-5"
-            style={{ color: "var(--hero-text)" }}>
-            Let's build<br />
-            <em className="not-italic text-[var(--accent)]">something great.</em>
+
+          <h1
+            className="font-syne text-[clamp(38px,6vw,78px)] font-extrabold leading-none tracking-tight mb-5"
+            style={{ color: "var(--hero-text)" }}
+          >
+            Let's build
+            <br />
+            <em className="not-italic" style={{ color: "var(--accent)" }}>something great.</em>
           </h1>
-          <p className="text-[17px] font-light leading-relaxed max-w-xl"
-            style={{ color: "var(--hero-muted)" }}>
+
+          <p
+            className="text-[16px] md:text-[17px] font-light leading-relaxed max-w-xl"
+            style={{ color: "var(--hero-muted)" }}
+          >
             One conversation is all it takes to get your project moving. Tell us what you're building.
           </p>
         </div>
       </section>
 
-      {/* Form + Info */}
-      <section className="px-8 md:px-14 py-28 bg-[var(--bg-base)] transition-colors duration-500">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-16 items-start">
-          {/* Form */}
+      {/* ── Form + Sidebar ────────────────────────────────────────────────── */}
+      <section className="px-6 md:px-14 py-20 md:py-28 bg-[var(--bg-base)] transition-colors duration-500">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-12 lg:gap-16 items-start">
+
+          {/* Form column */}
           <div className="reveal">
-            <div className="mb-10">
+            <div className="mb-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-5 h-px bg-[var(--accent)]" />
-                <span className="font-mono text-[11px] text-[var(--accent)] tracking-[0.12em] uppercase">Send a Message</span>
+                <span className="font-mono text-[11px] text-[var(--accent)] tracking-[0.12em] uppercase">
+                  Send a Message
+                </span>
               </div>
-              <h2 className="font-syne text-3xl font-extrabold text-[var(--ink)] tracking-tight mb-2">
+              <h2 className="font-syne text-2xl md:text-3xl font-extrabold text-[var(--ink)] tracking-tight mb-2">
                 Start a conversation
               </h2>
               <p className="text-sm font-light text-[var(--ink3)] leading-relaxed">
                 Fill in the form and we'll reply within 24 hours with a detailed response.
               </p>
             </div>
-            <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl p-8 transition-colors duration-500">
+
+            <div
+              className="rounded-2xl p-6 md:p-8 transition-colors duration-500"
+              style={{
+                background: "var(--bg-surface)",
+                border: "1px solid var(--border)",
+              }}
+            >
               <ContactForm />
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="flex flex-col gap-6 reveal reveal-d2 lg:sticky lg:top-28">
+          <div className="flex flex-col gap-4 reveal reveal-d2 lg:sticky lg:top-28">
+
             {/* Contact cards */}
             {CONTACT_INFO.map(({ label, value, href, emoji, external }) => (
-              <a
+              <ContactCard
                 key={label}
+                label={label}
+                value={value}
                 href={href}
-                {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
-                className="flex items-center gap-4 p-5 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl no-underline transition-all duration-300 hover:border-[var(--accent-pale2)] hover:shadow-[var(--shadow-md)] group"
-              >
-                <div className="w-11 h-11 rounded-xl bg-[var(--accent-pale)] border border-[var(--accent-pale2)] flex items-center justify-center text-xl flex-shrink-0 transition-colors duration-300">
-                  {emoji}
-                </div>
-                <div>
-                  <div className="font-mono text-[10px] text-[var(--ink4)] tracking-wider uppercase mb-0.5">{label}</div>
-                  <div className="text-sm font-medium text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors duration-200">
-                    {value}
-                  </div>
-                </div>
-              </a>
+                emoji={emoji}
+                external={external}
+              />
             ))}
 
-            {/* Response time badge */}
-            <div className="p-5 bg-[var(--bg-panel)] border border-[var(--border)] rounded-2xl transition-colors duration-500">
+            {/* Response time */}
+            <div
+              className="p-5 rounded-2xl transition-colors duration-500"
+              style={{
+                background: "var(--bg-panel)",
+                border: "1px solid var(--border)",
+              }}
+            >
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-[var(--cyan)]" style={{ animation: "bPulse 2s infinite" }} />
-                <span className="font-mono text-[11px] text-[var(--cyan)] tracking-wider uppercase">Avg. Response Time</span>
+                <div
+                  className="w-2 h-2 rounded-full bg-[var(--cyan)] flex-shrink-0"
+                  style={{ animation: "bPulse 2s infinite" }}
+                />
+                <span className="font-mono text-[10px] text-[var(--cyan)] tracking-wider uppercase">
+                  Avg. Response Time
+                </span>
               </div>
-              <div className="font-syne text-2xl font-extrabold text-[var(--ink)] mb-1">Under 4 hours</div>
-              <p className="text-xs font-light text-[var(--ink3)]">
-                Mon–Fri, 9am–8pm PKT. Urgent? Message on WhatsApp for instant response.
+              <div className="font-syne text-2xl font-extrabold text-[var(--ink)] mb-1">
+                Under 4 hours
+              </div>
+              <p className="text-xs font-light text-[var(--ink3)] leading-relaxed">
+                Mon–Fri, 9am–8pm PKT. Urgent? Message us on WhatsApp for a faster reply.
               </p>
             </div>
+
+            {/* Trust note */}
+            <div
+              className="flex items-start gap-3 px-4 py-3.5 rounded-xl"
+              style={{
+                background: "var(--accent-pale)",
+                border: "1px solid var(--accent-pale2)",
+              }}
+            >
+              <span className="text-[var(--accent)] text-base flex-shrink-0 mt-0.5">🔒</span>
+              <p className="text-[12px] text-[var(--ink3)] leading-relaxed font-light">
+                Your information is kept strictly private and never shared with third parties.
+              </p>
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="px-8 md:px-14 py-28 bg-[var(--bg-alt)] transition-colors duration-500">
+      {/* ── FAQ ──────────────────────────────────────────────────────────── */}
+      <section className="px-6 md:px-14 py-20 md:py-28 bg-[var(--bg-alt)] transition-colors duration-500">
         <div className="max-w-3xl mx-auto">
           <SectionHead
             tag="FAQ"
-            heading={<>Common <em className="not-italic text-[var(--accent)]">questions.</em></>}
+            heading={
+              <>
+                Common{" "}
+                <em className="not-italic" style={{ color: "var(--accent)" }}>questions.</em>
+              </>
+            }
+            sub="Everything you need to know before we get started."
           />
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {FAQ.map(({ q, a }, i) => (
               <FAQItem key={i} question={q} answer={a} index={i} />
             ))}
           </div>
         </div>
       </section>
+
     </main>
   );
 }
 
-function FAQItem({ question, answer, index }: { question: string; answer: string; index: number }) {
+// ─── ContactCard ──────────────────────────────────────────────────────────────
+function ContactCard({
+  label, value, href, emoji, external,
+}: {
+  label: string; value: string; href: string; emoji: string; external: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <a
+      href={href}
+      {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+      className="flex items-center gap-4 p-5 rounded-2xl no-underline transition-all duration-300"
+      style={{
+        background: "var(--bg-surface)",
+        border: `1px solid ${hovered ? "var(--accent-pale2)" : "var(--border)"}`,
+        boxShadow: hovered ? "var(--shadow-md)" : "none",
+        transform: hovered ? "translateY(-2px)" : "none",
+        cursor: href === "#" ? "default" : "pointer",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={href === "#" ? (e) => e.preventDefault() : undefined}
+    >
+      {/* Icon */}
+      <div
+        className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 transition-all duration-300"
+        style={{
+          background: hovered ? "var(--accent-pale)" : "var(--bg-panel)",
+          border: `1px solid ${hovered ? "var(--accent-pale2)" : "var(--border2)"}`,
+        }}
+      >
+        {emoji}
+      </div>
+
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <div className="font-mono text-[10px] text-[var(--ink4)] tracking-wider uppercase mb-0.5">
+          {label}
+        </div>
+        <div
+          className="text-[14px] font-medium truncate transition-colors duration-200"
+          style={{ color: hovered ? "var(--accent)" : "var(--ink)" }}
+        >
+          {value}
+        </div>
+      </div>
+
+      {/* Arrow — only for clickable links */}
+      {href !== "#" && (
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          className="flex-shrink-0 transition-all duration-300"
+          style={{
+            color: hovered ? "var(--accent)" : "var(--ink4)",
+            transform: hovered ? "translate(2px, -2px)" : "none",
+          }}
+        >
+          <path
+            d="M2 12L12 2M12 2H5M12 2V9"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+    </a>
+  );
+}
+
+// ─── FAQItem ──────────────────────────────────────────────────────────────────
+function FAQItem({
+  question, answer, index,
+}: {
+  question: string; answer: string; index: number;
+}) {
   const [open, setOpen] = useState(false);
+
   return (
     <div
-      className={`reveal reveal-d${(index % 3) + 1} border border-[var(--border)] rounded-xl overflow-hidden transition-colors duration-300 ${open ? "border-[var(--accent-pale2)]" : ""}`}
+      className={`reveal reveal-d${(index % 3) + 1} rounded-xl overflow-hidden transition-all duration-300`}
+      style={{
+        border: `1px solid ${open ? "var(--accent-pale2)" : "var(--border)"}`,
+        background: "var(--bg-surface)",
+      }}
     >
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left bg-[var(--bg-surface)] hover:bg-[var(--bg-panel)] transition-colors duration-200 cursor-none"
+        className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left transition-colors duration-200"
+        style={{
+          background: open ? "var(--accent-pale)" : "var(--bg-surface)",
+          cursor: "pointer",
+        }}
       >
-        <span className="font-syne text-[15px] font-semibold text-[var(--ink)] tracking-tight">{question}</span>
-        <span className={`text-[var(--accent)] text-xl font-light flex-shrink-0 transition-transform duration-300 ${open ? "rotate-45" : ""}`}>+</span>
+        <span className="font-syne text-[15px] font-semibold text-[var(--ink)] tracking-tight leading-snug">
+          {question}
+        </span>
+        <span
+          className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 text-sm font-semibold"
+          style={{
+            background: open ? "var(--accent)" : "var(--bg-panel)",
+            border: `1px solid ${open ? "var(--accent)" : "var(--border2)"}`,
+            color: open ? "white" : "var(--ink3)",
+            transform: open ? "rotate(45deg)" : "none",
+          }}
+        >
+          +
+        </span>
       </button>
-      <div className={`overflow-hidden transition-all duration-300 ${open ? "max-h-40" : "max-h-0"}`}>
-        <p className="px-6 py-4 text-sm font-light text-[var(--ink3)] leading-relaxed bg-[var(--bg-surface)] border-t border-[var(--border)]">
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ${open ? "max-h-48" : "max-h-0"}`}
+      >
+        <p
+          className="px-6 py-4 text-[13px] font-light text-[var(--ink3)] leading-relaxed"
+          style={{ borderTop: "1px solid var(--border)" }}
+        >
           {answer}
         </p>
       </div>
