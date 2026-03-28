@@ -47,10 +47,10 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
 
   // Logo filter:
   // • on hero: none — white logo shows great on dark hero bg
-  // • scrolled + light: brightness(0) → black, sepia+hue-rotate → blue (~#3B6EF8)
+  // • scrolled + light: navy blue (~#0a1a4a)
   // • scrolled + dark:  none — logo visible on dark glass pill
   const logoFilter = scrolled && !dark
-    ? "brightness(0) sepia(1) saturate(6) hue-rotate(200deg) brightness(0.8)"
+    ? "brightness(0) sepia(1) saturate(8) hue-rotate(210deg) brightness(0.35)"
     : "none";
 
   const navBg = scrolled
