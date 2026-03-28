@@ -38,12 +38,11 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
 
   const onHero = !scrolled;
 
-  const inkMain     = onHero ? "rgba(244,246,255,0.95)" : "var(--ink)";
-  // Nav link text: accent blue when scrolled in light mode, muted in dark, white/dim on hero
-  const inkMuted    = onHero ? "rgba(244,246,255,0.55)" : dark ? "var(--ink3)" : "var(--accent)";
-  const hoverBg     = onHero ? "rgba(255,255,255,0.08)" : dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)";
-  const activeBg    = onHero ? "rgba(255,255,255,0.12)" : "var(--accent-pale)";
-  const activeColor = onHero ? "rgba(244,246,255,0.98)" : "var(--accent)";
+  const inkMain     = "rgba(244,246,255,0.95)";
+  const inkMuted    = dark && scrolled ? "var(--ink3)" : "rgba(244,246,255,0.55)";
+  const hoverBg     = dark && scrolled ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.08)";
+  const activeBg    = "rgba(255,255,255,0.12)";
+  const activeColor = "rgba(244,246,255,0.98)";
 
   // Logo filter:
   // • on hero: none — white logo shows great on dark hero bg
