@@ -13,7 +13,8 @@ export const SITE_CONFIG = {
   location:    "Lahore, Pakistan",
   established: "2024",
 };
-
+export const TECH_STACK_DATA = ["PostgreSQL", "MongoDB", ...];
+export const TECH_STACK_DEVOPS = ["GitHub Actions", "Terraform", ...];
 // ─── Navigation ───────────────────────────────────────────────────────────────
 export const NAV_LINKS: NavLink[] = [
   { label: "Home",      href: "/"          },
