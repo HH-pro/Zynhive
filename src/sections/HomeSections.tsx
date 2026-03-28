@@ -551,11 +551,30 @@ export function ProcessSection() {
   );
 }
 
+import { useState } from "react";
+import {
+  TECH_STACK_AI,
+  TECH_STACK_WEB,
+  TECH_STACK_INFRA,
+  TECH_STACK_DATA,
+  TECH_STACK_DEVOPS,
+} from "../lib/data";
+import { SectionHead } from "../components/ui/index";
+
 // ══ TECH STACK ════════════════════════════════════════════════════════════════
 export function TechSection() {
   const [tab, setTab] = useState(0);
 
-  const categories = [
+  const categories: {
+    label: string;
+    short: string;
+    items: string[];
+    color: string;
+    shadowColor: string;
+    description: string;
+    stats: { value: string; label: string }[];
+    highlights: { icon: string; label: string; sub: string }[];
+  }[] = [
     {
       label: "AI & Machine Learning",
       short: "AI & ML",
@@ -806,7 +825,7 @@ export function TechSection() {
           {/* Tech pills */}
           <div className="px-5 sm:px-6 md:px-8 py-6 md:py-8">
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {cur.items.map((tech) => (
+              {cur.items.map((tech: string) => (
                 <span
                   key={tech}
                   className="group relative font-mono text-[10px] sm:text-[11px] px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl
