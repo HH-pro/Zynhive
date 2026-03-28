@@ -50,7 +50,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
   // • scrolled + light: navy blue (~#0a1a4a)
   // • scrolled + dark:  none — logo visible on dark glass pill
   const logoFilter = scrolled && !dark
-    ? "brightness(0) sepia(1) saturate(8) hue-rotate(210deg) brightness(0.35)"
+    ? "brightness(0) invert(1) sepia(1) saturate(3) hue-rotate(190deg) brightness(0.4)"
     : "none";
 
   const navBg = scrolled
