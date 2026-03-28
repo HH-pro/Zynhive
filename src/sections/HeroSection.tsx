@@ -23,62 +23,55 @@ function NeuralCanvas() {
     resize();
     window.addEventListener("resize", resize);
 
-    // Nodes
-    const nodeCount = Math.min(50, Math.floor((canvas.width * canvas.height) / 18000));
+    const nodeCount = Math.min(55, Math.floor((canvas.width * canvas.height) / 16000));
     const nodes = Array.from({ length: nodeCount }, () => ({
-      x:  Math.random() * canvas.width,
-      y:  Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
-      r:  Math.random() * 1.5 + 0.8,
+      x:     Math.random() * canvas.width,
+      y:     Math.random() * canvas.height,
+      vx:    (Math.random() - 0.5) * 0.3,
+      vy:    (Math.random() - 0.5) * 0.3,
+      r:     Math.random() * 1.6 + 0.7,
       pulse: Math.random() * Math.PI * 2,
     }));
 
-    const CONNECT_DIST = 160;
+    const CONNECT_DIST = 158;
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Update
       nodes.forEach((n) => {
-        n.x += n.vx;
-        n.y += n.vy;
-        n.pulse += 0.02;
+        n.x += n.vx; n.y += n.vy; n.pulse += 0.018;
         if (n.x < 0 || n.x > canvas.width)  n.vx *= -1;
         if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
       });
 
-      // Connections
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx   = nodes[i].x - nodes[j].x;
           const dy   = nodes[i].y - nodes[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < CONNECT_DIST) {
-            const alpha = (1 - dist / CONNECT_DIST) * 0.18;
+            const alpha = (1 - dist / CONNECT_DIST) * 0.17;
             ctx.beginPath();
             ctx.moveTo(nodes[i].x, nodes[i].y);
             ctx.lineTo(nodes[j].x, nodes[j].y);
-            ctx.strokeStyle = `rgba(59,110,248,${alpha})`;
-            ctx.lineWidth = 0.8;
+            ctx.strokeStyle = `rgba(99,129,255,${alpha})`;
+            ctx.lineWidth = 0.7;
             ctx.stroke();
           }
         }
       }
 
-      // Nodes
       nodes.forEach((n) => {
         const glow = Math.sin(n.pulse) * 0.5 + 0.5;
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(59,110,248,${0.4 + glow * 0.4})`;
+        ctx.fillStyle = `rgba(99,129,255,${0.35 + glow * 0.45})`;
         ctx.fill();
 
-        // Outer ring for some nodes
-        if (n.r > 1.5) {
+        if (n.r > 1.4) {
           ctx.beginPath();
-          ctx.arc(n.x, n.y, n.r + 4 + glow * 3, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(0,212,255,${0.08 + glow * 0.08})`;
+          ctx.arc(n.x, n.y, n.r + 3 + glow * 3.5, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(6,182,212,${0.07 + glow * 0.08})`;
           ctx.lineWidth = 0.5;
           ctx.stroke();
         }
@@ -98,23 +91,185 @@ function NeuralCanvas() {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ opacity: 0.7 }}
+      style={{ opacity: 0.65 }}
     />
   );
 }
 
 // ─── Stat Counter ─────────────────────────────────────────────────────────────
-function StatCounter({ target, suffix, label }: { target: number; suffix: string; label: string }) {
-  const [ref, inView] = useInView(0.5);
+function StatCounter({
+  target,
+  suffix,
+  label,
+}: {
+  target: number;
+  suffix: string;
+  label: string;
+}) {
+  const [ref, inView] = useInView(0.4);
   const count = useCounter(target, 2000, inView);
   return (
-    <div ref={ref} className="text-right">
-      <div className="font-display text-[28px] font-bold text-[var(--ink)] leading-none tracking-tight">
+    <div ref={ref} className="flex flex-col gap-1">
+      <div
+        className="font-display leading-none tracking-tight"
+        style={{ fontSize: "clamp(22px,3vw,30px)", fontWeight: 800, color: "#fff" }}
+      >
         {count}
-        <em className="not-italic text-gradient-blue text-xl">{suffix}</em>
+        <em
+          className="not-italic"
+          style={{
+            fontSize: "0.7em",
+            fontWeight: 700,
+            background: "linear-gradient(110deg,var(--accent2),var(--cyan))",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          {suffix}
+        </em>
       </div>
-      <div className="font-mono text-[10px] text-[var(--ink4)] mt-1 tracking-[0.08em] uppercase">
+      <div
+        className="font-mono uppercase tracking-widest"
+        style={{ fontSize: "9px", color: "rgba(244,246,255,0.3)", letterSpacing: "0.1em" }}
+      >
         {label}
+      </div>
+    </div>
+  );
+}
+
+// ─── Performance Card (floating right) ───────────────────────────────────────
+function PerfCard() {
+  const metrics = [
+    { label: "Model Accuracy", val: 94, color: "linear-gradient(90deg,var(--accent),var(--accent2))" },
+    { label: "Latency Reduction", val: 78, color: "linear-gradient(90deg,var(--cyan),#22d3ee)" },
+    { label: "Uptime SLA", val: 99, color: "linear-gradient(90deg,#10b981,#34d399)" },
+  ];
+
+  return (
+    <div
+      className="absolute right-6 md:right-14 top-1/2 -translate-y-1/2 z-10 hidden xl:flex flex-col gap-5"
+      style={{
+        width: 272,
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.09)",
+        borderRadius: 20,
+        padding: "24px",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        animation: "heroUp 1s 0.55s var(--ease) both",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          paddingBottom: 16,
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
+        }}
+      >
+        <div
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 10,
+            background: "linear-gradient(135deg,rgba(74,108,247,0.45),rgba(6,182,212,0.3))",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(165,180,252,.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(244,246,255,.88)", lineHeight: 1.3 }}>
+            Live Metrics
+          </div>
+          <div style={{ fontSize: 11, color: "rgba(244,246,255,.35)", marginTop: 1 }}>
+            AI pipeline · production
+          </div>
+        </div>
+      </div>
+
+      {/* Bars */}
+      {metrics.map((m) => (
+        <div key={m.label} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span
+              className="font-mono uppercase"
+              style={{ fontSize: 9, letterSpacing: "0.08em", color: "rgba(244,246,255,.32)" }}
+            >
+              {m.label}
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(244,246,255,.75)" }}>
+              {m.val}%
+            </span>
+          </div>
+          <div
+            style={{
+              height: 4,
+              borderRadius: 4,
+              background: "rgba(255,255,255,0.07)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${m.val}%`,
+                borderRadius: 4,
+                background: m.color,
+              }}
+            />
+          </div>
+        </div>
+      ))}
+
+      {/* Tags */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 4 }}>
+        {[
+          { label: "Production live", dot: true },
+          { label: "Lahore HQ" },
+          { label: "24 / 7 support" },
+        ].map((t) => (
+          <span
+            key={t.label}
+            className="font-mono"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "4px 10px",
+              borderRadius: 8,
+              background: "rgba(74,108,247,0.10)",
+              border: "1px solid rgba(74,108,247,0.18)",
+              fontSize: 9,
+              letterSpacing: "0.04em",
+              color: "rgba(165,180,252,.75)",
+            }}
+          >
+            {t.dot && (
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: "50%",
+                  background: "#4ade80",
+                  boxShadow: "0 0 6px #4ade80",
+                  display: "inline-block",
+                  flexShrink: 0,
+                }}
+              />
+            )}
+            {t.label}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -122,7 +277,9 @@ function StatCounter({ target, suffix, label }: { target: number; suffix: string
 
 // ─── HeroSection ─────────────────────────────────────────────────────────────
 export function HeroSection() {
-  const typed = useTypewriter(HERO_WORDS, 75, 2200);
+  const typed = useTypewriter(HERO_WORDS, 72, 2300);
+
+  const CAPS = ["GPT-4o", "Claude 3.5", "LangChain", "RAG Pipelines", "AI Agents", "Fine-Tuning", "Next.js", "FastAPI"];
 
   return (
     <section
@@ -133,46 +290,76 @@ export function HeroSection() {
       {/* Neural network bg */}
       <NeuralCanvas />
 
-      {/* Grid background */}
+      {/* Grid overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: "linear-gradient(rgba(59,110,248,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(59,110,248,0.04) 1px, transparent 1px)",
-          backgroundSize: "80px 80px",
-          animation: "gridPulse 4s ease-in-out infinite",
+          backgroundImage:
+            "linear-gradient(rgba(59,110,248,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59,110,248,0.05) 1px, transparent 1px)",
+          backgroundSize: "72px 72px",
+          maskImage: "radial-gradient(ellipse 90% 90% at 50% 50%, black 10%, transparent 100%)",
+          animation: "gridPulse 5s ease-in-out infinite",
         }}
       />
 
-      {/* Radial glow — top right */}
+      {/* Orb — top right */}
       <div
-        className="absolute top-[-20%] right-[-10%] w-[700px] h-[700px] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(59,110,248,0.12) 0%, transparent 65%)" }}
+        className="absolute pointer-events-none rounded-full"
+        style={{
+          top: "-15%", right: "-8%",
+          width: 700, height: 700,
+          background: "radial-gradient(circle, rgba(74,108,247,0.14) 0%, rgba(74,108,247,0.04) 45%, transparent 70%)",
+          animation: "floatGlow 9s ease-in-out infinite",
+        }}
       />
-      {/* Cyan glow — bottom left */}
+      {/* Orb — bottom left */}
       <div
-        className="absolute bottom-[-10%] left-[5%] w-[500px] h-[500px] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(0,212,255,0.07) 0%, transparent 65%)" }}
+        className="absolute pointer-events-none rounded-full"
+        style={{
+          bottom: "-12%", left: "0%",
+          width: 560, height: 560,
+          background: "radial-gradient(circle, rgba(6,182,212,0.09) 0%, transparent 65%)",
+          animation: "floatGlow 12s ease-in-out infinite reverse",
+        }}
+      />
+      {/* Orb — mid accent */}
+      <div
+        className="absolute pointer-events-none rounded-full"
+        style={{
+          top: "40%", left: "55%",
+          width: 320, height: 320,
+          background: "radial-gradient(circle, rgba(99,129,255,0.07) 0%, transparent 70%)",
+          animation: "floatGlow 7s ease-in-out infinite",
+        }}
       />
 
       {/* Available badge */}
       <div
-        className="absolute top-28 right-6 md:right-14 z-10 hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl backdrop-blur-sm"
+        className="absolute top-28 right-6 md:right-14 z-10 hidden sm:flex items-center gap-2 px-3 py-2 rounded-full"
         style={{
-          animation: "heroUp 1s 0.7s var(--ease) both",
-          background: "rgba(255,255,255,0.07)",
-          border: "1px solid rgba(255,255,255,0.12)",
+          animation: "heroUp 1s 0.65s var(--ease) both",
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.11)",
+          backdropFilter: "blur(12px)",
         }}
       >
         <div
-          className="w-1.5 h-1.5 rounded-full"
-          style={{ background: "#4ade80", animation: "bPulse 2s infinite", boxShadow: "0 0 6px #4ade80" }}
+          style={{
+            width: 6, height: 6, borderRadius: "50%",
+            background: "#4ade80",
+            boxShadow: "0 0 8px #4ade80, 0 0 20px rgba(74,222,128,0.4)",
+            animation: "bPulse 2s ease-in-out infinite",
+          }}
         />
-        <span className="font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: "rgba(244,246,255,0.7)" }}>
+        <span
+          className="font-mono uppercase"
+          style={{ fontSize: 10, letterSpacing: "0.1em", color: "rgba(244,246,255,0.65)" }}
+        >
           Available for projects
         </span>
       </div>
 
-      {/* Main content */}
+      {/* ── Main content ── */}
       <div className="relative z-10 max-w-4xl w-full">
 
         {/* Eyebrow */}
@@ -180,41 +367,67 @@ export function HeroSection() {
           className="flex items-center gap-3 mb-7"
           style={{ animation: "heroUp .8s var(--ease) both" }}
         >
-          <div className="w-8 h-px" style={{ background: "linear-gradient(90deg, var(--accent), var(--cyan))" }} />
-          <span className="font-mono text-[11px] font-medium text-[var(--accent)] tracking-[0.16em] uppercase">
+          <div
+            className="flex-shrink-0"
+            style={{
+              width: 32, height: 1,
+              background: "linear-gradient(90deg, var(--accent), var(--cyan))",
+            }}
+          />
+          <span
+            className="font-mono uppercase"
+            style={{
+              fontSize: 11, fontWeight: 500,
+              color: "var(--accent)",
+              letterSpacing: "0.18em",
+            }}
+          >
             {SITE_CONFIG.name} · AI-First Digital Agency · Est. {SITE_CONFIG.established}
           </span>
         </div>
 
-        {/* Main headline */}
+        {/* Headline */}
         <h1
-          className="font-display font-bold leading-[0.95] tracking-[-0.04em] mb-6 text-[var(--hero-text)]"
+          className="font-display font-bold leading-[0.93] tracking-[-0.04em] mb-7"
           style={{
-            fontSize: "clamp(48px,8vw,104px)",
-            animation: "heroUp .9s .1s var(--ease) both",
+            fontSize: "clamp(50px,8.5vw,108px)",
+            color: "var(--hero-text)",
+            animation: "heroUp .9s .08s var(--ease) both",
           }}
         >
           <span className="block">We Build</span>
 
-          {/* Animated gradient word */}
+          {/* Animated gradient line */}
           <span
-            className="block text-gradient-blue"
-            style={{ minHeight: "1.1em" }}
+            className="block"
+            style={{
+              minHeight: "1.05em",
+              paddingBottom: "0.02em",
+              background: "linear-gradient(110deg,#ffffff 0%,#a5b4fc 40%,var(--cyan) 80%,#38bdf8 100%)",
+              backgroundSize: "200%",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              animation: "gradientShift 5s ease-in-out infinite",
+            }}
           >
             {typed}
             <span
-              className="text-[var(--cyan)]"
-              style={{ animation: "blink 1s step-end infinite" }}
+              style={{
+                fontWeight: 300,
+                WebkitTextFillColor: "var(--cyan)",
+                animation: "blink 1s step-end infinite",
+              }}
             >
               |
             </span>
           </span>
 
-          {/* Outline ghost word */}
+          {/* Ghost outline */}
           <span
             className="block"
             style={{
-              WebkitTextStroke: "1px rgba(232,240,255,0.12)",
+              WebkitTextStroke: "1px rgba(232,240,255,0.10)",
               color: "transparent",
             }}
           >
@@ -224,18 +437,24 @@ export function HeroSection() {
 
         {/* Sub */}
         <p
-          className="text-[16px] md:text-[18px] font-light leading-relaxed max-w-2xl mb-10 text-[var(--hero-muted)] font-body"
-          style={{ animation: "heroUp .9s .2s var(--ease) both" }}
+          className="font-body leading-relaxed max-w-2xl mb-10"
+          style={{
+            fontSize: "clamp(15px,1.4vw,18px)",
+            color: "var(--hero-muted)",
+            animation: "heroUp .9s .16s var(--ease) both",
+          }}
         >
-          From <span className="text-[var(--cyan)] font-medium">LLM fine-tuning</span> to pixel-perfect interfaces —
-          we engineer AI products that automate workflows, delight users, and generate revenue.
-          Lahore-based. <span className="text-[var(--ink2)]">Global delivery.</span>
+          From{" "}
+          <span style={{ color: "var(--cyan)", fontWeight: 500 }}>LLM fine-tuning</span>
+          {" "}to pixel-perfect interfaces — we engineer AI products that automate workflows,
+          delight users, and generate revenue. Lahore-based.{" "}
+          <span style={{ color: "rgba(244,246,255,0.72)", fontWeight: 400 }}>Global delivery.</span>
         </p>
 
         {/* CTAs */}
         <div
-          className="flex items-center gap-3 flex-wrap mb-16"
-          style={{ animation: "heroUp .9s .3s var(--ease) both" }}
+          className="flex items-center gap-3 flex-wrap mb-10"
+          style={{ animation: "heroUp .9s .24s var(--ease) both" }}
         >
           <LinkButton href="#services" variant="accent" size="lg">
             Explore Services
@@ -247,51 +466,100 @@ export function HeroSection() {
           </LinkButton>
         </div>
 
-        {/* AI capability pills */}
+        {/* Capability pills */}
         <div
-          className="flex flex-wrap gap-2"
-          style={{ animation: "heroUp .9s .4s var(--ease) both" }}
+          className="flex flex-wrap gap-2 mb-14"
+          style={{ animation: "heroUp .9s .32s var(--ease) both" }}
         >
-          {["GPT-4o", "Claude 3.5", "LangChain", "RAG Pipelines", "AI Agents", "Fine-Tuning"].map((cap) => (
+          {CAPS.map((cap) => (
             <span
               key={cap}
-              className="font-mono text-[10px] px-3 py-1.5 rounded-full border border-[var(--border)]
-                text-[var(--ink4)] bg-[var(--bg-surface)] hover:border-[var(--accent-pale2)]
-                hover:text-[var(--accent)] transition-all duration-200 tracking-wide cursor-default"
+              className="font-mono uppercase cursor-default"
+              style={{
+                fontSize: 10,
+                padding: "6px 14px",
+                borderRadius: 100,
+                border: "1px solid rgba(255,255,255,0.09)",
+                background: "rgba(255,255,255,0.04)",
+                color: "rgba(244,246,255,0.42)",
+                letterSpacing: "0.06em",
+                transition: "all .2s ease",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(74,108,247,0.4)";
+                (e.currentTarget as HTMLElement).style.background  = "rgba(74,108,247,0.08)";
+                (e.currentTarget as HTMLElement).style.color       = "rgba(165,180,252,.9)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.09)";
+                (e.currentTarget as HTMLElement).style.background  = "rgba(255,255,255,0.04)";
+                (e.currentTarget as HTMLElement).style.color       = "rgba(244,246,255,0.42)";
+              }}
             >
               {cap}
             </span>
           ))}
         </div>
+
+        {/* Stats row */}
+        <div
+          className="flex items-center gap-8 flex-wrap"
+          style={{
+            paddingTop: 32,
+            borderTop: "1px solid rgba(255,255,255,0.07)",
+            animation: "heroUp .9s .4s var(--ease) both",
+          }}
+        >
+          {HERO_STATS.map((s, i) => (
+            <div key={s.label} className="flex items-center gap-8">
+              <StatCounter {...s} />
+              {i < HERO_STATS.length - 1 && (
+                <div
+                  style={{
+                    width: 1,
+                    height: 36,
+                    background: "rgba(255,255,255,0.08)",
+                    flexShrink: 0,
+                  }}
+                />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Floating performance card */}
+      <PerfCard />
 
       {/* Scroll indicator */}
       <div
         className="absolute bottom-10 left-6 md:left-14 z-10 items-center gap-3 hidden md:flex"
-        style={{ animation: "heroUp .9s .6s var(--ease) both" }}
+        style={{ animation: "heroUp .9s .55s var(--ease) both" }}
       >
-        <div className="relative w-px h-14 overflow-hidden bg-[var(--border)]">
+        <div
+          className="relative overflow-hidden"
+          style={{ width: 1, height: 52, background: "rgba(255,255,255,0.08)" }}
+        >
           <div
-            className="absolute top-0 w-px h-1/2 bg-gradient-to-b from-transparent to-[var(--accent)]"
-            style={{ animation: "scrollDown 1.8s ease-in-out infinite" }}
+            className="absolute top-0 w-px"
+            style={{
+              height: "55%",
+              background: "linear-gradient(to bottom, transparent, var(--accent))",
+              animation: "scrollDown 1.9s ease-in-out infinite",
+            }}
           />
         </div>
         <span
-          className="font-mono text-[10px] tracking-[0.14em] uppercase text-[var(--ink4)]"
-          style={{ writingMode: "vertical-rl" }}
+          className="font-mono uppercase"
+          style={{
+            fontSize: 9,
+            letterSpacing: "0.14em",
+            color: "rgba(244,246,255,0.25)",
+            writingMode: "vertical-rl",
+          }}
         >
           Scroll
         </span>
-      </div>
-
-      {/* Stats — bottom right */}
-      <div
-        className="absolute bottom-10 right-6 md:right-14 z-10 hidden md:flex gap-10"
-        style={{ animation: "heroUp .9s .5s var(--ease) both" }}
-      >
-        {HERO_STATS.map((s) => (
-          <StatCounter key={s.label} {...s} />
-        ))}
       </div>
     </section>
   );
