@@ -39,10 +39,15 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
   const onHero = !scrolled;
 
   const inkMain  = onHero ? "rgba(244,246,255,0.95)" : "var(--ink)";
-  const inkMuted = onHero ? "rgba(244,246,255,0.55)" : "var(--ink3)";
+  const inkMuted = onHero ? "rgba(244,246,255,0.55)" : dark ? "var(--ink3)" : "var(--ink2)";
   const hoverBg  = onHero ? "rgba(255,255,255,0.08)" : dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)";
   const activeBg = onHero ? "rgba(255,255,255,0.12)" : "var(--accent-pale)";
   const activeColor = onHero ? "rgba(244,246,255,0.98)" : "var(--accent)";
+
+  // Logo filter: when scrolled in light mode, invert white logo to black so it stays visible
+  const logoFilter = scrolled && !dark
+    ? "brightness(0) saturate(100%)"
+    : "none";
 
   // Scrolled: solid glass pill. On hero: transparent floating pill.
   const navBg = scrolled
@@ -107,7 +112,8 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                   height: scrolled ? 44 : 54,
                   width: "auto",
                   maxWidth: 180,
-                  transition: "height .35s var(--ease)",
+                  transition: "height .35s var(--ease), filter .35s ease",
+                  filter: logoFilter,
                 }}
               />
             </a>
