@@ -13,8 +13,7 @@ export const SITE_CONFIG = {
   location:    "Lahore, Pakistan",
   established: "2024",
 };
-export const TECH_STACK_DATA = ["PostgreSQL", "MongoDB", ...];
-export const TECH_STACK_DEVOPS = ["GitHub Actions", "Terraform", ...];
+
 // ─── Navigation ───────────────────────────────────────────────────────────────
 export const NAV_LINKS: NavLink[] = [
   { label: "Home",      href: "/"          },
@@ -28,61 +27,64 @@ export const NAV_LINKS: NavLink[] = [
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 export const HERO_WORDS = [
   "AI Solutions", "Web Apps", "Mobile Apps", "Digital Growth", "UI/UX Design",
+  "RAG Pipelines", "AI Agents", "SaaS Products",
 ];
 
 export const HERO_STATS: StatItem[] = [
   { target: 120, suffix: "+",  label: "Projects Delivered"  },
   { target: 98,  suffix: "%",  label: "Client Satisfaction" },
   { target: 5,   suffix: "yr", label: "Years Experience"    },
+  { target: 40,  suffix: "+",  label: "AI Models Deployed"  },
 ];
 
 // ─── Marquee ──────────────────────────────────────────────────────────────────
 export const MARQUEE_ITEMS = [
   "AI Development", "Web Applications", "Mobile Apps", "UI/UX Design",
-  "Digital Marketing", "SEO Optimization", "Custom Software", "Cloud Solutions", "E-Commerce",
+  "Digital Marketing", "SEO Optimization", "Custom Software", "Cloud Solutions",
+  "E-Commerce", "LLM Fine-Tuning", "RAG Pipelines", "AI Agents",
 ];
 
 // ─── Services  (navy-family accent colors) ────────────────────────────────────
 export const SERVICES: Service[] = [
   {
-    id: "s1", emoji: "🤖", color: "#3B6EF8",   // electric blue
+    id: "s1", emoji: "🤖", color: "#3B6EF8",
     title: "AI Development",
     desc:  "Custom LLM integrations, AI agents, and automation workflows that transform your operations.",
     items: ["LLM Integration", "AI Automation", "Custom Models", "Data Pipelines"],
   },
   {
-    id: "s2", emoji: "🌐", color: "#00AACC",   // teal-cyan
+    id: "s2", emoji: "🌐", color: "#00AACC",
     title: "Web Applications",
     desc:  "Production-grade web apps with modern stacks — fast, scalable, and pixel-perfect.",
     items: ["React / Next.js", "Node.js / Laravel", "Web Portals", "E-Commerce"],
   },
   {
-    id: "s3", emoji: "📱", color: "#7B5CFA",   // indigo-violet
+    id: "s3", emoji: "📱", color: "#7B5CFA",
     title: "Mobile Apps",
     desc:  "Cross-platform and native mobile experiences built for performance and delight.",
     items: ["React Native", "Flutter", "iOS & Android", "Enterprise Apps"],
   },
   {
-    id: "s4", emoji: "✦",  color: "#1A66FF",   // royal blue
+    id: "s4", emoji: "✦",  color: "#1A66FF",
     title: "UI/UX Design",
     desc:  "Interfaces that convert. Research-driven design systems rooted in user psychology.",
     items: ["UX Research", "Design Systems", "Prototyping", "Brand Identity"],
   },
   {
-    id: "s5", emoji: "📈", color: "#0DBFA8",   // teal-green
+    id: "s5", emoji: "📈", color: "#0DBFA8",
     title: "Digital Marketing",
     desc:  "Data-driven campaigns that grow your audience, build trust, and increase revenue.",
     items: ["SEO Strategy", "Social Media", "PPC Campaigns", "Content Marketing"],
   },
   {
-    id: "s6", emoji: "⚙️",  color: "#4D5BFF",   // periwinkle
+    id: "s6", emoji: "⚙️", color: "#4D5BFF",
     title: "Software Consulting",
     desc:  "Architecture audits, IT consulting, and legacy modernisation for growing businesses.",
     items: ["Tech Audits", "IT Consulting", "Legacy Migration", "Cloud Setup"],
   },
 ];
 
-// ─── Portfolio Projects (navy-blue accent colors) ─────────────────────────────
+// ─── Portfolio Projects ───────────────────────────────────────────────────────
 export const PROJECTS: Project[] = [
   {
     id: "p1", emoji: "🤖", color: "#3B6EF8", featured: true,
@@ -132,18 +134,53 @@ export const PROJECTS: Project[] = [
     description: "Full-stack SEO and content strategy overhaul for a B2B SaaS, including technical audit and backlink campaigns.",
     result: "312% organic traffic growth",
   },
+  {
+    id: "p7", emoji: "🧠", color: "#3B6EF8",
+    title: "DocuMind RAG",
+    category: "AI Development",
+    tags: ["RAG", "LangChain", "Pinecone"],
+    description: "Retrieval-augmented generation system for a legal firm — instant semantic search across 500K+ documents.",
+    result: "82% reduction in research time",
+  },
+  {
+    id: "p8", emoji: "🏗", color: "#4D5BFF",
+    title: "BuildTrack SaaS",
+    category: "Web Application",
+    tags: ["Next.js", "Supabase", "Stripe"],
+    description: "Construction project management SaaS with real-time collaboration, milestone tracking, and contractor payments.",
+    result: "Onboarded 200 firms in 3 months",
+  },
 ];
 
 // ─── Process ──────────────────────────────────────────────────────────────────
 export const PROCESS_STEPS: ProcessStep[] = [
-  { step: "01", title: "Discovery & Strategy",  desc: "Deep-dive into your vision, market, and goals. We map a clear roadmap before a single line of code is written." },
-  { step: "02", title: "Design & Prototyping",  desc: "High-fidelity prototypes and design systems that align stakeholders and eliminate rework." },
-  { step: "03", title: "Development & Build",   desc: "Agile sprints with weekly demos. Clean, tested, documented code delivered on schedule." },
-  { step: "04", title: "Testing & QA",          desc: "Rigorous quality assurance across browsers, devices and edge cases. Performance, security, accessibility." },
-  { step: "05", title: "Deployment & Launch",   desc: "CI/CD pipelines, zero-downtime deploys, and a smooth go-live backed by our team." },
+  {
+    step: "01", title: "Discovery & Strategy",
+    desc: "Deep-dive into your vision, market, and goals. We map a clear roadmap before a single line of code is written.",
+  },
+  {
+    step: "02", title: "Design & Prototyping",
+    desc: "High-fidelity prototypes and design systems that align stakeholders and eliminate rework.",
+  },
+  {
+    step: "03", title: "Development & Build",
+    desc: "Agile sprints with weekly demos. Clean, tested, documented code delivered on schedule.",
+  },
+  {
+    step: "04", title: "Testing & QA",
+    desc: "Rigorous quality assurance across browsers, devices and edge cases. Performance, security, accessibility.",
+  },
+  {
+    step: "05", title: "Deployment & Launch",
+    desc: "CI/CD pipelines, zero-downtime deploys, and a smooth go-live backed by our team.",
+  },
+  {
+    step: "06", title: "Growth & Support",
+    desc: "Post-launch monitoring, iterative improvements, and ongoing partnership to help your product scale.",
+  },
 ];
 
-// ─── Team  (navy-blue avatar colors) ─────────────────────────────────────────
+// ─── Team ─────────────────────────────────────────────────────────────────────
 export const TEAM_MEMBERS: TeamMember[] = [
   {
     id: "tm1", initials: "ZA", color: "#3B6EF8",
@@ -185,20 +222,133 @@ export const TEAM_MEMBERS: TeamMember[] = [
 
 // ─── Testimonials ─────────────────────────────────────────────────────────────
 export const TESTIMONIALS: Testimonial[] = [
-  { id: "t1", initials: "SJ", rating: 5, name: "Sarah Johnson",     role: "CEO",              company: "InnovateX",    text: "ZynHive exceeded every expectation. Tight process, professional team, and results that speak for themselves. Delivered on time, on budget." },
-  { id: "t2", initials: "DK", rating: 5, name: "David Kim",         role: "CTO",              company: "NextGen Tech", text: "From design to deployment, handled with genuine expertise. The AI integration they built saved us 20 hours per week immediately." },
-  { id: "t3", initials: "EC", rating: 5, name: "Emily Carter",      role: "Founder",          company: "StartUp Hub",  text: "They understood our vision perfectly and shipped a product that truly scales. Not just developers — strategic partners." },
-  { id: "t4", initials: "MR", rating: 5, name: "Michael Rodriguez", role: "Product Director", company: "TechVision",   text: "Technical depth and attention to detail are rare. Their solution impresses both our users and our investors." },
-  { id: "t5", initials: "JT", rating: 5, name: "Jessica Taylor",    role: "Operations Lead",  company: "ScaleFast",    text: "Genuinely collaborative. They helped us pivot fast when market conditions shifted — felt like our in-house team." },
-  { id: "t6", initials: "AK", rating: 5, name: "Ahmed Khan",        role: "CEO",              company: "LaunchPad",    text: "Best investment we made. The website ZynHive built tripled our leads in 60 days. The SEO alone paid for the whole project." },
+  {
+    id: "t1", initials: "SJ", rating: 5,
+    name: "Sarah Johnson", role: "CEO", company: "InnovateX",
+    text: "ZynHive exceeded every expectation. Tight process, professional team, and results that speak for themselves. Delivered on time, on budget.",
+  },
+  {
+    id: "t2", initials: "DK", rating: 5,
+    name: "David Kim", role: "CTO", company: "NextGen Tech",
+    text: "From design to deployment, handled with genuine expertise. The AI integration they built saved us 20 hours per week immediately.",
+  },
+  {
+    id: "t3", initials: "EC", rating: 5,
+    name: "Emily Carter", role: "Founder", company: "StartUp Hub",
+    text: "They understood our vision perfectly and shipped a product that truly scales. Not just developers — strategic partners.",
+  },
+  {
+    id: "t4", initials: "MR", rating: 5,
+    name: "Michael Rodriguez", role: "Product Director", company: "TechVision",
+    text: "Technical depth and attention to detail are rare. Their solution impresses both our users and our investors.",
+  },
+  {
+    id: "t5", initials: "JT", rating: 5,
+    name: "Jessica Taylor", role: "Operations Lead", company: "ScaleFast",
+    text: "Genuinely collaborative. They helped us pivot fast when market conditions shifted — felt like our in-house team.",
+  },
+  {
+    id: "t6", initials: "AK", rating: 5,
+    name: "Ahmed Khan", role: "CEO", company: "LaunchPad",
+    text: "Best investment we made. The website ZynHive built tripled our leads in 60 days. The SEO alone paid for the whole project.",
+  },
 ];
 
-// ─── Tech Stack ───────────────────────────────────────────────────────────────
+// ─── Tech Stack — flat (legacy / marquee usage) ───────────────────────────────
 export const TECH_STACK = [
   "React.js", "Next.js", "TypeScript", "Node.js", "Python", "Laravel",
   "Flutter", "React Native", "Firebase", "Supabase", "PostgreSQL", "MongoDB",
   "AWS", "Vercel", "Tailwind CSS", "Figma", "WordPress", "Shopify",
   "OpenAI API", "LangChain", "Stripe", "Docker", "Redis", "GitHub Actions",
+];
+
+// ─── Tech Stack — AI & Machine Learning ──────────────────────────────────────
+export const TECH_STACK_AI = [
+  // LLM Providers & APIs
+  "OpenAI API", "Anthropic Claude", "Google Gemini", "Mistral AI", "Cohere",
+  // Frameworks & Orchestration
+  "LangChain", "LlamaIndex", "CrewAI", "AutoGen", "Haystack",
+  // Models & Fine-tuning
+  "Hugging Face", "PEFT / LoRA", "Whisper", "Stable Diffusion", "CLIP",
+  // Vector & Retrieval
+  "Pinecone", "Weaviate", "pgvector", "ChromaDB", "Qdrant",
+  // ML & Data Science
+  "Python", "TensorFlow", "PyTorch", "scikit-learn", "Pandas",
+  // Serving & Infra
+  "FastAPI", "Ray Serve", "BentoML", "Replicate", "Modal",
+];
+
+// ─── Tech Stack — Web & Mobile ────────────────────────────────────────────────
+export const TECH_STACK_WEB = [
+  // Frontend
+  "React.js", "Next.js", "TypeScript", "Tailwind CSS", "Framer Motion",
+  "ShadCN UI", "Radix UI", "Vite", "Astro", "Remix",
+  // Backend
+  "Node.js", "Express.js", "NestJS", "Laravel", "FastAPI",
+  // Mobile
+  "React Native", "Expo", "Flutter", "Swift (iOS)", "Kotlin (Android)",
+  // Databases
+  "PostgreSQL", "MongoDB", "MySQL", "Redis", "Supabase",
+  // Commerce & Payments
+  "Shopify", "Stripe", "PayFast", "Razorpay",
+  // Auth & CMS
+  "NextAuth.js", "Clerk", "Firebase Auth", "Contentful", "Sanity",
+  // Design
+  "Figma", "Storybook", "Lottie",
+];
+
+// ─── Tech Stack — Infrastructure & Cloud ─────────────────────────────────────
+export const TECH_STACK_INFRA = [
+  // Cloud Providers
+  "AWS", "Google Cloud", "Azure", "Vercel", "Fly.io",
+  // Containers & Orchestration
+  "Docker", "Kubernetes", "Helm", "Docker Compose",
+  // Databases & Caching
+  "PostgreSQL", "Redis", "ClickHouse", "Elasticsearch",
+  // CDN & Networking
+  "Cloudflare", "Nginx", "Traefik", "AWS CloudFront",
+  // Storage & Queues
+  "AWS S3", "Cloudflare R2", "BullMQ", "RabbitMQ",
+  // Monitoring
+  "Grafana", "Prometheus", "Datadog", "Sentry",
+  // Platform
+  "Linux VPS", "Supabase", "PlanetScale", "Neon",
+];
+
+// ─── Tech Stack — Data & Analytics ───────────────────────────────────────────
+export const TECH_STACK_DATA = [
+  // Databases
+  "PostgreSQL", "MongoDB", "ClickHouse", "BigQuery", "Snowflake",
+  // Streaming & Queues
+  "Apache Kafka", "Apache Flink", "AWS Kinesis", "RabbitMQ",
+  // ETL & Pipelines
+  "Apache Airflow", "dbt", "Prefect", "Great Expectations",
+  // Data Science
+  "Pandas", "Polars", "Apache Spark", "Jupyter", "DuckDB",
+  // BI & Visualisation
+  "Metabase", "Redash", "Apache Superset", "Grafana", "Recharts",
+  // Search
+  "Elasticsearch", "Typesense", "Meilisearch",
+  // Storage
+  "AWS S3", "Parquet", "Delta Lake", "Cloudflare R2",
+];
+
+// ─── Tech Stack — Security & DevOps ──────────────────────────────────────────
+export const TECH_STACK_DEVOPS = [
+  // CI/CD
+  "GitHub Actions", "GitLab CI", "ArgoCD", "CircleCI",
+  // Infrastructure as Code
+  "Terraform", "Ansible", "Pulumi", "AWS CDK",
+  // Secrets & Identity
+  "HashiCorp Vault", "AWS Secrets Manager", "SOPS", "Doppler",
+  // Security Scanning
+  "Trivy", "Snyk", "SonarQube", "OWASP ZAP", "Semgrep",
+  // Observability
+  "Datadog", "PagerDuty", "Sentry", "OpenTelemetry", "Jaeger",
+  // Feature Flags & Releases
+  "LaunchDarkly", "Unleash", "Flagsmith",
+  // Reverse Proxy & API
+  "Nginx", "Traefik", "Kong", "AWS API Gateway",
 ];
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
@@ -215,20 +365,4 @@ export const INTRO_BULLETS = [
   "Smart AI-powered technology for business growth",
   "Results-driven marketing & SEO strategies",
   "End-to-end from concept to production launch",
-];
-// ─── Tech Stack (categorized) ─────────────────────────────────────────────────
-export const TECH_STACK_AI = [
-  "OpenAI API", "LangChain", "Python", "TensorFlow", "Hugging Face",
-  "LlamaIndex", "Pinecone", "Whisper", "Stable Diffusion", "AutoGPT",
-];
-
-export const TECH_STACK_WEB = [
-  "React.js", "Next.js", "TypeScript", "Node.js", "Laravel",
-  "Tailwind CSS", "PostgreSQL", "MongoDB", "Supabase", "Stripe",
-  "Flutter", "React Native", "Firebase", "Figma", "Shopify",
-];
-
-export const TECH_STACK_INFRA = [
-  "AWS", "Vercel", "Docker", "Redis", "GitHub Actions",
-  "Nginx", "Cloudflare", "Supabase", "CI/CD", "Linux VPS",
 ];
