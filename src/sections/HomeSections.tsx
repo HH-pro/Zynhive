@@ -556,15 +556,114 @@ export function TechSection() {
   const [tab, setTab] = useState(0);
 
   const categories = [
-    { label: "AI & Machine Learning", short: "AI & ML",  items: TECH_STACK_AI,    color: "var(--accent)"  },
-    { label: "Web & Mobile",          short: "Web",       items: TECH_STACK_WEB,   color: "var(--cyan)"    },
-    { label: "Infrastructure",        short: "Infra",     items: TECH_STACK_INFRA, color: "var(--accent2)" },
+    {
+      label: "AI & Machine Learning",
+      short: "AI & ML",
+      items: TECH_STACK_AI,
+      color: "var(--accent)",
+      shadowColor: "var(--accent-dim)",
+      description: "LLM fine-tuning, RAG pipelines, embeddings, and agentic workflows — our AI layer.",
+      stats: [
+        { value: "40+", label: "Models deployed" },
+        { value: "10M+", label: "Tokens/day processed" },
+        { value: "94%", label: "Avg. accuracy" },
+      ],
+      highlights: [
+        { icon: "⚡", label: "Real-time inference", sub: "Sub-200ms latency via optimised serving" },
+        { icon: "🔗", label: "Multi-model chaining", sub: "LangChain & custom orchestration layers" },
+        { icon: "🗂", label: "Vector search", sub: "Pinecone, Weaviate, pgvector pipelines" },
+      ],
+    },
+    {
+      label: "Web & Mobile",
+      short: "Web",
+      items: TECH_STACK_WEB,
+      color: "var(--cyan)",
+      shadowColor: "rgba(6,182,212,0.25)",
+      description: "Pixel-perfect interfaces from marketing sites to complex SaaS dashboards and native apps.",
+      stats: [
+        { value: "120+", label: "Projects shipped" },
+        { value: "98%", label: "Client satisfaction" },
+        { value: "<1s", label: "Avg. LCP target" },
+      ],
+      highlights: [
+        { icon: "🎨", label: "Design systems", sub: "Scalable component libraries with Storybook" },
+        { icon: "📱", label: "Cross-platform mobile", sub: "React Native & Expo for iOS + Android" },
+        { icon: "⚡", label: "Edge-optimised delivery", sub: "Next.js + Vercel CDN global distribution" },
+      ],
+    },
+    {
+      label: "Infrastructure",
+      short: "Infra",
+      items: TECH_STACK_INFRA,
+      color: "var(--accent2)",
+      shadowColor: "rgba(99,129,255,0.25)",
+      description: "Cloud-native infra built for 99.9% uptime, zero-downtime deploys, and infinite scale.",
+      stats: [
+        { value: "99.9%", label: "Uptime SLA" },
+        { value: "0-downtime", label: "Deployment model" },
+        { value: "3×", label: "Avg. cost reduction" },
+      ],
+      highlights: [
+        { icon: "🐳", label: "Container-first", sub: "Docker + Kubernetes on GKE, EKS, AKS" },
+        { icon: "🔒", label: "Security by default", sub: "SOC2-aligned configs, secret management" },
+        { icon: "📊", label: "Observability stack", sub: "Grafana, Prometheus, OpenTelemetry tracing" },
+      ],
+    },
+    {
+      label: "Data & Analytics",
+      short: "Data",
+      items: TECH_STACK_DATA ?? [
+        "PostgreSQL","MongoDB","Redis","ClickHouse","BigQuery","Snowflake",
+        "Apache Kafka","Airflow","dbt","Pandas","Polars","Spark",
+        "Metabase","Redash","Superset","Elasticsearch",
+      ],
+      color: "var(--green)",
+      shadowColor: "var(--green-pale)",
+      description: "From real-time event streaming to batch ETL and self-serve analytics dashboards.",
+      stats: [
+        { value: "1B+", label: "Records processed" },
+        { value: "<50ms", label: "Query p95 target" },
+        { value: "100%", label: "Data lineage tracked" },
+      ],
+      highlights: [
+        { icon: "📡", label: "Event streaming", sub: "Kafka + Flink for real-time pipelines" },
+        { icon: "🔄", label: "ELT / ETL automation", sub: "dbt + Airflow for scheduled transforms" },
+        { icon: "📈", label: "Embedded analytics", sub: "ClickHouse-backed dashboards in product" },
+      ],
+    },
+    {
+      label: "Security & DevOps",
+      short: "DevOps",
+      items: TECH_STACK_DEVOPS ?? [
+        "GitHub Actions","ArgoCD","Terraform","Ansible","Vault",
+        "SOPS","Trivy","Snyk","SonarQube","OWASP ZAP",
+        "Datadog","PagerDuty","Sentry","LaunchDarkly","Nginx",
+      ],
+      color: "var(--gold)",
+      shadowColor: "var(--gold-pale)",
+      description: "CI/CD, secrets management, vulnerability scanning, and incident response pipelines.",
+      stats: [
+        { value: "< 5min", label: "Deploy cycle time" },
+        { value: "MTTR < 30min", label: "Incident response" },
+        { value: "0 critical CVEs", label: "On production" },
+      ],
+      highlights: [
+        { icon: "🚀", label: "GitOps workflows", sub: "ArgoCD + Terraform for infra-as-code" },
+        { icon: "🔐", label: "Secrets management", sub: "HashiCorp Vault + SOPS encryption" },
+        { icon: "🛡", label: "Continuous scanning", sub: "Trivy + Snyk on every PR & image build" },
+      ],
+    },
   ];
 
   const cur = categories[tab];
 
   return (
-    <section className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-base)] relative overflow-hidden" id="tech">
+    <section
+      className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-base)] relative overflow-hidden"
+      id="tech"
+    >
+      {/* bg orb */}
       <div
         className="absolute -bottom-24 -left-24 w-80 md:w-96 h-80 md:h-96 rounded-full pointer-events-none"
         style={{ background: "radial-gradient(circle, var(--accent-pale) 0%, transparent 70%)" }}
@@ -573,26 +672,38 @@ export function TechSection() {
       <div className="max-w-7xl mx-auto relative z-10">
         <SectionHead
           tag="Our Stack"
-          heading={<>Technologies That{" "}<span className="text-gradient-cyan">Power Results</span></>}
+          heading={
+            <>
+              Technologies That{" "}
+              <span className="text-gradient-cyan">Power Results</span>
+            </>
+          }
           sub="Industry-leading tools selected for performance, reliability, and AI compatibility."
         />
 
+        {/* ── Tab bar ── */}
         <div
-          className="flex gap-1 p-1.5 rounded-2xl mb-6 md:mb-8 w-fit mx-auto reveal border border-[var(--border2)]"
+          className="flex gap-1 p-1.5 rounded-2xl mb-6 md:mb-8 w-fit mx-auto reveal border border-[var(--border2)] flex-wrap justify-center"
           style={{ background: "var(--bg-surface)" }}
         >
           {categories.map((c, i) => (
             <button
               key={c.short}
               onClick={() => setTab(i)}
-              className={`px-4 sm:px-5 md:px-6 py-2 md:py-2.5 rounded-xl font-display text-[11px] sm:text-[12px] font-semibold
+              className={`px-4 sm:px-5 py-2 md:py-2.5 rounded-xl font-display text-[11px] sm:text-[12px] font-semibold
                 transition-all duration-300 ${
-                tab === i ? "text-white" : "text-[var(--ink4)] hover:text-[var(--ink3)]"
+                tab === i
+                  ? "text-white"
+                  : "text-[var(--ink4)] hover:text-[var(--ink3)]"
               }`}
-              style={tab === i ? {
-                background: "linear-gradient(135deg, var(--accent), var(--cyan))",
-                boxShadow: "0 4px 16px var(--accent-dim)",
-              } : {}}
+              style={
+                tab === i
+                  ? {
+                      background: `linear-gradient(135deg, ${c.color}, ${c.color === "var(--accent)" ? "var(--cyan)" : c.color})`,
+                      boxShadow: `0 4px 16px ${c.shadowColor}`,
+                    }
+                  : {}
+              }
             >
               <span className="hidden sm:inline">{c.label}</span>
               <span className="sm:hidden">{c.short}</span>
@@ -600,61 +711,145 @@ export function TechSection() {
           ))}
         </div>
 
+        {/* ── Panel ── */}
         <div
-          className="rounded-2xl border border-[var(--border2)] p-5 sm:p-6 md:p-8 reveal"
+          className="rounded-2xl border border-[var(--border2)] reveal overflow-hidden"
           style={{ background: "var(--bg-surface)" }}
         >
-          <div className="flex items-center gap-3 mb-5 md:mb-6">
-            <div
-              className="w-2 h-2 rounded-full"
-              style={{ background: cur.color, boxShadow: `0 0 8px ${cur.color}` }}
-            />
-            <span
-              className="font-mono text-[10px] tracking-[0.14em] uppercase font-bold"
-              style={{ color: cur.color }}
-            >
-              {cur.label}
-            </span>
-            <span className="font-mono text-[10px] text-[var(--ink3)]">
-              — {cur.items.length} technologies
-            </span>
+          {/* Panel header */}
+          <div
+            className="px-5 sm:px-6 md:px-8 py-5 md:py-6 border-b border-[var(--border)]"
+            style={{ background: "var(--bg-panel)" }}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{
+                    background: cur.color,
+                    boxShadow: `0 0 8px ${cur.color}`,
+                  }}
+                />
+                <span
+                  className="font-mono text-[10px] tracking-[0.14em] uppercase font-bold"
+                  style={{ color: cur.color }}
+                >
+                  {cur.label}
+                </span>
+                <span className="font-mono text-[10px] text-[var(--ink4)]">
+                  — {cur.items.length} technologies
+                </span>
+              </div>
+              <p className="text-[12px] text-[var(--ink3)] font-body leading-relaxed max-w-md">
+                {cur.description}
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 sm:gap-2">
-            {cur.items.map((tech) => (
-              <span
-                key={tech}
-                className="group relative font-mono text-[10px] sm:text-[11px] px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl
-                  border border-[var(--border2)] text-[var(--ink3)] bg-[var(--bg-panel)]
-                  hover:text-[var(--ink)] hover:border-[var(--border)] transition-all duration-200
-                  overflow-hidden cursor-default"
+          {/* Stats row */}
+          <div
+            className="grid grid-cols-3 border-b border-[var(--border)]"
+          >
+            {cur.stats.map((s, i) => (
+              <div
+                key={s.label}
+                className={`px-4 sm:px-6 md:px-8 py-4 md:py-5 flex flex-col gap-1 ${
+                  i < cur.stats.length - 1 ? "border-r border-[var(--border)]" : ""
+                }`}
               >
-                <span
-                  className="absolute bottom-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{ background: `linear-gradient(90deg, transparent, ${cur.color}, transparent)` }}
-                />
-                <span className="relative z-10">{tech}</span>
-              </span>
+                <div
+                  className="font-display font-bold leading-none tracking-tight"
+                  style={{
+                    fontSize: "clamp(18px,2.5vw,26px)",
+                    background: `linear-gradient(110deg, ${cur.color}, var(--cyan))`,
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  {s.value}
+                </div>
+                <div className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--ink4)]">
+                  {s.label}
+                </div>
+              </div>
             ))}
           </div>
 
-          <div
-            className="mt-6 md:mt-8 pt-5 md:pt-6 border-t border-[var(--border)] flex items-center gap-3
-              px-3 md:px-4 py-2.5 md:py-3 rounded-xl bg-[var(--accent-pale)]"
-          >
-            <div
-              className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
-                border border-[var(--accent-pale2)]"
-            >
-              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                <path d="M5.5 1l1.2 2.8H9L7 5.4l.7 2.9L5.5 7l-2.2 1.3.7-2.9L2 3.8h2.3L5.5 1z"
-                  stroke="var(--accent)" strokeWidth="0.8" strokeLinejoin="round" fill="var(--accent-pale2)"/>
-              </svg>
+          {/* Highlights row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 border-b border-[var(--border)]">
+            {cur.highlights.map((h, i) => (
+              <div
+                key={h.label}
+                className={`px-4 sm:px-6 md:px-8 py-4 md:py-5 flex items-start gap-3 ${
+                  i < cur.highlights.length - 1 ? "sm:border-r border-b sm:border-b-0 border-[var(--border)]" : ""
+                }`}
+              >
+                <span
+                  className="text-base leading-none mt-0.5 flex-shrink-0"
+                  style={{ fontSize: 16 }}
+                >
+                  {h.icon}
+                </span>
+                <div>
+                  <div className="text-[12px] font-semibold text-[var(--ink2)] mb-0.5">
+                    {h.label}
+                  </div>
+                  <div className="text-[11px] font-body text-[var(--ink4)] leading-relaxed">
+                    {h.sub}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Tech pills */}
+          <div className="px-5 sm:px-6 md:px-8 py-6 md:py-8">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
+              {cur.items.map((tech) => (
+                <span
+                  key={tech}
+                  className="group relative font-mono text-[10px] sm:text-[11px] px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl
+                    border border-[var(--border2)] text-[var(--ink3)] bg-[var(--bg-panel)]
+                    hover:text-[var(--ink)] hover:border-[var(--border)] transition-all duration-200
+                    overflow-hidden cursor-default"
+                >
+                  <span
+                    className="absolute bottom-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{
+                      background: `linear-gradient(90deg, transparent, ${cur.color}, transparent)`,
+                    }}
+                  />
+                  <span className="relative z-10">{tech}</span>
+                </span>
+              ))}
             </div>
-            <p className="text-[11px] sm:text-[12px] font-body text-[var(--ink3)] leading-relaxed">
-              <span className="font-semibold text-[var(--accent)]">AI-first by design.</span>{" "}
-              Every tool is evaluated for AI compatibility, automation potential, and long-term scalability.
-            </p>
+          </div>
+
+          {/* Footer note */}
+          <div className="px-5 sm:px-6 md:px-8 pb-5 md:pb-7">
+            <div
+              className="flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-xl"
+              style={{ background: "var(--accent-pale)" }}
+            >
+              <div
+                className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 border border-[var(--accent-pale2)]"
+              >
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <path
+                    d="M5.5 1l1.2 2.8H9L7 5.4l.7 2.9L5.5 7l-2.2 1.3.7-2.9L2 3.8h2.3L5.5 1z"
+                    stroke="var(--accent)"
+                    strokeWidth="0.8"
+                    strokeLinejoin="round"
+                    fill="var(--accent-pale2)"
+                  />
+                </svg>
+              </div>
+              <p className="text-[11px] sm:text-[12px] font-body text-[var(--ink3)] leading-relaxed">
+                <span className="font-semibold text-[var(--accent)]">AI-first by design.</span>{" "}
+                Every tool is evaluated for AI compatibility, automation potential, and long-term scalability.
+              </p>
+            </div>
           </div>
         </div>
       </div>
