@@ -50,17 +50,15 @@ function PortfolioCard({
   index,
   onClick,
 }: { project: Project; index: number; onClick: (p: Project) => void }) {
-  const delayClass = REVEAL_DELAYS[index % 3];
-
   return (
     <div
       onClick={() => onClick(project)}
-      className={`group relative rounded-3xl overflow-hidden cursor-pointer
-        transition-all duration-500 hover:-translate-y-2 reveal ${delayClass}`}
+      className="group relative rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-2"
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--border2)",
         boxShadow: "0 2px 16px rgba(0,0,0,0.04)",
+        opacity: 1,
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLElement;
@@ -668,12 +666,12 @@ export function PortfolioPage() {
                   <div
                     key={p.id}
                     onClick={() => setModal(p)}
-                    className={`group flex items-center gap-5 p-4 sm:p-5 rounded-2xl cursor-pointer
-                      transition-all duration-300 reveal ${delayClass}`}
+                    className="group flex items-center gap-5 p-4 sm:p-5 rounded-2xl cursor-pointer transition-all duration-300"
                     style={{
                       background: "var(--bg-surface)",
                       border: "1px solid var(--border2)",
                       boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
+                      opacity: 1,
                     }}
                     onMouseEnter={(e) => {
                       const el = e.currentTarget as HTMLElement;
