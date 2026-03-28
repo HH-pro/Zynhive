@@ -297,7 +297,7 @@ export function TeamPage() {
             <div className="flex flex-wrap gap-2.5 mt-8">
               {[
                 { label: "Team Members",  val: members.length },
-                { label: "Avg Experience", val: "8+ yrs"      },
+                { label: "Avg Experience", val: "5+ yrs"      },
                 { label: "Projects Done", val: "120+"         },
               ].map(({ label, val }) => (
                 <div key={label} className="flex items-center gap-2.5 px-4 py-2 rounded-full"
