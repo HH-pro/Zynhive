@@ -38,18 +38,21 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
 
   const onHero = !scrolled;
 
-  const inkMain  = onHero ? "rgba(244,246,255,0.95)" : "var(--ink)";
-  const inkMuted = onHero ? "rgba(244,246,255,0.55)" : dark ? "var(--ink3)" : "var(--accent)";
-  const hoverBg  = onHero ? "rgba(255,255,255,0.08)" : dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)";
-  const activeBg = onHero ? "rgba(255,255,255,0.12)" : "var(--accent-pale)";
+  const inkMain     = onHero ? "rgba(244,246,255,0.95)" : "var(--ink)";
+  // Nav link text: accent blue when scrolled in light mode, muted in dark, white/dim on hero
+  const inkMuted    = onHero ? "rgba(244,246,255,0.55)" : dark ? "var(--ink3)" : "var(--accent)";
+  const hoverBg     = onHero ? "rgba(255,255,255,0.08)" : dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)";
+  const activeBg    = onHero ? "rgba(255,255,255,0.12)" : "var(--accent-pale)";
   const activeColor = onHero ? "rgba(244,246,255,0.98)" : "var(--accent)";
 
-  // Logo filter: when scrolled in light mode, tint white logo to accent blue so it stays visible
+  // Logo filter:
+  // • on hero: none — white logo shows great on dark hero bg
+  // • scrolled + light: brightness(0) → black, sepia+hue-rotate → blue (~#3B6EF8)
+  // • scrolled + dark:  none — logo visible on dark glass pill
   const logoFilter = scrolled && !dark
-    ? "brightness(0) saturate(100%) invert(27%) sepia(90%) saturate(600%) hue-rotate(210deg) brightness(95%)"
+    ? "brightness(0) sepia(1) saturate(6) hue-rotate(200deg) brightness(0.8)"
     : "none";
 
-  // Scrolled: solid glass pill. On hero: transparent floating pill.
   const navBg = scrolled
     ? dark ? "rgba(17,18,20,0.88)" : "rgba(245,246,250,0.88)"
     : "rgba(2,8,66,0.45)";
@@ -66,7 +69,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
 
   return (
     <>
-      {/* ── Outer wrapper — full width, fixed, centered ───────────────── */}
+      {/* ── Outer wrapper ─────────────────────────────────────────────── */}
       <div
         className="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none"
         style={{ paddingTop: scrolled ? 10 : 16, transition: "padding .35s var(--ease)" }}
@@ -107,12 +110,12 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
               <img
                 src="/logo.png"
                 alt={SITE_CONFIG.name}
-                className="object-contain transition-all duration-300 group-hover:opacity-85"
+                className="object-contain group-hover:opacity-80"
                 style={{
                   height: scrolled ? 44 : 54,
                   width: "auto",
                   maxWidth: 180,
-                  transition: "height .35s var(--ease), filter .35s ease",
+                  transition: "height .35s var(--ease), filter .4s ease, opacity .2s ease",
                   filter: logoFilter,
                 }}
               />
@@ -121,11 +124,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
             {/* Desktop Nav — absolutely centered */}
             <ul
               className="hidden md:flex items-center gap-0.5 list-none"
-              style={{
-                position: "absolute",
-                left: "50%",
-                transform: "translateX(-50%)",
-              }}
+              style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}
             >
               {NAV_LINKS.map(({ label, href }) => {
                 const isActive = currentPage === href;
@@ -254,7 +253,10 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                 : "none",
             }}
           >
-            <div className="h-px w-full" style={{ background: "linear-gradient(90deg, var(--accent), var(--cyan))", opacity: 0.35 }} />
+            <div
+              className="h-px w-full"
+              style={{ background: "linear-gradient(90deg, var(--accent), var(--cyan))", opacity: 0.35 }}
+            />
 
             <div className="px-4 py-4 flex flex-col gap-1">
               {NAV_LINKS.map(({ label, href }) => {
@@ -286,7 +288,10 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                   >
                     {label}
                     {isActive ? (
-                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--accent)" }} />
+                      <span
+                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                        style={{ background: "var(--accent)" }}
+                      />
                     ) : (
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--ink4)" }}>
                         <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -296,7 +301,10 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                 );
               })}
 
-              <div className="my-1 h-px" style={{ background: dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }} />
+              <div
+                className="my-1 h-px"
+                style={{ background: dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }}
+              />
 
               <a
                 href={SITE_CONFIG.whatsapp}
