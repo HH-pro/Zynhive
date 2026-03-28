@@ -54,7 +54,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
     : "none";
 
   const navBg = scrolled
-    ? dark ? "rgba(17,18,20,0.88)" : "rgba(245,246,250,0.88)"
+    ? dark ? "rgba(17,18,20,0.88)" : "rgba(2,8,66,0.45)"
     : "rgba(2,8,66,0.45)";
 
   const navBorder = scrolled
