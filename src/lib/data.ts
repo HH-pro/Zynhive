@@ -7,7 +7,7 @@ export const SITE_CONFIG = {
   name:        "ZynHive",
   tagline:     "We Build Digital Experiences That Scale.",
   description: "Full-service AI & software agency. From concept to production — we build digital products that win markets.",
-  email:       "hello@zynhive.com",
+  email:       "zynhive@gmail.com",
   phone:       "+92 343 4783677",
   whatsapp:    "https://wa.me/923434783677",
   location:    "Lahore, Pakistan",
