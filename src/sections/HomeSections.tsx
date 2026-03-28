@@ -375,18 +375,17 @@ export function ServicesPreviewSection() {
     </section>
   );
 }
-
 // ══ PROCESS ═══════════════════════════════════════════════════════════════════
 export function ProcessSection() {
   const [active, setActive] = useState(0);
   const step = PROCESS_STEPS[active];
 
-  const aiInsights: Record<string, string> = {
-    "Discovery & Strategy":  "AI auto-generates a competitive landscape and gap analysis for your market.",
-    "Design & Prototyping":  "Generative AI creates 50+ design variants — our team curates the best.",
-    "Development & Build":   "AI code review catches 80% of bugs before they reach production.",
-    "Testing & QA":          "ML simulates 10,000+ user flows, covering every edge case instantly.",
-    "Deployment & Launch":   "AI monitors health, auto-scales resources, and alerts on anomalies 24/7.",
+  const stepInsights: Record<string, string> = {
+    "Discovery & Strategy":  "We map your competitive landscape, define success metrics, and align on a clear roadmap before a single line of code is written.",
+    "Design & Prototyping":  "Interactive prototypes let you feel the product early — we iterate fast, validate assumptions, and lock in the vision.",
+    "Development & Build":   "Clean architecture, rigorous code reviews, and modern tooling mean less technical debt from day one.",
+    "Testing & QA":          "Every feature is stress-tested across devices, browsers, and edge cases before it reaches your users.",
+    "Deployment & Launch":   "Zero-downtime deployments, real-time monitoring, and a dedicated support window — so launch day is calm, not chaotic.",
   };
 
   return (
@@ -394,8 +393,8 @@ export function ProcessSection() {
       <div className="max-w-7xl mx-auto">
         <SectionHead
           tag="How We Work"
-          heading={<>AI-Augmented{" "}<span className="text-gradient-blue">5-Step Process</span></>}
-          sub="Every stage is supercharged by AI. Faster delivery, fewer errors, better outcomes."
+          heading={<>A Proven{" "}<span className="text-gradient-blue">5-Step Process</span></>}
+          sub="From first conversation to live product — a clear, collaborative process that keeps you in the loop at every stage."
         />
 
         {/* Mobile step indicator */}
@@ -427,6 +426,7 @@ export function ProcessSection() {
                 className={`text-left flex gap-3 md:gap-4 py-4 md:py-5 border-b border-[var(--border)] last:border-0
                   transition-all duration-300 ${active === i ? "pl-2 sm:pl-3" : "pl-0 hover:pl-2"}`}
               >
+                {/* Step number */}
                 <div
                   className={`flex-shrink-0 w-8 md:w-9 h-8 md:h-9 rounded-xl flex items-center justify-center
                     font-mono text-[10px] md:text-[11px] font-bold transition-all duration-300 mt-0.5 ${
@@ -448,22 +448,33 @@ export function ProcessSection() {
                     {p.title}
                   </div>
 
+                  {/* Expanded content */}
                   <div className={`overflow-hidden transition-all duration-[400ms] ${
-                    active === i ? "max-h-40 mt-3 opacity-100" : "max-h-0 opacity-0"
+                    active === i ? "max-h-48 mt-3 opacity-100" : "max-h-0 opacity-0"
                   }`}>
-                    <p className="text-[12px] md:text-[13px] text-[var(--ink3)] leading-relaxed font-body mb-3">{p.desc}</p>
+                    <p className="text-[12px] md:text-[13px] text-[var(--ink3)] leading-relaxed font-body mb-3">
+                      {p.desc}
+                    </p>
+
+                    {/* Insight block — neutral, professional */}
                     <div
-                      className="inline-flex items-start gap-2 px-3 py-2 rounded-xl text-[10px] md:text-[11px]
-                        border border-[var(--accent-pale2)] bg-[var(--accent-pale)]"
+                      className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl text-[11px] md:text-[12px]"
+                      style={{
+                        background: "var(--bg-panel)",
+                        border: "1px solid var(--border2)",
+                      }}
                     >
-                      <span className="text-[var(--accent)] font-bold mt-0.5 flex-shrink-0">⚡</span>
+                      <span
+                        className="flex-shrink-0 w-1.5 h-1.5 rounded-full mt-1.5"
+                        style={{ background: "var(--accent)" }}
+                      />
                       <span className="font-body text-[var(--ink3)] leading-relaxed">
-                        <span className="font-semibold text-[var(--accent)]">AI: </span>
-                        {aiInsights[p.title]}
+                        {stepInsights[p.title]}
                       </span>
                     </div>
                   </div>
 
+                  {/* Active underline */}
                   <div
                     className={`h-px mt-3 transition-all duration-500 ${active === i ? "w-full" : "w-0"}`}
                     style={{ background: "linear-gradient(90deg, var(--accent), var(--cyan))" }}
@@ -473,12 +484,13 @@ export function ProcessSection() {
             ))}
           </div>
 
-          {/* Visual panel — desktop only */}
+          {/* Visual panel — desktop */}
           <div
             className="relative rounded-2xl border border-[var(--border2)] min-h-[380px] lg:min-h-[460px] hidden lg:flex
               items-center justify-center overflow-hidden sticky top-24 reveal reveal-d2"
             style={{ background: "var(--bg-surface)" }}
           >
+            {/* Grid background */}
             <div
               className="absolute inset-0"
               style={{
@@ -486,23 +498,28 @@ export function ProcessSection() {
                 backgroundSize: "44px 44px",
               }}
             />
+
+            {/* Radial glow */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{ background: "radial-gradient(ellipse 60% 60% at 50% 50%, var(--accent-pale) 0%, transparent 70%)" }}
             />
 
+            {/* Pulse rings */}
             {[180, 260, 340].map((size, i) => (
               <div
                 key={i}
                 className="absolute rounded-full border border-[var(--border2)] top-1/2 left-1/2"
                 style={{
-                  width: size, height: size,
+                  width: size,
+                  height: size,
                   transform: "translate(-50%,-50%)",
                   animation: `rPulse 3s ${i * 0.9}s ease-in-out infinite`,
                 }}
               />
             ))}
 
+            {/* Center orb */}
             <div
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10
                 w-20 h-20 rounded-full flex items-center justify-center"
@@ -514,6 +531,7 @@ export function ProcessSection() {
               <span className="font-mono text-white text-xl font-bold">{step.step}</span>
             </div>
 
+            {/* Step title + dots */}
             <div className="absolute bottom-8 left-0 right-0 px-8 z-10 text-center">
               <p className="font-display text-[18px] md:text-[20px] font-bold text-[var(--ink)] tracking-tight mb-4">
                 {step.title}
@@ -536,17 +554,22 @@ export function ProcessSection() {
               </div>
             </div>
 
+            {/* Step counter badge — top */}
             <div className="absolute top-6 left-0 right-0 text-center z-10">
               <span
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-mono
-                  text-[9px] tracking-[0.14em] uppercase border border-[var(--accent-pale2)]
-                  text-[var(--accent)] bg-[var(--accent-pale)]"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full font-mono
+                  text-[10px] tracking-[0.12em] uppercase"
+                style={{
+                  border: "1px solid var(--border2)",
+                  color: "var(--ink3)",
+                  background: "var(--bg-panel)",
+                }}
               >
-                <span className="w-1 h-1 rounded-full bg-[var(--accent)]" style={{ animation: "bPulse 2s infinite" }} />
-                AI Augmented
+                Step {active + 1} of {PROCESS_STEPS.length}
               </span>
             </div>
           </div>
+
         </div>
       </div>
     </section>
