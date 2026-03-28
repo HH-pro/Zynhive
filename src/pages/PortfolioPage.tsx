@@ -460,7 +460,7 @@ export function PortfolioPage() {
         {/* Bottom fade — FIX: use gradient, not solid color */}
         <div
           className="absolute bottom-0 left-0 right-0 h-36 pointer-events-none"
-          style={{ background: "linear-gradient(to bottom, transparent, var(--bg-base))" }}
+          style={{ background: "var(--bg-base)" }}
         />
 
         <div
