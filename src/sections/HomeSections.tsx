@@ -551,15 +551,7 @@ export function ProcessSection() {
   );
 }
 
-import { useState } from "react";
-import {
-  TECH_STACK_AI,
-  TECH_STACK_WEB,
-  TECH_STACK_INFRA,
-  TECH_STACK_DATA,
-  TECH_STACK_DEVOPS,
-} from "../lib/data";
-import { SectionHead } from "../components/ui/index";
+
 
 // ══ TECH STACK ════════════════════════════════════════════════════════════════
 export function TechSection() {
