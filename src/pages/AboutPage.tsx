@@ -93,7 +93,7 @@ const FOUNDERS = [
     role: "Founder & CEO",
     name: "Hamza Manzoor",
     initials: "HM",
-    bio: "A builder at heart with a background spanning software engineering and growth strategy. Founded ZynHive to bridge the gap between beautiful design and real business outcomes. Previously led product at [Company].",
+    bio: "Web & app developer and AI automation expert. Founded ZynHive to bridge the gap between cutting-edge technology and real business outcomes. Specializes in building scalable digital products powered by intelligent automation.",
     color: "var(--accent)",
     socials: {
       linkedin: "https://linkedin.com/in/hamzamanzoor",
@@ -103,7 +103,7 @@ const FOUNDERS = [
     role: "Co-Founder & CTO",
     name: "Hanzala Tariq",
     initials: "HT",
-    bio: "Full-stack engineer turned AI practitioner. Obsessed with automation, developer experience, and systems that scale. Previously built products used by 500K+ users at [Company].",
+    bio: "Business development strategist with a sharp eye for growth opportunities. Drives client partnerships, market expansion, and revenue strategy at ZynHive — turning great products into thriving businesses.",
     color: "var(--cyan)",
     socials: {
       linkedin: "https://linkedin.com/in/hanzalatariq",
@@ -263,7 +263,23 @@ export function AboutPage() {
         </div>
       </section>
 
-      
+      {/* ── Stats ── */}
+      <div className="bg-[var(--bg-panel)] border-y border-[var(--border)] transition-colors duration-500">
+        <div className="max-w-7xl mx-auto px-8 md:px-14 py-8 grid grid-cols-3 gap-6 text-center">
+          {HERO_STATS.map(({ target, suffix, label }) => (
+            <div key={label}>
+              <div className="font-syne text-3xl font-extrabold text-[var(--accent)]">
+                {target}
+                {suffix}
+              </div>
+              <div className="font-mono text-[10px] text-[var(--ink4)] tracking-wider uppercase mt-1">
+                {label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── Team (MOVED TO TOP) ── */}
       <section className="px-8 md:px-14 py-28 bg-[var(--bg-alt)] transition-colors duration-500">
         <div className="max-w-7xl mx-auto">
