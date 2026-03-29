@@ -56,7 +56,7 @@ const VALUES = [
   },
 ];
 
-// ── Milestones — updated to 2025 ─────────────────────────────────────────────
+// ── Milestones ────────────────────────────────────────────────────────────────
 
 const MILESTONES = [
   {
@@ -91,24 +91,22 @@ const MILESTONES = [
 const FOUNDERS = [
   {
     role: "Founder & CEO",
-    name: "Your Name",
-    initials: "YN",
+    name: "Hamza Manzoor",
+    initials: "HM",
     bio: "A builder at heart with a background spanning software engineering and growth strategy. Founded ZynHive to bridge the gap between beautiful design and real business outcomes. Previously led product at [Company].",
     color: "var(--accent)",
     socials: {
-      linkedin: "https://linkedin.com",
-      twitter: "https://twitter.com",
+      linkedin: "https://linkedin.com/in/hamzamanzoor",
     },
   },
   {
     role: "Co-Founder & CTO",
-    name: "Co-Founder Name",
-    initials: "CN",
+    name: "Hanzala Tariq",
+    initials: "HT",
     bio: "Full-stack engineer turned AI practitioner. Obsessed with automation, developer experience, and systems that scale. Previously built products used by 500K+ users at [Company].",
     color: "var(--cyan)",
     socials: {
-      linkedin: "https://linkedin.com",
-      twitter: "https://twitter.com",
+      linkedin: "https://linkedin.com/in/hanzalatariq",
     },
   },
 ];
@@ -134,17 +132,12 @@ function FounderAvatar({
         border: `1px solid ${color}30`,
       }}
     >
-      {/* Shine */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%)",
         }}
       />
-      {/* Image placeholder — replace src with real photo */}
-      {/* <img src="/founders/name.jpg" alt={initials} className="w-full h-full object-cover" /> */}
-
-      {/* Initials fallback */}
       <span
         className="relative z-10 font-display font-bold select-none"
         style={{
@@ -155,8 +148,6 @@ function FounderAvatar({
       >
         {initials}
       </span>
-
-      {/* Decorative corner dot */}
       <div
         className="absolute bottom-2.5 right-2.5 w-2 h-2 rounded-full"
         style={{ background: color, opacity: 0.6 }}
@@ -187,11 +178,6 @@ function SocialLink({
       className="w-8 h-8 rounded-xl flex items-center justify-center no-underline
         border border-[var(--border2)] text-[var(--ink4)] bg-[var(--bg-panel)]
         hover:border-[var(--border)] transition-all duration-200"
-      style={
-        {
-          "--hover-color": color,
-        } as React.CSSProperties
-      }
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLElement;
         el.style.color = color;
@@ -212,20 +198,10 @@ function SocialLink({
   );
 }
 
-// ─── LinkedInIcon / TwitterIcon inline (avoids import dependency) ─────────────
-
 function LinkedInIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 16 16" fill="currentColor">
       <path d="M3.5 2A1.5 1.5 0 1 0 3.5 5 1.5 1.5 0 0 0 3.5 2zM2 6h3v8H2V6zm5 0h2.8v1.1h.04C10.36 6.4 11.4 6 12.5 6 15 6 15.5 7.7 15.5 9.8V14h-3v-3.7c0-1 0-2.2-1.4-2.2-1.4 0-1.6 1-1.6 2.1V14H7V6z" />
-    </svg>
-  );
-}
-
-function TwitterIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="currentColor">
-      <path d="M12.6 1h2.4L9.8 6.8 16 15h-4.5l-3.7-4.8L3.5 15H1l5.5-6.3L0 1h4.6l3.3 4.3L12.6 1zm-.8 12.6h1.3L4.3 2.4H2.9l8.9 11.2z" />
     </svg>
   );
 }
@@ -304,66 +280,7 @@ export function AboutPage() {
         </div>
       </div>
 
-      {/* ── Mission ── */}
-      <section className="px-8 md:px-14 py-28 bg-[var(--bg-base)] transition-colors duration-500">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-          <div className="reveal">
-            <SectionHead
-              tag="Our Mission"
-              heading={
-                <>
-                  Intelligence &amp;{" "}
-                  <em className="not-italic text-[var(--accent)]">craft,</em>{" "}
-                  combined.
-                </>
-              }
-            />
-            <p className="text-base font-light text-[var(--ink3)] leading-relaxed mb-5">
-              We started ZynHive because we saw a gap: companies need digital
-              products that actually move business metrics, not just look good in
-              a Figma file. Most agencies deliver one or the other. We deliver
-              both.
-            </p>
-            <p className="text-base font-light text-[var(--ink3)] leading-relaxed mb-8">
-              Our team is deliberately small and senior. We work with a limited
-              number of clients at a time so that every project gets the
-              strategic attention it deserves. Quality compounds.
-            </p>
-            <LinkButton href="/contact" variant="accent" size="md">
-              Start a Project →
-            </LinkButton>
-          </div>
-
-          {/* Values grid */}
-          <div className="reveal reveal-d2">
-            <div className="grid grid-cols-2 gap-4">
-              {VALUES.map(({ title, desc, icon }, i) => (
-                <div
-                  key={title}
-                  className={`p-5 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl
-                    hover:border-[var(--accent-pale2)] transition-all duration-300 reveal reveal-d${i + 1}`}
-                >
-                  {/* SVG icon */}
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 border border-[var(--border2)]"
-                    style={{ background: "var(--bg-panel)" }}
-                  >
-                    {icon("var(--accent)")}
-                  </div>
-                  <h4 className="font-syne text-sm font-bold text-[var(--ink)] mb-2">
-                    {title}
-                  </h4>
-                  <p className="text-xs font-light text-[var(--ink3)] leading-relaxed">
-                    {desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Founders ── */}
+      {/* ── Team (MOVED TO TOP) ── */}
       <section className="px-8 md:px-14 py-28 bg-[var(--bg-alt)] transition-colors duration-500">
         <div className="max-w-7xl mx-auto">
           <SectionHead
@@ -384,11 +301,6 @@ export function AboutPage() {
                 className={`group relative overflow-hidden rounded-2xl border border-[var(--border2)]
                   bg-[var(--bg-surface)] p-7 transition-all duration-500 reveal reveal-d${i + 1}
                   hover:border-[var(--border)]`}
-                style={
-                  {
-                    "--founder-color": f.color,
-                  } as React.CSSProperties
-                }
                 onMouseEnter={(e) => {
                   const el = e.currentTarget as HTMLElement;
                   el.style.boxShadow = `0 20px 50px ${f.color}14`;
@@ -401,9 +313,7 @@ export function AboutPage() {
                 }}
               >
                 {/* Top accent bar */}
-                <div
-                  className="absolute top-0 left-0 right-0 h-[1.5px] overflow-hidden"
-                >
+                <div className="absolute top-0 left-0 right-0 h-[1.5px] overflow-hidden">
                   <div
                     className="h-full w-full"
                     style={{
@@ -425,7 +335,6 @@ export function AboutPage() {
                 <div className="relative z-10">
                   {/* Avatar + name row */}
                   <div className="flex items-start gap-5 mb-6">
-                    {/* Avatar — swap the <img> comment below for a real photo */}
                     <FounderAvatar initials={f.initials} color={f.color} size={80} />
 
                     <div className="flex-1 min-w-0 pt-1">
@@ -471,7 +380,7 @@ export function AboutPage() {
                     {f.bio}
                   </p>
 
-                  {/* Socials */}
+                  {/* LinkedIn only */}
                   <div className="flex gap-2">
                     {f.socials.linkedin && (
                       <SocialLink
@@ -482,19 +391,68 @@ export function AboutPage() {
                         <LinkedInIcon className="w-3.5 h-3.5" />
                       </SocialLink>
                     )}
-                    {f.socials.twitter && (
-                      <SocialLink
-                        href={f.socials.twitter}
-                        label="Twitter / X"
-                        color={f.color}
-                      >
-                        <TwitterIcon className="w-3.5 h-3.5" />
-                      </SocialLink>
-                    )}
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Mission ── */}
+      <section className="px-8 md:px-14 py-28 bg-[var(--bg-base)] transition-colors duration-500">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          <div className="reveal">
+            <SectionHead
+              tag="Our Mission"
+              heading={
+                <>
+                  Intelligence &amp;{" "}
+                  <em className="not-italic text-[var(--accent)]">craft,</em>{" "}
+                  combined.
+                </>
+              }
+            />
+            <p className="text-base font-light text-[var(--ink3)] leading-relaxed mb-5">
+              We started ZynHive because we saw a gap: companies need digital
+              products that actually move business metrics, not just look good in
+              a Figma file. Most agencies deliver one or the other. We deliver
+              both.
+            </p>
+            <p className="text-base font-light text-[var(--ink3)] leading-relaxed mb-8">
+              Our team is deliberately small and senior. We work with a limited
+              number of clients at a time so that every project gets the
+              strategic attention it deserves. Quality compounds.
+            </p>
+            <LinkButton href="/contact" variant="accent" size="md">
+              Start a Project →
+            </LinkButton>
+          </div>
+
+          {/* Values grid */}
+          <div className="reveal reveal-d2">
+            <div className="grid grid-cols-2 gap-4">
+              {VALUES.map(({ title, desc, icon }, i) => (
+                <div
+                  key={title}
+                  className={`p-5 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl
+                    hover:border-[var(--accent-pale2)] transition-all duration-300 reveal reveal-d${i + 1}`}
+                >
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 border border-[var(--border2)]"
+                    style={{ background: "var(--bg-panel)" }}
+                  >
+                    {icon("var(--accent)")}
+                  </div>
+                  <h4 className="font-syne text-sm font-bold text-[var(--ink)] mb-2">
+                    {title}
+                  </h4>
+                  <p className="text-xs font-light text-[var(--ink3)] leading-relaxed">
+                    {desc}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -518,7 +476,6 @@ export function AboutPage() {
                 key={i}
                 className={`relative mb-12 last:mb-0 reveal reveal-d${(i % 3) + 1}`}
               >
-                {/* Timeline dot */}
                 <div className="absolute -left-[29px] top-1 w-4 h-4 rounded-full bg-[var(--bg-surface)] border-2 border-[var(--accent)]" />
                 <span className="font-mono text-[11px] text-[var(--accent)] tracking-[0.1em] uppercase mb-1 block">
                   {year}
