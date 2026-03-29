@@ -509,7 +509,7 @@ export function PortfolioPage() {
             ].map(({ label, val }) => (
               <div
                 key={label}
-                className="flex items-center gap-2.5 px-4 py-2 mt-5 rounded-full border"
+                className="flex items-center gap-2.5 px-4 py-2 mt-10 rounded-full border"
                 style={{ borderColor: "rgba(59,110,248,0.22)", background: "rgba(59,110,248,0.08)" }}
               >
                 <span className="font-syne text-[15px] font-bold" style={{ color: "var(--accent)" }}>
