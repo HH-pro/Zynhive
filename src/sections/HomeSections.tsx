@@ -577,117 +577,77 @@ export function ProcessSection() {
 }
 
 
-// ══ TECH STACK ════════════════════════════════════════════════════════════════
+
+// ── Tool lists ──────────────────────────────────────────────────────────────
+
+const TOOLS_AI: string[] = [
+  "N8N", "Zapier", "Make (Integromat)", "OpenAI API", "Claude API",
+  "Chatbot Builder", "WhatsApp Bots", "Telegram Bots", "Voiceflow",
+  "LangChain", "Airtable Automations", "Webhook Pipelines",
+  "CRM Integration", "Email Automation", "Lead Qualification AI",
+];
+
+const TOOLS_WEB: string[] = [
+  "Next.js", "React", "React Native", "Expo", "WordPress",
+  "Webflow", "Shopify", "Framer", "Tailwind CSS",
+  "Supabase", "Firebase", "PostgreSQL", "REST APIs", "GraphQL",
+  "App Store Publishing",
+];
+
+const TOOLS_MARKETING: string[] = [
+  "Google Ads", "Meta Ads", "TikTok Ads", "SEO / On-page", "Technical SEO",
+  "Content Strategy", "Email Marketing", "Klaviyo", "Mailchimp",
+  "Analytics Setup", "Google Analytics 4", "Conversion Tracking",
+  "Social Media Management", "Influencer Campaigns", "Landing Page CRO",
+];
+
+// ══ SERVICES SECTION ════════════════════════════════════════════════════════
+
 export function TechSection() {
   const [tab, setTab] = useState(0);
 
   const categories: {
     label: string;
     short: string;
+    icon: string;
     items: string[];
     color: string;
     shadowColor: string;
     description: string;
-    stats: { value: string; label: string }[];
-    highlights: { icon: string; label: string; sub: string }[];
+    note: string;
   }[] = [
     {
-      label: "AI & Machine Learning",
-      short: "AI & ML",
-      items: TECH_STACK_AI,
+      label: "AI Automations",
+      short: "AI",
+      icon: "🤖",
+      items: TOOLS_AI,
       color: "var(--accent)",
       shadowColor: "var(--accent-dim)",
-      description: "LLM fine-tuning, RAG pipelines, embeddings, and agentic workflows — our AI layer.",
-      stats: [
-        { value: "40+", label: "Models deployed" },
-        { value: "10M+", label: "Tokens/day processed" },
-        { value: "94%", label: "Avg. accuracy" },
-      ],
-      highlights: [
-        { icon: "⚡", label: "Real-time inference", sub: "Sub-200ms latency via optimised serving" },
-        { icon: "🔗", label: "Multi-model chaining", sub: "LangChain & custom orchestration layers" },
-        { icon: "🗂", label: "Vector search", sub: "Pinecone, Weaviate, pgvector pipelines" },
-      ],
+      description:
+        "N8N, Zapier, chatbots, and custom AI agents that replace repetitive work.",
+      note: "Automation-first. Every workflow is built to scale — from simple Zapier triggers to fully custom AI agents.",
     },
     {
-      label: "Web & Mobile",
+      label: "Web & Apps",
       short: "Web",
-      items: TECH_STACK_WEB,
+      icon: "💻",
+      items: TOOLS_WEB,
       color: "var(--cyan)",
       shadowColor: "rgba(6,182,212,0.25)",
-      description: "Pixel-perfect interfaces from marketing sites to complex SaaS dashboards and native apps.",
-      stats: [
-        { value: "120+", label: "Projects shipped" },
-        { value: "98%", label: "Client satisfaction" },
-        { value: "<1s", label: "Avg. LCP target" },
-      ],
-      highlights: [
-        { icon: "🎨", label: "Design systems", sub: "Scalable component libraries with Storybook" },
-        { icon: "📱", label: "Cross-platform mobile", sub: "React Native & Expo for iOS + Android" },
-        { icon: "⚡", label: "Edge-optimised delivery", sub: "Next.js + Vercel CDN global distribution" },
-      ],
+      description:
+        "Fast websites, SaaS dashboards, and mobile apps built for real users.",
+      note: "Performance by default. Every site targets sub-1s load times and 90+ Lighthouse scores.",
     },
     {
-      label: "Infrastructure",
-      short: "Infra",
-      items: TECH_STACK_INFRA,
-      color: "var(--accent2)",
-      shadowColor: "rgba(99,129,255,0.25)",
-      description: "Cloud-native infra built for 99.9% uptime, zero-downtime deploys, and infinite scale.",
-      stats: [
-        { value: "99.9%", label: "Uptime SLA" },
-        { value: "0-downtime", label: "Deployment model" },
-        { value: "3×", label: "Avg. cost reduction" },
-      ],
-      highlights: [
-        { icon: "🐳", label: "Container-first", sub: "Docker + Kubernetes on GKE, EKS, AKS" },
-        { icon: "🔒", label: "Security by default", sub: "SOC2-aligned configs, secret management" },
-        { icon: "📊", label: "Observability stack", sub: "Grafana, Prometheus, OpenTelemetry tracing" },
-      ],
-    },
-    {
-      label: "Data & Analytics",
-      short: "Data",
-      items: TECH_STACK_DATA ?? [
-        "PostgreSQL","MongoDB","Redis","ClickHouse","BigQuery","Snowflake",
-        "Apache Kafka","Airflow","dbt","Pandas","Polars","Spark",
-        "Metabase","Redash","Superset","Elasticsearch",
-      ],
+      label: "Digital Marketing",
+      short: "Marketing",
+      icon: "📈",
+      items: TOOLS_MARKETING,
       color: "var(--green)",
       shadowColor: "var(--green-pale)",
-      description: "From real-time event streaming to batch ETL and self-serve analytics dashboards.",
-      stats: [
-        { value: "1B+", label: "Records processed" },
-        { value: "<50ms", label: "Query p95 target" },
-        { value: "100%", label: "Data lineage tracked" },
-      ],
-      highlights: [
-        { icon: "📡", label: "Event streaming", sub: "Kafka + Flink for real-time pipelines" },
-        { icon: "🔄", label: "ELT / ETL automation", sub: "dbt + Airflow for scheduled transforms" },
-        { icon: "📈", label: "Embedded analytics", sub: "ClickHouse-backed dashboards in product" },
-      ],
-    },
-    {
-      label: "Security & DevOps",
-      short: "DevOps",
-      items: TECH_STACK_DEVOPS ?? [
-        "GitHub Actions","ArgoCD","Terraform","Ansible","Vault",
-        "SOPS","Trivy","Snyk","SonarQube","OWASP ZAP",
-        "Datadog","PagerDuty","Sentry","LaunchDarkly","Nginx",
-      ],
-      color: "var(--gold)",
-      shadowColor: "var(--gold-pale)",
-      description: "CI/CD, secrets management, vulnerability scanning, and incident response pipelines.",
-      stats: [
-        { value: "< 5min", label: "Deploy cycle time" },
-        { value: "MTTR < 30min", label: "Incident response" },
-        { value: "0 critical CVEs", label: "On production" },
-      ],
-      highlights: [
-        { icon: "🚀", label: "GitOps workflows", sub: "ArgoCD + Terraform for infra-as-code" },
-        { icon: "🔐", label: "Secrets management", sub: "HashiCorp Vault + SOPS encryption" },
-        { icon: "🛡", label: "Continuous scanning", sub: "Trivy + Snyk on every PR & image build" },
-      ],
+      description:
+        "SEO, paid ads, social, and content that drives measurable growth.",
+      note: "ROI-focused. Every campaign is tracked end-to-end — from impression to revenue.",
     },
   ];
 
@@ -701,47 +661,76 @@ export function TechSection() {
       {/* bg orb */}
       <div
         className="absolute -bottom-24 -left-24 w-80 md:w-96 h-80 md:h-96 rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, var(--accent-pale) 0%, transparent 70%)" }}
+        style={{
+          background:
+            "radial-gradient(circle, var(--accent-pale) 0%, transparent 70%)",
+        }}
       />
 
       <div className="max-w-7xl mx-auto relative z-10">
         <SectionHead
-          tag="Our Stack"
+          tag="What We Do"
           heading={
             <>
-              Technologies That{" "}
-              <span className="text-gradient-cyan">Power Results</span>
+              Three Things,{" "}
+              <span className="text-gradient-cyan">Done Right</span>
             </>
           }
-          sub="Industry-leading tools selected for performance, reliability, and AI compatibility."
+          sub="Automation, digital experiences, and growth — built to work together."
         />
 
-        {/* ── Tab bar ── */}
-        <div
-          className="flex gap-1 p-1.5 rounded-2xl mb-6 md:mb-8 w-fit mx-auto reveal border border-[var(--border2)] flex-wrap justify-center"
-          style={{ background: "var(--bg-surface)" }}
-        >
+        {/* ── Service cards (tab triggers) ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8 reveal">
           {categories.map((c, i) => (
             <button
               key={c.short}
               onClick={() => setTab(i)}
-              className={`px-4 sm:px-5 py-2 md:py-2.5 rounded-xl font-display text-[11px] sm:text-[12px] font-semibold
-                transition-all duration-300 ${
-                tab === i
-                  ? "text-white"
-                  : "text-[var(--ink4)] hover:text-[var(--ink3)]"
-              }`}
+              className={`group text-left px-5 py-5 rounded-2xl border transition-all duration-300
+                ${
+                  tab === i
+                    ? "border-[var(--border)] bg-[var(--bg-surface)]"
+                    : "border-[var(--border2)] bg-[var(--bg-panel)] hover:bg-[var(--bg-surface)] hover:border-[var(--border)]"
+                }`}
               style={
                 tab === i
-                  ? {
-                      background: `linear-gradient(135deg, ${c.color}, ${c.color === "var(--accent)" ? "var(--cyan)" : c.color})`,
-                      boxShadow: `0 4px 16px ${c.shadowColor}`,
-                    }
+                  ? { boxShadow: `0 0 0 1px ${c.color}22` }
                   : {}
               }
             >
-              <span className="hidden sm:inline">{c.label}</span>
-              <span className="sm:hidden">{c.short}</span>
+              {/* Icon */}
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-base mb-3 border border-[var(--border2)]"
+                style={
+                  tab === i
+                    ? { background: `${c.color}18`, borderColor: `${c.color}30` }
+                    : { background: "var(--bg-base)" }
+                }
+              >
+                <span style={{ fontSize: 16 }}>{c.icon}</span>
+              </div>
+
+              {/* Dot + label */}
+              <div className="flex items-center gap-2 mb-1.5">
+                <div
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{
+                    background: tab === i ? c.color : "var(--ink4)",
+                    boxShadow: tab === i ? `0 0 6px ${c.color}` : "none",
+                    transition: "all 0.3s",
+                  }}
+                />
+                <span
+                  className="font-display text-[12px] font-semibold"
+                  style={{ color: tab === i ? c.color : "var(--ink2)" }}
+                >
+                  {c.label}
+                </span>
+              </div>
+
+              {/* Description */}
+              <p className="text-[11px] font-body text-[var(--ink4)] leading-relaxed">
+                {c.description}
+              </p>
             </button>
           ))}
         </div>
@@ -772,7 +761,7 @@ export function TechSection() {
                   {cur.label}
                 </span>
                 <span className="font-mono text-[10px] text-[var(--ink4)]">
-                  — {cur.items.length} technologies
+                  — {cur.items.length} tools
                 </span>
               </div>
               <p className="text-[12px] text-[var(--ink3)] font-body leading-relaxed max-w-md">
@@ -781,69 +770,12 @@ export function TechSection() {
             </div>
           </div>
 
-          {/* Stats row */}
-          <div
-            className="grid grid-cols-3 border-b border-[var(--border)]"
-          >
-            {cur.stats.map((s, i) => (
-              <div
-                key={s.label}
-                className={`px-4 sm:px-6 md:px-8 py-4 md:py-5 flex flex-col gap-1 ${
-                  i < cur.stats.length - 1 ? "border-r border-[var(--border)]" : ""
-                }`}
-              >
-                <div
-                  className="font-display font-bold leading-none tracking-tight"
-                  style={{
-                    fontSize: "clamp(18px,2.5vw,26px)",
-                    background: `linear-gradient(110deg, ${cur.color}, var(--cyan))`,
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
-                  {s.value}
-                </div>
-                <div className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--ink4)]">
-                  {s.label}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Highlights row */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 border-b border-[var(--border)]">
-            {cur.highlights.map((h, i) => (
-              <div
-                key={h.label}
-                className={`px-4 sm:px-6 md:px-8 py-4 md:py-5 flex items-start gap-3 ${
-                  i < cur.highlights.length - 1 ? "sm:border-r border-b sm:border-b-0 border-[var(--border)]" : ""
-                }`}
-              >
-                <span
-                  className="text-base leading-none mt-0.5 flex-shrink-0"
-                  style={{ fontSize: 16 }}
-                >
-                  {h.icon}
-                </span>
-                <div>
-                  <div className="text-[12px] font-semibold text-[var(--ink2)] mb-0.5">
-                    {h.label}
-                  </div>
-                  <div className="text-[11px] font-body text-[var(--ink4)] leading-relaxed">
-                    {h.sub}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
           {/* Tech pills */}
           <div className="px-5 sm:px-6 md:px-8 py-6 md:py-8">
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {cur.items.map((tech: string) => (
+              {cur.items.map((tool: string) => (
                 <span
-                  key={tech}
+                  key={tool}
                   className="group relative font-mono text-[10px] sm:text-[11px] px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl
                     border border-[var(--border2)] text-[var(--ink3)] bg-[var(--bg-panel)]
                     hover:text-[var(--ink)] hover:border-[var(--border)] transition-all duration-200
@@ -855,7 +787,7 @@ export function TechSection() {
                       background: `linear-gradient(90deg, transparent, ${cur.color}, transparent)`,
                     }}
                   />
-                  <span className="relative z-10">{tech}</span>
+                  <span className="relative z-10">{tool}</span>
                 </span>
               ))}
             </div>
@@ -867,9 +799,7 @@ export function TechSection() {
               className="flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-xl"
               style={{ background: "var(--accent-pale)" }}
             >
-              <div
-                className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 border border-[var(--accent-pale2)]"
-              >
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 border border-[var(--accent-pale2)]">
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
                   <path
                     d="M5.5 1l1.2 2.8H9L7 5.4l.7 2.9L5.5 7l-2.2 1.3.7-2.9L2 3.8h2.3L5.5 1z"
@@ -881,8 +811,10 @@ export function TechSection() {
                 </svg>
               </div>
               <p className="text-[11px] sm:text-[12px] font-body text-[var(--ink3)] leading-relaxed">
-                <span className="font-semibold text-[var(--accent)]">AI-first by design.</span>{" "}
-                Every tool is evaluated for AI compatibility, automation potential, and long-term scalability.
+                <span className="font-semibold" style={{ color: cur.color }}>
+                  {cur.label}.
+                </span>{" "}
+                {cur.note.split(". ").slice(1).join(". ")}
               </p>
             </div>
           </div>
