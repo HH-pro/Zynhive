@@ -500,7 +500,7 @@ export function PortfolioPage() {
           </p>
 
           {/* Stats row — FIX: label color was hardcoded rgb(10,15,80), invisible in dark mode */}
-          <div className="flex flex-wrap gap-2.5 mt-12">
+          <div className="flex flex-wrap gap-2.5 mt-1">
             {[
               { label: "Web Apps",      val: projects.filter((p) => p.category === "Web Application").length || projects.length },
               { label: "Mobile Apps",   val: projects.filter((p) => p.category === "Mobile App").length      || "–" },
