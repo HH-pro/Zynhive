@@ -2,6 +2,88 @@ import { useState, useRef } from "react";
 import type { Service, Project, TeamMember, Testimonial } from "../../lib/types";
 import { ArrowRightIcon, LinkedInIcon, TwitterIcon, GitHubIcon } from "../ui/index";
 
+// ── Professional SVG service icons ───────────────────────────────────────────
+
+function IconAI({ color }: { color: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 18 18" fill="none">
+      {/* Chip body */}
+      <rect x="5" y="5" width="8" height="8" rx="1.5" stroke={color} strokeWidth="1.3" />
+      {/* Inner dots */}
+      <circle cx="7.5"  cy="7.5"  r="0.8" fill={color} />
+      <circle cx="10.5" cy="7.5"  r="0.8" fill={color} />
+      <circle cx="7.5"  cy="10.5" r="0.8" fill={color} />
+      <circle cx="10.5" cy="10.5" r="0.8" fill={color} />
+      {/* Pins — top */}
+      <line x1="7"  y1="5"  x2="7"  y2="2.5"  stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+      <line x1="11" y1="5"  x2="11" y2="2.5"  stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+      {/* Pins — bottom */}
+      <line x1="7"  y1="13" x2="7"  y2="15.5" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+      <line x1="11" y1="13" x2="11" y2="15.5" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+      {/* Pins — left */}
+      <line x1="5"  y1="7"  x2="2.5"  y2="7"  stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+      <line x1="5"  y1="11" x2="2.5"  y2="11" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+      {/* Pins — right */}
+      <line x1="13" y1="7"  x2="15.5" y2="7"  stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+      <line x1="13" y1="11" x2="15.5" y2="11" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconWeb({ color }: { color: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 18 18" fill="none">
+      {/* Browser frame */}
+      <rect x="1.5" y="3" width="15" height="12" rx="2" stroke={color} strokeWidth="1.3" />
+      {/* Title bar divider */}
+      <line x1="1.5" y1="6.5" x2="16.5" y2="6.5" stroke={color} strokeWidth="1.1" />
+      {/* Traffic lights */}
+      <circle cx="4"   cy="4.75" r="0.8" fill={color} opacity="0.45" />
+      <circle cx="6.2" cy="4.75" r="0.8" fill={color} opacity="0.7"  />
+      <circle cx="8.4" cy="4.75" r="0.8" fill={color} />
+      {/* URL bar */}
+      <rect x="10" y="3.9" width="5" height="1.7" rx="0.85" stroke={color} strokeWidth="0.8" opacity="0.45" />
+      {/* Content lines */}
+      <line x1="4" y1="9.5"  x2="14" y2="9.5"  stroke={color} strokeWidth="1.1" strokeLinecap="round" />
+      <line x1="4" y1="11.5" x2="11" y2="11.5" stroke={color} strokeWidth="1.1" strokeLinecap="round" />
+      <line x1="4" y1="13.5" x2="9"  y2="13.5" stroke={color} strokeWidth="1.1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconMarketing({ color }: { color: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 18 18" fill="none">
+      {/* Rising bars */}
+      <rect x="2"  y="10"  width="3"   height="5.5" rx="0.8" stroke={color} strokeWidth="1.2" />
+      <rect x="7"  y="7"   width="3"   height="8.5" rx="0.8" stroke={color} strokeWidth="1.2" />
+      <rect x="12" y="3.5" width="3.5" height="12"  rx="0.8" stroke={color} strokeWidth="1.2" />
+      {/* Trend line */}
+      <polyline
+        points="3.5,9.5 8.5,6.5 13.75,3"
+        stroke={color} strokeWidth="1.2"
+        strokeLinecap="round" strokeLinejoin="round"
+        opacity="0.6"
+      />
+      {/* Arrow tip */}
+      <polyline
+        points="11.5,2.5 13.75,3 13.2,5.2"
+        stroke={color} strokeWidth="1.2"
+        strokeLinecap="round" strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// Map service ID (or title key) → icon component
+function ServiceIcon({ service, color }: { service: Service; color: string }) {
+  const key = service.iconKey ?? service.title.toLowerCase();
+  if (key.includes("web") || key.includes("app")) return <IconWeb color={color} />;
+  if (key.includes("market")) return <IconMarketing color={color} />;
+  // Default: AI / automation
+  return <IconAI color={color} />;
+}
+
 // ─── ServiceCard ──────────────────────────────────────────────────────────────
 export function ServiceCard({ service, index }: { service: Service; index: number }) {
   const [hovered, setHovered] = useState(false);
@@ -45,7 +127,7 @@ export function ServiceCard({ service, index }: { service: Service; index: numbe
         />
       </div>
 
-      {/* Corner index badge */}
+      {/* Corner index badge + icon row */}
       <div className="flex items-start justify-between mb-6">
         <span
           className="font-mono text-[10px] tracking-[0.18em] uppercase px-2 py-1 rounded-md transition-all duration-300"
@@ -58,9 +140,9 @@ export function ServiceCard({ service, index }: { service: Service; index: numbe
           {String(index + 1).padStart(2, "0")}
         </span>
 
-        {/* Icon box */}
+        {/* Icon box — SVG replaces emoji */}
         <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all duration-500"
+          className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500"
           style={{
             background: hovered ? `${service.color}18` : "var(--bg-panel)",
             border: `1px solid ${hovered ? service.color + "35" : "var(--border2)"}`,
@@ -68,14 +150,17 @@ export function ServiceCard({ service, index }: { service: Service; index: numbe
             boxShadow: hovered ? `0 8px 24px ${service.color}28` : "none",
           }}
         >
-          {service.emoji}
+          <ServiceIcon
+            service={service}
+            color={hovered ? service.color : "var(--ink4)"}
+          />
         </div>
       </div>
 
       {/* Title */}
       <h3
         className="font-display text-[18px] font-bold tracking-tight leading-snug mb-2.5 transition-colors duration-300"
-        style={{ color: hovered ? "var(--ink)" : "var(--ink)" }}
+        style={{ color: "var(--ink)" }}
       >
         {service.title}
       </h3>
@@ -91,7 +176,7 @@ export function ServiceCard({ service, index }: { service: Service; index: numbe
         }}
       />
 
-      {/* Desc */}
+      {/* Description */}
       <p
         className="text-[13px] leading-relaxed mb-6"
         style={{ color: "var(--ink3)", lineHeight: "1.75" }}
@@ -215,7 +300,7 @@ export function ProjectCard({
           }}
         />
 
-        {/* Emoji */}
+        {/* Emoji — kept for project cards (each project has a unique visual identity) */}
         <span
           className="text-5xl transition-all duration-500 relative z-10"
           style={{
@@ -321,8 +406,13 @@ export function ProjectCard({
             }}
           >
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <path d="M1 9l3-4 3 2.5 4-6" stroke={project.color}
-                strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M1 9l3-4 3 2.5 4-6"
+                stroke={project.color}
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
           <span
@@ -482,8 +572,14 @@ export function TeamCard({ member }: { member: TeamMember }) {
 
 // ─── SocialBtn atom ───────────────────────────────────────────────────────────
 function SocialBtn({
-  href, color, children,
-}: { href: string; color: string; children: React.ReactNode }) {
+  href,
+  color,
+  children,
+}: {
+  href: string;
+  color: string;
+  children: React.ReactNode;
+}) {
   const [hov, setHov] = useState(false);
   return (
     <a
@@ -532,13 +628,14 @@ export function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
         <div
           className="h-full w-full transition-all duration-700"
           style={{
-            background: "linear-gradient(90deg, transparent, var(--accent), var(--cyan), transparent)",
+            background:
+              "linear-gradient(90deg, transparent, var(--accent), var(--cyan), transparent)",
             transform: hovered ? "translateX(0%)" : "translateX(-101%)",
           }}
         />
       </div>
 
-      {/* Decorative quote mark — large, positioned */}
+      {/* Decorative quote mark */}
       <div
         className="absolute top-3 right-5 font-display font-bold leading-none pointer-events-none select-none transition-all duration-500"
         style={{
@@ -563,7 +660,7 @@ export function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
             fill="var(--accent)"
             style={{ opacity: 0.9 + i * 0.02 }}
           >
-            <path d="M6.5 1l1.5 3.3 3.6.5-2.6 2.5.6 3.5L6.5 9l-3.1 1.8.6-3.5L1.4 4.8l3.6-.5L6.5 1z"/>
+            <path d="M6.5 1l1.5 3.3 3.6.5-2.6 2.5.6 3.5L6.5 9l-3.1 1.8.6-3.5L1.4 4.8l3.6-.5L6.5 1z" />
           </svg>
         ))}
       </div>
@@ -612,10 +709,7 @@ export function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
           >
             {testimonial.name}
           </div>
-          <div
-            className="text-[11px] font-mono truncate"
-            style={{ color: "var(--ink4)" }}
-          >
+          <div className="text-[11px] font-mono truncate" style={{ color: "var(--ink4)" }}>
             {testimonial.role} · {testimonial.company}
           </div>
         </div>
@@ -642,7 +736,13 @@ export function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 }
 
 // ─── ProjectModal ─────────────────────────────────────────────────────────────
-export function ProjectModal({ project, onClose }: { project: Project; onClose: () => void }) {
+export function ProjectModal({
+  project,
+  onClose,
+}: {
+  project: Project;
+  onClose: () => void;
+}) {
   return (
     <div
       className="fixed inset-0 z-[800] flex items-center justify-center p-4"
@@ -758,7 +858,9 @@ export function ProjectModal({ project, onClose }: { project: Project; onClose: 
           {/* Separator */}
           <div
             className="h-px mb-4"
-            style={{ background: `linear-gradient(90deg, ${project.color}40, transparent)` }}
+            style={{
+              background: `linear-gradient(90deg, ${project.color}40, transparent)`,
+            }}
           />
 
           <p
@@ -801,9 +903,13 @@ export function ProjectModal({ project, onClose }: { project: Project; onClose: 
               }}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M2 12l3.5-5 3.5 3 5-7"
-                  stroke={project.color} strokeWidth="1.5"
-                  strokeLinecap="round" strokeLinejoin="round"/>
+                <path
+                  d="M2 12l3.5-5 3.5 3 5-7"
+                  stroke={project.color}
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <div>
