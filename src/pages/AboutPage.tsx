@@ -263,23 +263,7 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* ── Stats ── */}
-      <div className="bg-[var(--bg-panel)] border-y border-[var(--border)] transition-colors duration-500">
-        <div className="max-w-7xl mx-auto px-8 md:px-14 py-8 grid grid-cols-3 gap-6 text-center">
-          {HERO_STATS.map(({ target, suffix, label }) => (
-            <div key={label}>
-              <div className="font-syne text-3xl font-extrabold text-[var(--accent)]">
-                {target}
-                {suffix}
-              </div>
-              <div className="font-mono text-[10px] text-[var(--ink4)] tracking-wider uppercase mt-1">
-                {label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
+     
       {/* ── Team (MOVED TO TOP) ── */}
       <section className="px-8 md:px-14 py-28 bg-[var(--bg-alt)] transition-colors duration-500">
         <div className="max-w-7xl mx-auto">
