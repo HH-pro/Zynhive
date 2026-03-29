@@ -39,15 +39,11 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
   const onHero = !scrolled;
 
   const inkMain     = "rgba(244,246,255,0.95)";
-  const inkMuted    = dark && scrolled ? "var(--ink3)" : "rgba(244,246,255,0.55)";
-  const hoverBg     = dark && scrolled ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.08)";
+  const inkMuted    = "rgba(244,246,255,0.95)"; // ← always white
+  const hoverBg     = "rgba(255,255,255,0.08)";
   const activeBg    = "rgba(255,255,255,0.12)";
   const activeColor = "rgba(244,246,255,0.98)";
 
-  // Logo filter:
-  // • on hero: none — white logo shows great on dark hero bg
-  // • scrolled + light: navy blue (~#0a1a4a)
-  // • scrolled + dark:  none — logo visible on dark glass pill
   const logoFilter = "none";
 
   const navBg = scrolled
@@ -267,19 +263,19 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                       text-[13px] font-semibold tracking-[0.05em] uppercase no-underline
                       transition-all duration-200"
                     style={{
-                      color: isActive ? "var(--accent)" : "var(--ink3)",
+                      color: isActive ? "var(--accent)" : "rgba(244,246,255,0.95)",
                       background: isActive ? "var(--accent-pale)" : "transparent",
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        (e.currentTarget as HTMLElement).style.background = dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
-                        (e.currentTarget as HTMLElement).style.color = "var(--ink)";
+                        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                        (e.currentTarget as HTMLElement).style.color = "rgba(244,246,255,0.95)";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isActive) {
                         (e.currentTarget as HTMLElement).style.background = "transparent";
-                        (e.currentTarget as HTMLElement).style.color = "var(--ink3)";
+                        (e.currentTarget as HTMLElement).style.color = "rgba(244,246,255,0.95)";
                       }
                     }}
                   >
@@ -290,7 +286,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                         style={{ background: "var(--accent)" }}
                       />
                     ) : (
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--ink4)" }}>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "rgba(244,246,255,0.5)" }}>
                         <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     )}
@@ -300,7 +296,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
 
               <div
                 className="my-1 h-px"
-                style={{ background: dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }}
+                style={{ background: "rgba(255,255,255,0.08)" }}
               />
 
               <a
