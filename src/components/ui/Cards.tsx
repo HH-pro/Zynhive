@@ -77,7 +77,7 @@ function IconMarketing({ color }: { color: string }) {
 
 // Map service ID (or title key) → icon component
 function ServiceIcon({ service, color }: { service: Service; color: string }) {
-  const key = service.iconKey ?? service.title.toLowerCase();
+  const key = service.title.toLowerCase();
   if (key.includes("web") || key.includes("app")) return <IconWeb color={color} />;
   if (key.includes("market")) return <IconMarketing color={color} />;
   // Default: AI / automation
