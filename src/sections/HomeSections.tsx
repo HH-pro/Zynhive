@@ -578,6 +578,7 @@ export function ProcessSection() {
 
 
 
+
 // ── Tool lists ──────────────────────────────────────────────────────────────
 
 const TOOLS_AI: string[] = [
@@ -588,10 +589,10 @@ const TOOLS_AI: string[] = [
 ];
 
 const TOOLS_WEB: string[] = [
-  "Next.js", "React", "React Native", "Expo", "WordPress",
-  "Webflow", "Shopify", "Framer", "Tailwind CSS",
-  "Supabase", "Firebase", "PostgreSQL", "REST APIs", "GraphQL",
-  "App Store Publishing",
+  "Next.js", "React", "React Native", "Expo", "Swift iOS",
+  "WordPress", "Webflow", "Shopify", "Squarespace", "Framer",
+  "Tailwind CSS", "Supabase", "Firebase", "PostgreSQL", "MongoDB",
+  "REST APIs", "GraphQL", "App Store Publishing",
 ];
 
 const TOOLS_MARKETING: string[] = [
