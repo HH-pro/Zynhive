@@ -134,9 +134,7 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
             </svg>
           </button>
         </div>
- <h2 className="font-display text-[17px] font-bold text-[var(--ink)] tracking-tight">
-              Add New Project
-            </h2>
+
         {/* Success banner */}
         {successMsg && (
           <div className="mx-6 mt-5 flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px]"
@@ -226,7 +224,9 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
               </div>
             </div>
           </div>
-
+ <h2 className="font-display text-[17px] font-bold text-[var(--ink)] tracking-tight">
+              Add New Project
+            </h2>
           {/* CATEGORY + COLOR */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
