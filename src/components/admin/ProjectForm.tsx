@@ -8,11 +8,9 @@ const COLOR_OPTIONS = ["#3B6EF8","#00AACC","#7B5CFA","#1A66FF","#0DBFA8","#4D5BF
 const CATEGORIES    = ["AI Development","Web Application","Mobile App","UI/UX Design","Digital Marketing","Software Consulting"];
 
 type Props = {
-  project?:             FirestoreProject | null;
-  onClose:              () => void;
-  onSaved:              () => void;
-  // Called when "Save & Add Another" is clicked — parent should NOT close the form
-  onSavedAndContinue?:  () => void;
+  project?:  FirestoreProject | null;
+  onClose:   () => void;
+  onSaved:   () => void;
 };
 
 const EMPTY: Omit<FirestoreProject,"id"|"createdAt"|"updatedAt"> = {
@@ -21,17 +19,15 @@ const EMPTY: Omit<FirestoreProject,"id"|"createdAt"|"updatedAt"> = {
   imageUrl: "", imagePublicId: "", liveUrl: "", githubUrl: "",
 };
 
-export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: Props) {
+export function ProjectForm({ project, onClose, onSaved }: Props) {
   const isEdit = !!project;
-
-  const [form,       setForm]       = useState({ ...EMPTY, ...project });
-  const [tagInput,   setTagInput]   = useState("");
-  const [uploading,  setUploading]  = useState(false);
-  const [uploadPct,  setUploadPct]  = useState(0);
-  const [saving,     setSaving]     = useState(false);
-  const [error,      setError]      = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-  const fileRef                     = useRef<HTMLInputElement>(null);
+  const [form,      setForm]      = useState({ ...EMPTY, ...project });
+  const [tagInput,  setTagInput]  = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadPct, setUploadPct] = useState(0);
+  const [saving,    setSaving]    = useState(false);
+  const [error,     setError]     = useState("");
+  const fileRef                   = useRef<HTMLInputElement>(null);
 
   function field(key: keyof typeof EMPTY, val: unknown) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -63,7 +59,6 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    setSuccessMsg("");
     setSaving(true);
     try {
       if (isEdit && project?.id) {
@@ -71,31 +66,8 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
       } else {
         await createProject(form);
       }
-      onSaved();   // tells parent to refresh list + show toast
-      onClose();   // closes the drawer
-    } catch (err) {
-      setError("Failed to save. Please try again.");
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleSaveAndAddAnother() {
-    setError("");
-    setSuccessMsg("");
-    setSaving(true);
-    try {
-      await createProject(form);
-
-      // Tell parent to refresh list + show toast, but NOT close the form
-      onSavedAndContinue?.();
-
-      // Reset form locally — drawer stays open
-      setForm({ ...EMPTY });
-      setTagInput("");
-      if (fileRef.current) fileRef.current.value = "";
-      setSuccessMsg("✓ Project saved! Fill in details for the next one.");
+      onSaved();
+      onClose();
     } catch (err) {
       setError("Failed to save. Please try again.");
       console.error(err);
@@ -117,7 +89,7 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
           animation: "slideInRight .3s cubic-bezier(0.16,1,0.3,1) both",
         }}
       >
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)] sticky top-0 z-10"
           style={{ background: "var(--bg-panel)" }}>
           <div>
@@ -128,58 +100,14 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
               {isEdit ? `ID: ${project?.id?.slice(0,8)}…` : "New entry → Firestore + Cloudinary"}
             </p>
           </div>
-
-          <div className="flex items-center gap-2">
-            {/* ── "Add Project" shortcut — visible even in edit mode ── */}
-            <button
-              type="button"
-              onClick={() => {
-                // Reset to a fresh create form without closing the drawer
-                setForm({ ...EMPTY });
-                setTagInput("");
-                setError("");
-                setSuccessMsg("");
-                if (fileRef.current) fileRef.current.value = "";
-                // We can't flip `isEdit` directly since it's derived from the prop,
-                // so we call onSavedAndContinue which tells the parent to open a
-                // fresh create drawer.  If parent doesn't supply it we just reset
-                // visually and the next submit will createProject.
-                onSavedAndContinue?.();
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-mono
-                font-medium border border-dashed border-[var(--accent-pale2)] text-[var(--accent)]
-                hover:bg-[var(--accent-pale)] transition-all duration-200"
-              style={{ background: "transparent" }}
-              title="Start a new project (opens fresh form)"
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              </svg>
-              Add Project
-            </button>
-
-            {/* Close */}
-            <button onClick={onClose}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--ink4)]
-                hover:text-[var(--ink)] hover:bg-[var(--border)] transition-all">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Success banner */}
-        {successMsg && (
-          <div className="mx-6 mt-5 flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px]"
-            style={{ background: "rgba(13,191,168,0.1)", border: "1px solid rgba(13,191,168,0.3)", color: "var(--cyan)" }}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" strokeWidth="1"/>
-              <path d="M4 6.5l2 2 3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--ink4)]
+              hover:text-[var(--ink)] hover:bg-[var(--border)] transition-all">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
-            {successMsg}
-          </div>
-        )}
+          </button>
+        </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 p-6 flex-1">
@@ -275,6 +203,7 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Accent Color</Label>
+              {/* ── FIX: removed invalid ringOffsetColor inline style prop ── */}
               <div className="flex gap-1.5 flex-wrap">
                 {COLOR_OPTIONS.map((c) => (
                   <button
@@ -396,61 +325,30 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
           )}
 
           {/* Actions */}
-          <div className="flex flex-col gap-2 pt-2">
-            <div className="flex gap-3">
-              <button type="button" onClick={onClose}
-                className="flex-1 py-3 rounded-xl text-[14px] font-medium border border-[var(--border2)]
-                  text-[var(--ink3)] hover:text-[var(--ink)] hover:border-[var(--ink3)] transition-all"
-                style={{ background: "transparent", cursor: "pointer" }}>
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving || uploading}
-                className="flex-1 py-3 rounded-xl text-[14px] font-semibold text-white
-                  disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300"
-                style={{ background: "linear-gradient(135deg, var(--accent), var(--cyan))", cursor: "pointer" }}
-              >
-                {saving ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
-                    Saving…
-                  </span>
-                ) : (
-                  isEdit ? "Save Changes" : "Create Project →"
-                )}
-              </button>
-            </div>
-
-            {/* ── Save & Add Another — CREATE mode only ── */}
-            {!isEdit && (
-              <button
-                type="button"
-                disabled={saving || uploading}
-                onClick={handleSaveAndAddAnother}
-                className="w-full py-3 rounded-xl text-[14px] font-medium border border-dashed
-                  border-[var(--accent-pale2)] text-[var(--accent)] hover:bg-[var(--accent-pale)]
-                  disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200
-                  flex items-center justify-center gap-2"
-                style={{ background: "transparent", cursor: "pointer" }}
-              >
-                {saving ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-[var(--accent)]/30 border-t-[var(--accent)] rounded-full animate-spin"/>
-                    Saving…
-                  </span>
-                ) : (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-                    </svg>
-                    Save & Add Another
-                  </>
-                )}
-              </button>
-            )}
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-3 rounded-xl text-[14px] font-medium border border-[var(--border2)]
+                text-[var(--ink3)] hover:text-[var(--ink)] hover:border-[var(--ink3)] transition-all"
+              style={{ background: "transparent", cursor: "pointer" }}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving || uploading}
+              className="flex-1 py-3 rounded-xl text-[14px] font-semibold text-white
+                disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300"
+              style={{ background: "linear-gradient(135deg, var(--accent), var(--cyan))", cursor: "pointer" }}
+            >
+              {saving ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
+                  Saving…
+                </span>
+              ) : (
+                isEdit ? "Save Changes" : "Create Project →"
+              )}
+            </button>
           </div>
-
         </form>
       </div>
     </div>
