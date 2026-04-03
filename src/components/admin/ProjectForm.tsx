@@ -8,9 +8,11 @@ const COLOR_OPTIONS = ["#3B6EF8","#00AACC","#7B5CFA","#1A66FF","#0DBFA8","#4D5BF
 const CATEGORIES    = ["AI Development","Web Application","Mobile App","UI/UX Design","Digital Marketing","Software Consulting"];
 
 type Props = {
-  project?:  FirestoreProject | null;
-  onClose:   () => void;
-  onSaved:   () => void;
+  project?:             FirestoreProject | null;
+  onClose:              () => void;
+  onSaved:              () => void;
+  // Called when "Save & Add Another" is clicked — parent should NOT close the form
+  onSavedAndContinue?:  () => void;
 };
 
 const EMPTY: Omit<FirestoreProject,"id"|"createdAt"|"updatedAt"> = {
@@ -19,11 +21,8 @@ const EMPTY: Omit<FirestoreProject,"id"|"createdAt"|"updatedAt"> = {
   imageUrl: "", imagePublicId: "", liveUrl: "", githubUrl: "",
 };
 
-export function ProjectForm({ project, onClose, onSaved }: Props) {
-  // addingAnother = true means we already saved once and reset the form
-  // this keeps isEdit = false even though `project` prop still exists
-  const [addingAnother, setAddingAnother] = useState(false);
-  const isEdit = !!project && !addingAnother;
+export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: Props) {
+  const isEdit = !!project;
 
   const [form,       setForm]       = useState({ ...EMPTY, ...project });
   const [tagInput,   setTagInput]   = useState("");
@@ -72,8 +71,8 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
       } else {
         await createProject(form);
       }
-      onSaved();
-      onClose();
+      onSaved();   // tells parent to refresh list + show toast
+      onClose();   // closes the drawer
     } catch (err) {
       setError("Failed to save. Please try again.");
       console.error(err);
@@ -88,12 +87,13 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
     setSaving(true);
     try {
       await createProject(form);
-      onSaved(); // refresh parent list in background — does NOT close drawer
 
-      // Reset form to blank, keep drawer open
+      // Tell parent to refresh list + show toast, but NOT close the form
+      onSavedAndContinue?.();
+
+      // Reset form locally — drawer stays open
       setForm({ ...EMPTY });
       setTagInput("");
-      setAddingAnother(true); // locks isEdit=false from now on
       if (fileRef.current) fileRef.current.value = "";
       setSuccessMsg("✓ Project saved! Fill in details for the next one.");
     } catch (err) {
@@ -103,10 +103,6 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
       setSaving(false);
     }
   }
-
-  // Whether to show the "Save & Add Another" button:
-  // show when no project prop (fresh add) OR when addingAnother mode is active
-  const showAddAnother = !project || addingAnother;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end"
@@ -394,8 +390,8 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
               </button>
             </div>
 
-            {/* Save & Add Another — visible whenever NOT in pure edit mode */}
-            {showAddAnother && (
+            {/* Save & Add Another — only in create mode, always visible */}
+            {!isEdit && (
               <button
                 type="button"
                 disabled={saving || uploading}
