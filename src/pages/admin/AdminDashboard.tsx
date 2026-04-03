@@ -1007,8 +1007,7 @@ export function AdminDashboard({ user }: Props) {
               )}
 
               {/* Bell */}
-              <div className="relative">
-               {/* CTA Button */}
+              {/* CTA Button */}
 {ctaLabel && (
   <PrimaryBtn small onClick={handleCta}>
     <Ic.Plus />
@@ -1019,9 +1018,6 @@ export function AdminDashboard({ user }: Props) {
 {/* Bell */}
 <div className="relative">
   <IconBtn title="Notifications" size={30}><Ic.Bell /></IconBtn>
-
-</div> 
-                <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full pointer-events-none"
                   style={{ background: "var(--red)", border: "1.5px solid var(--bg-panel)" }}/>
               </div>
 
