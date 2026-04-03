@@ -20,14 +20,19 @@ const EMPTY: Omit<FirestoreProject,"id"|"createdAt"|"updatedAt"> = {
 };
 
 export function ProjectForm({ project, onClose, onSaved }: Props) {
-  const isEdit = !!project;
-  const [form,      setForm]      = useState({ ...EMPTY, ...project });
-  const [tagInput,  setTagInput]  = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [uploadPct, setUploadPct] = useState(0);
-  const [saving,    setSaving]    = useState(false);
-  const [error,     setError]     = useState("");
-  const fileRef                   = useRef<HTMLInputElement>(null);
+  // addingAnother = true means we already saved once and reset the form
+  // this keeps isEdit = false even though `project` prop still exists
+  const [addingAnother, setAddingAnother] = useState(false);
+  const isEdit = !!project && !addingAnother;
+
+  const [form,       setForm]       = useState({ ...EMPTY, ...project });
+  const [tagInput,   setTagInput]   = useState("");
+  const [uploading,  setUploading]  = useState(false);
+  const [uploadPct,  setUploadPct]  = useState(0);
+  const [saving,     setSaving]     = useState(false);
+  const [error,      setError]      = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const fileRef                     = useRef<HTMLInputElement>(null);
 
   function field(key: keyof typeof EMPTY, val: unknown) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -59,6 +64,7 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
     setSaving(true);
     try {
       if (isEdit && project?.id) {
@@ -78,14 +84,18 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
 
   async function handleSaveAndAddAnother() {
     setError("");
+    setSuccessMsg("");
     setSaving(true);
     try {
       await createProject(form);
-      onSaved();
-      // Reset form to blank so user can immediately add another project
+      onSaved(); // refresh parent list in background — does NOT close drawer
+
+      // Reset form to blank, keep drawer open
       setForm({ ...EMPTY });
       setTagInput("");
+      setAddingAnother(true); // locks isEdit=false from now on
       if (fileRef.current) fileRef.current.value = "";
+      setSuccessMsg("✓ Project saved! Fill in details for the next one.");
     } catch (err) {
       setError("Failed to save. Please try again.");
       console.error(err);
@@ -93,6 +103,10 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
       setSaving(false);
     }
   }
+
+  // Whether to show the "Save & Add Another" button:
+  // show when no project prop (fresh add) OR when addingAnother mode is active
+  const showAddAnother = !project || addingAnother;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end"
@@ -126,6 +140,18 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
             </svg>
           </button>
         </div>
+
+        {/* Success banner */}
+        {successMsg && (
+          <div className="mx-6 mt-5 flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px]"
+            style={{ background: "rgba(13,191,168,0.1)", border: "1px solid rgba(13,191,168,0.3)", color: "var(--cyan)" }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" strokeWidth="1"/>
+              <path d="M4 6.5l2 2 3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {successMsg}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 p-6 flex-1">
@@ -368,8 +394,8 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
               </button>
             </div>
 
-            {/* Save & Add Another — only shown in create mode */}
-            {!isEdit && (
+            {/* Save & Add Another — visible whenever NOT in pure edit mode */}
+            {showAddAnother && (
               <button
                 type="button"
                 disabled={saving || uploading}
