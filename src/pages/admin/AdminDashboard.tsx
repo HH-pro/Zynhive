@@ -14,6 +14,7 @@ interface Props { user: User; }
 type Tab = "projects" | "leads" | "team" | "analytics";
 
 // ─── Theme helpers ────────────────────────────────────────────────────────────
+// Persists choice and writes data-theme to <html> so index.css vars swap.
 function getStoredTheme(): boolean {
   try { return localStorage.getItem("admin-theme") === "dark"; } catch { return false; }
 }
@@ -50,6 +51,7 @@ export function ThemeToggle({ dark, onToggle }: { dark: boolean; onToggle: () =>
         el.style.boxShadow = "none";
       }}
     >
+      {/* Icon row */}
       <div style={{
         position: "absolute", inset: 0, display: "flex", alignItems: "center",
         justifyContent: "space-between", padding: "0 6px", pointerEvents: "none",
@@ -58,6 +60,7 @@ export function ThemeToggle({ dark, onToggle }: { dark: boolean; onToggle: () =>
         <span style={{ opacity: dark ? 0.35 : 1, transition: "opacity .3s" }}>☀</span>
         <span style={{ opacity: dark ? 1 : 0.35, transition: "opacity .3s" }}>☽</span>
       </div>
+      {/* Thumb */}
       <div style={{
         position: "absolute", top: 3, left: 3,
         width: 18, height: 18, borderRadius: "50%",
@@ -70,6 +73,7 @@ export function ThemeToggle({ dark, onToggle }: { dark: boolean; onToggle: () =>
 }
 
 // ─── Keyframe injector ────────────────────────────────────────────────────────
+// Only admin-specific keyframes. All token variables live in index.css.
 const ADMIN_KF = `
   @keyframes spinLoader { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
 `;
@@ -542,6 +546,7 @@ function ProjectsTab({
   return (
     <div className="admin-content-pad flex flex-col gap-4" style={{ padding: compact ? 12 : 20 }}>
 
+      {/* Stat cards — 2 cols on mobile, 4 on desktop */}
       <div className="admin-stat-grid grid gap-3"
         style={{ gridTemplateColumns: compact ? "repeat(2,minmax(0,1fr))" : "repeat(4,minmax(0,1fr))" }}>
         <StatCard label="Total projects" value={stats.total}      sub="all categories"  iconBg="var(--accent-pale)"  iconColor="var(--accent)"  icon={<Ic.Projects />}/>
@@ -550,6 +555,7 @@ function ProjectsTab({
         <StatCard label="AI projects"    value={stats.aiProjects} sub="ML & LLM builds" iconBg="var(--gold-pale)"    iconColor="var(--gold)"    icon={<Ic.Ai />}/>
       </div>
 
+      {/* Search bar */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 min-w-[160px] max-w-sm">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--ink4)" }}>
@@ -577,6 +583,7 @@ function ProjectsTab({
         </div>
       </div>
 
+      {/* Table */}
       <Card>
         <div className="flex items-center gap-3 px-4 py-2.5"
           style={{ background: "var(--bg-alt)", borderBottom: "0.5px solid var(--border)", borderRadius: "12px 12px 0 0" }}>
@@ -660,6 +667,7 @@ function AnalyticsTab({ projects }: { projects: FirestoreProject[] }) {
 
   return (
     <div style={{ padding: compact ? 12 : 20, display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Summary cards */}
       <div style={{ display: "grid", gridTemplateColumns: compact ? "repeat(2,minmax(0,1fr))" : "repeat(4,minmax(0,1fr))", gap: 12 }}>
         {summaryStats.map(({ label, value, ic, ib }) => (
           <Card key={label}>
@@ -671,7 +679,9 @@ function AnalyticsTab({ projects }: { projects: FirestoreProject[] }) {
         ))}
       </div>
 
+      {/* Two-col grid → single col on mobile */}
       <div className="admin-analytics-grid" style={{ display: "grid", gridTemplateColumns: compact ? "1fr" : "1fr 1fr", gap: 16 }}>
+        {/* Category bars */}
         <Card>
           <div className="p-5">
             <h3 className="font-semibold text-[14px] mb-4" style={{ color: "var(--ink)" }}>Projects by category</h3>
@@ -702,6 +712,7 @@ function AnalyticsTab({ projects }: { projects: FirestoreProject[] }) {
           </div>
         </Card>
 
+        {/* Top projects */}
         <Card>
           <div className="p-5">
             <h3 className="font-semibold text-[14px] mb-4" style={{ color: "var(--ink)" }}>Top performing</h3>
@@ -754,11 +765,13 @@ export function AdminDashboard({ user }: Props) {
   const [toast,        setToast]        = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [dark,         setDark]         = useState<boolean>(() => getStoredTheme());
 
-  const w        = useWindowWidth();
+  const w       = useWindowWidth();
   const isMobile = w < 768;
 
+  // On mobile, auto-collapse sidebar
   const effectiveSidebarOpen = isMobile ? false : sidebarOpen;
 
+  // Apply theme on mount + change
   useEffect(() => { applyTheme(dark); }, [dark]);
 
   const handleThemeToggle = useCallback(() => {
@@ -790,7 +803,12 @@ export function AdminDashboard({ user }: Props) {
 
   function switchTab(next: Tab) { setTab(next); setSearch(""); }
 
+  const ctaLabel      = CTA_LABELS[tab];
   const activeNavItem = NAV_ITEMS.find((n) => n.id === tab);
+
+  function handleCta() {
+    if (tab === "projects") { setEditProject(null); setFormOpen(true); }
+  }
 
   const sidebarW = effectiveSidebarOpen ? 210 : 52;
 
@@ -813,6 +831,7 @@ export function AdminDashboard({ user }: Props) {
             borderRight: "0.5px solid var(--border)",
             overflow:    "hidden",
             transition:  "width .3s var(--ease), background .3s",
+            // On mobile: absolute overlay
             ...(isMobile ? {
               position: "absolute",
               top: 0, left: 0, bottom: 0,
@@ -820,6 +839,7 @@ export function AdminDashboard({ user }: Props) {
             } : {}),
           }}>
 
+          {/* Logo row */}
           <div className="flex items-center flex-shrink-0"
             style={{
               height: 52,
@@ -855,12 +875,14 @@ export function AdminDashboard({ user }: Props) {
             )}
           </div>
 
+          {/* Section label */}
           {effectiveSidebarOpen && (
             <div className="px-4 pt-3 pb-1">
               <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "var(--ink4)" }}>Menu</span>
             </div>
           )}
 
+          {/* Nav */}
           <nav className="flex flex-col flex-1 overflow-hidden"
             style={{ gap: 2, padding: effectiveSidebarOpen ? "4px 8px" : "8px 6px" }}>
             {NAV_ITEMS.map((item) => {
@@ -908,6 +930,7 @@ export function AdminDashboard({ user }: Props) {
 
           <div style={{ height: "0.5px", background: "var(--border)", margin: "6px 10px" }}/>
 
+          {/* User row */}
           <div className="flex-shrink-0 flex items-center gap-2.5 overflow-hidden"
             style={{ padding: effectiveSidebarOpen ? "10px 14px" : "10px 0", justifyContent: effectiveSidebarOpen ? "flex-start" : "center" }}>
             <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[11px]"
@@ -923,6 +946,7 @@ export function AdminDashboard({ user }: Props) {
           </div>
         </aside>
 
+        {/* Mobile sidebar backdrop */}
         {isMobile && (
           <div style={{ width: 52, flexShrink: 0 }} />
         )}
@@ -930,6 +954,7 @@ export function AdminDashboard({ user }: Props) {
         {/* ══════════ MAIN ══════════ */}
         <div className="flex-1 flex flex-col min-w-0">
 
+          {/* Header */}
           <header className="flex items-center gap-2 flex-shrink-0"
             style={{
               height: 52,
@@ -938,18 +963,21 @@ export function AdminDashboard({ user }: Props) {
               borderBottom: "0.5px solid var(--border)",
             }}>
 
+            {/* Hamburger on mobile */}
             {isMobile && (
               <IconBtn title="Menu" onClick={() => setSidebarOpen((o) => !o)} size={32}>
                 <Ic.Menu />
               </IconBtn>
             )}
 
+            {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 flex-shrink-0">
               {!isMobile && <span className="text-[11px]" style={{ color: "var(--ink4)" }}>ZynHive</span>}
               {!isMobile && <span style={{ color: "var(--ink4)" }}><Ic.Breadcrumb /></span>}
               <span className="font-semibold text-[14px]" style={{ color: "var(--ink)" }}>{activeNavItem?.label}</span>
             </div>
 
+            {/* Inline search — projects, medium+ */}
             {tab === "projects" && !isMobile && (
               <div className="admin-hdr-search relative flex-1 max-w-[220px] mx-3">
                 <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--ink4)" }}>
@@ -965,7 +993,9 @@ export function AdminDashboard({ user }: Props) {
               </div>
             )}
 
+            {/* Right actions */}
             <div className="flex items-center gap-2 ml-auto">
+              {/* Project count pill — hidden on mobile */}
               {!isMobile && (
                 <div className="admin-status-pill flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
                   style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border)" }}>
@@ -976,18 +1006,23 @@ export function AdminDashboard({ user }: Props) {
                 </div>
               )}
 
+              {/* Bell */}
               <div className="relative">
                 <IconBtn title="Notifications" size={30}><Ic.Bell /></IconBtn>
                 <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full pointer-events-none"
                   style={{ background: "var(--red)", border: "1.5px solid var(--bg-panel)" }}/>
               </div>
 
+              {/* Theme toggle */}
               <ThemeToggle dark={dark} onToggle={handleThemeToggle} />
 
               <ProfileDropdown email={user.email ?? ""} onLogout={() => adminLogout()} />
+
+
             </div>
           </header>
 
+          {/* Page content */}
           <main className="flex-1 overflow-y-auto" style={{ background: "var(--bg)" }}>
             {tab === "projects" && (
               <ProjectsTab
@@ -1004,24 +1039,12 @@ export function AdminDashboard({ user }: Props) {
           </main>
         </div>
 
-        {/* ── ProjectForm overlay ── */}
+        {/* Overlays */}
         {formOpen && (
-          <ProjectForm
-            project={editProject}
-            onClose={() => setFormOpen(false)}
-            onSaved={() => {
-              // Called by "Create Project →" and "Save Changes" — close + refresh + toast
-              loadProjects();
-              showToast(editProject ? "Project updated!" : "Project created!");
-            }}
-            onSavedAndContinue={() => {
-              // Called by "Save & Add Another" — KEEP form open, just refresh list + toast
-              loadProjects();
-              showToast("Project saved!");
-            }}
+          <ProjectForm project={editProject} onClose={() => setFormOpen(false)}
+            onSaved={() => { loadProjects(); showToast(editProject ? "Project updated!" : "Project created!"); }}
           />
         )}
-
         {deleteTarget && (
           <DeleteConfirm title={deleteTarget.title} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
         )}
