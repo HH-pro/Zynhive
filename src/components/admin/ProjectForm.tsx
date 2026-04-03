@@ -122,7 +122,7 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
           style={{ background: "var(--bg-panel)" }}>
           <div>
             <h2 className="font-display text-[17px] font-bold text-[var(--ink)] tracking-tight">
-              {isEdit ? "Edit Project" : "Add New Project"}
+              { "Add New Project"}
             </h2>
             <p className="font-mono text-[10px] text-[var(--ink4)] tracking-[0.1em] mt-0.5">
               {isEdit ? `ID: ${project?.id?.slice(0,8)}…` : "New entry → Firestore + Cloudinary"}
@@ -391,7 +391,7 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
             </div>
 
             {/* Save & Add Another — only in create mode, always visible */}
-            {!isEdit && (
+            {isEdit && (
               <button
                 type="button"
                 disabled={saving || uploading}
