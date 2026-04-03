@@ -391,7 +391,7 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
             </div>
 
             {/* Save & Add Another — only in create mode, always visible */}
-            {!isEdit && (
+            {isEdit && (
               <button
                 type="button"
                 disabled={saving || uploading}
