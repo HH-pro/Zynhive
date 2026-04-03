@@ -117,22 +117,56 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
           animation: "slideInRight .3s cubic-bezier(0.16,1,0.3,1) both",
         }}
       >
-        {/* Header */}
+        {/* ── Header ── */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)] sticky top-0 z-10"
           style={{ background: "var(--bg-panel)" }}>
           <div>
-           
+            <h2 className="font-display text-[17px] font-bold text-[var(--ink)] tracking-tight">
+              {isEdit ? "Edit Project" : "Add New Project"}
+            </h2>
             <p className="font-mono text-[10px] text-[var(--ink4)] tracking-[0.1em] mt-0.5">
               {isEdit ? `ID: ${project?.id?.slice(0,8)}…` : "New entry → Firestore + Cloudinary"}
             </p>
           </div>
-          <button onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--ink4)]
-              hover:text-[var(--ink)] hover:bg-[var(--border)] transition-all">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* ── "Add Project" shortcut — visible even in edit mode ── */}
+            <button
+              type="button"
+              onClick={() => {
+                // Reset to a fresh create form without closing the drawer
+                setForm({ ...EMPTY });
+                setTagInput("");
+                setError("");
+                setSuccessMsg("");
+                if (fileRef.current) fileRef.current.value = "";
+                // We can't flip `isEdit` directly since it's derived from the prop,
+                // so we call onSavedAndContinue which tells the parent to open a
+                // fresh create drawer.  If parent doesn't supply it we just reset
+                // visually and the next submit will createProject.
+                onSavedAndContinue?.();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-mono
+                font-medium border border-dashed border-[var(--accent-pale2)] text-[var(--accent)]
+                hover:bg-[var(--accent-pale)] transition-all duration-200"
+              style={{ background: "transparent" }}
+              title="Start a new project (opens fresh form)"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+              </svg>
+              Add Project
+            </button>
+
+            {/* Close */}
+            <button onClick={onClose}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--ink4)]
+                hover:text-[var(--ink)] hover:bg-[var(--border)] transition-all">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Success banner */}
@@ -224,9 +258,7 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
               </div>
             </div>
           </div>
- <h2 className="font-display text-[17px] font-bold text-[var(--ink)] tracking-tight">
-              Add New Project
-            </h2>
+
           {/* CATEGORY + COLOR */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
@@ -390,8 +422,8 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
               </button>
             </div>
 
-            {/* Save & Add Another — only in create mode, always visible */}
-            {isEdit && (
+            {/* ── Save & Add Another — CREATE mode only ── */}
+            {!isEdit && (
               <button
                 type="button"
                 disabled={saving || uploading}
