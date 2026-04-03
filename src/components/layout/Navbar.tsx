@@ -39,7 +39,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
   const onHero = !scrolled;
 
   const inkMain     = "rgba(244,246,255,0.95)";
-  const inkMuted    = "rgba(244,246,255,0.95)"; // ← always white
+  const inkMuted    = "rgba(244,246,255,0.95)";
   const hoverBg     = "rgba(255,255,255,0.08)";
   const activeBg    = "rgba(255,255,255,0.12)";
   const activeColor = "rgba(244,246,255,0.98)";
@@ -164,7 +164,65 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
 
             {/* Right Controls */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              <ThemeToggle dark={dark} onToggle={onToggle} />
+              {/* Theme Toggle — overflow:hidden removed to fix cursor disappearing on hover */}
+              <button
+                onClick={onToggle}
+                aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+                style={{
+                  position: "relative",
+                  width: 52,
+                  height: 28,
+                  borderRadius: 99,
+                  border: "1.5px solid rgba(255,255,255,0.25)",
+                  background: "rgba(255,255,255,0.10)",
+                  cursor: "pointer",
+                  /* overflow: "hidden" intentionally removed — was hiding cursor on hover */
+                  flexShrink: 0,
+                  transition: "border-color .2s, box-shadow .2s",
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.borderColor = "rgba(255,255,255,0.45)";
+                  el.style.boxShadow = "0 0 0 3px rgba(255,255,255,0.10)";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.borderColor = "rgba(255,255,255,0.25)";
+                  el.style.boxShadow = "none";
+                }}
+              >
+                {/* Icon row */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0 6px",
+                    pointerEvents: "none",
+                    fontSize: 11,
+                    lineHeight: 1,
+                  }}
+                >
+                  <span style={{ opacity: dark ? 0.35 : 1, transition: "opacity .3s" }}>☀</span>
+                  <span style={{ opacity: dark ? 1 : 0.35, transition: "opacity .3s" }}>☽</span>
+                </div>
+                {/* Thumb */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 3,
+                    left: 3,
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    background: "rgba(244,246,255,0.95)",
+                    transform: dark ? "translateX(24px)" : "translateX(0)",
+                    transition: "transform 380ms cubic-bezier(0.16,1,0.3,1)",
+                  }}
+                />
+              </button>
 
               {/* Hire Us CTA */}
               <a
@@ -196,10 +254,14 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                   }}
                 />
                 <svg width="12" height="12" viewBox="0 0 13 13" fill="none" className="relative z-10">
-                  <path d="M6.5 1C3.46 1 1 3.46 1 6.5c0 .97.26 1.88.7 2.67L1 12l2.94-.66A5.47 5.47 0 006.5 12C9.54 12 12 9.54 12 6.5S9.54 1 6.5 1z"
-                    stroke="white" strokeWidth="1" strokeLinejoin="round"/>
-                  <path d="M4.5 5c0-.28.22-.5.5-.5h.5c.28 0 .5.22.5.5v.5c0 .55-.45 1-.97 1.25.35.7.9 1.25 1.6 1.6.25-.52.7-.97 1.25-.97H8c.28 0 .5.22.5.5v.5c0 .28-.22.5-.5.5C6.07 8.88 4.5 7.3 4.5 5z"
-                    fill="white"/>
+                  <path
+                    d="M6.5 1C3.46 1 1 3.46 1 6.5c0 .97.26 1.88.7 2.67L1 12l2.94-.66A5.47 5.47 0 006.5 12C9.54 12 12 9.54 12 6.5S9.54 1 6.5 1z"
+                    stroke="white" strokeWidth="1" strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4.5 5c0-.28.22-.5.5-.5h.5c.28 0 .5.22.5.5v.5c0 .55-.45 1-.97 1.25.35.7.9 1.25 1.6 1.6.25-.52.7-.97 1.25-.97H8c.28 0 .5.22.5.5v.5c0 .28-.22.5-.5.5C6.07 8.88 4.5 7.3 4.5 5z"
+                    fill="white"
+                  />
                 </svg>
                 <span className="relative z-10">Hire Us</span>
               </a>
@@ -319,10 +381,14 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                   }}
                 />
                 <svg width="14" height="14" viewBox="0 0 13 13" fill="none" className="relative z-10">
-                  <path d="M6.5 1C3.46 1 1 3.46 1 6.5c0 .97.26 1.88.7 2.67L1 12l2.94-.66A5.47 5.47 0 006.5 12C9.54 12 12 9.54 12 6.5S9.54 1 6.5 1z"
-                    stroke="white" strokeWidth="1" strokeLinejoin="round"/>
-                  <path d="M4.5 5c0-.28.22-.5.5-.5h.5c.28 0 .5.22.5.5v.5c0 .55-.45 1-.97 1.25.35.7.9 1.25 1.6 1.6.25-.52.7-.97 1.25-.97H8c.28 0 .5.22.5.5v.5c0 .28-.22.5-.5.5C6.07 8.88 4.5 7.3 4.5 5z"
-                    fill="white"/>
+                  <path
+                    d="M6.5 1C3.46 1 1 3.46 1 6.5c0 .97.26 1.88.7 2.67L1 12l2.94-.66A5.47 5.47 0 006.5 12C9.54 12 12 9.54 12 6.5S9.54 1 6.5 1z"
+                    stroke="white" strokeWidth="1" strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4.5 5c0-.28.22-.5.5-.5h.5c.28 0 .5.22.5.5v.5c0 .55-.45 1-.97 1.25.35.7.9 1.25 1.6 1.6.25-.52.7-.97 1.25-.97H8c.28 0 .5.22.5.5v.5c0 .28-.22.5-.5.5C6.07 8.88 4.5 7.3 4.5 5z"
+                    fill="white"
+                  />
                 </svg>
                 <span className="relative z-10">Chat on WhatsApp — Hire Us</span>
               </a>
