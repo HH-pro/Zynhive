@@ -121,9 +121,7 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)] sticky top-0 z-10"
           style={{ background: "var(--bg-panel)" }}>
           <div>
-            <h2 className="font-display text-[17px] font-bold text-[var(--ink)] tracking-tight">
-              Add New Project
-            </h2>
+           
             <p className="font-mono text-[10px] text-[var(--ink4)] tracking-[0.1em] mt-0.5">
               {isEdit ? `ID: ${project?.id?.slice(0,8)}…` : "New entry → Firestore + Cloudinary"}
             </p>
@@ -136,7 +134,9 @@ export function ProjectForm({ project, onClose, onSaved, onSavedAndContinue }: P
             </svg>
           </button>
         </div>
-
+ <h2 className="font-display text-[17px] font-bold text-[var(--ink)] tracking-tight">
+              Add New Project
+            </h2>
         {/* Success banner */}
         {successMsg && (
           <div className="mx-6 mt-5 flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px]"
