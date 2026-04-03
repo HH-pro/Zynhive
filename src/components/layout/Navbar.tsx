@@ -105,7 +105,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                 alt={SITE_CONFIG.name}
                 className="object-contain group-hover:opacity-80"
                 style={{
-                  height: scrolled ? 44 : 54,
+                  height: scrolled ? 54 : 64,
                   width: "auto",
                   maxWidth: 300,
                   transition: "height .35s var(--ease), filter .4s ease, opacity .2s ease",
