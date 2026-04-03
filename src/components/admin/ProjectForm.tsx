@@ -76,6 +76,24 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
     }
   }
 
+  async function handleSaveAndAddAnother() {
+    setError("");
+    setSaving(true);
+    try {
+      await createProject(form);
+      onSaved();
+      // Reset form to blank so user can immediately add another project
+      setForm({ ...EMPTY });
+      setTagInput("");
+      if (fileRef.current) fileRef.current.value = "";
+    } catch (err) {
+      setError("Failed to save. Please try again.");
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end"
       style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
@@ -203,7 +221,6 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Accent Color</Label>
-              {/* ── FIX: removed invalid ringOffsetColor inline style prop ── */}
               <div className="flex gap-1.5 flex-wrap">
                 {COLOR_OPTIONS.map((c) => (
                   <button
@@ -325,30 +342,61 @@ export function ProjectForm({ project, onClose, onSaved }: Props) {
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose}
-              className="flex-1 py-3 rounded-xl text-[14px] font-medium border border-[var(--border2)]
-                text-[var(--ink3)] hover:text-[var(--ink)] hover:border-[var(--ink3)] transition-all"
-              style={{ background: "transparent", cursor: "pointer" }}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving || uploading}
-              className="flex-1 py-3 rounded-xl text-[14px] font-semibold text-white
-                disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300"
-              style={{ background: "linear-gradient(135deg, var(--accent), var(--cyan))", cursor: "pointer" }}
-            >
-              {saving ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
-                  Saving…
-                </span>
-              ) : (
-                isEdit ? "Save Changes" : "Create Project →"
-              )}
-            </button>
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex gap-3">
+              <button type="button" onClick={onClose}
+                className="flex-1 py-3 rounded-xl text-[14px] font-medium border border-[var(--border2)]
+                  text-[var(--ink3)] hover:text-[var(--ink)] hover:border-[var(--ink3)] transition-all"
+                style={{ background: "transparent", cursor: "pointer" }}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving || uploading}
+                className="flex-1 py-3 rounded-xl text-[14px] font-semibold text-white
+                  disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300"
+                style={{ background: "linear-gradient(135deg, var(--accent), var(--cyan))", cursor: "pointer" }}
+              >
+                {saving ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
+                    Saving…
+                  </span>
+                ) : (
+                  isEdit ? "Save Changes" : "Create Project →"
+                )}
+              </button>
+            </div>
+
+            {/* Save & Add Another — only shown in create mode */}
+            {!isEdit && (
+              <button
+                type="button"
+                disabled={saving || uploading}
+                onClick={handleSaveAndAddAnother}
+                className="w-full py-3 rounded-xl text-[14px] font-medium border border-dashed
+                  border-[var(--accent-pale2)] text-[var(--accent)] hover:bg-[var(--accent-pale)]
+                  disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200
+                  flex items-center justify-center gap-2"
+                style={{ background: "transparent", cursor: "pointer" }}
+              >
+                {saving ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-[var(--accent)]/30 border-t-[var(--accent)] rounded-full animate-spin"/>
+                    Saving…
+                  </span>
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                    </svg>
+                    Save & Add Another
+                  </>
+                )}
+              </button>
+            )}
           </div>
+
         </form>
       </div>
     </div>
