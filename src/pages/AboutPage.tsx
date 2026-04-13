@@ -262,7 +262,7 @@ export function AboutPage() {
     <>
       {/* ── SEO Head ── */}
       <Helmet>
-         <title>About ZynHive | AI-Powered Digital Agency | Web, App & Automation Experts</title>
+        <title>About ZynHive | AI-Powered Digital Agency | Web, App & Automation Experts</title>
         <meta
           name="description"
           content="Meet the team behind ZynHive — an AI-first digital agency founded by Hamza Manzoor & Hanzala Tariq. We build web apps, mobile apps, and AI automations for ambitious companies in 8+ countries."
