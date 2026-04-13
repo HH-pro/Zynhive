@@ -281,7 +281,7 @@ export function AboutPage() {
         <meta property="og:image:alt" content="ZynHive — About Us" />
         <meta property="og:site_name" content="ZynHive" />
         <meta property="og:locale" content="en_US" />
-        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:card" content="summary_large_image" /> 
         <meta name="twitter:url" content="https://www.zynhive.com/about" />
         <meta name="twitter:title" content="About ZynHive | AI-Powered Digital Agency" />
         <meta name="twitter:description" content="Meet the team behind ZynHive — AI, web, and automation experts serving clients in 8+ countries. Founded 2025." />
