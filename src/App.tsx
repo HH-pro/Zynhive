@@ -192,6 +192,6 @@ export default function App() {
         </Suspense>
         <Footer />
       </div>
-    </>
+    </> 
   );
 }
