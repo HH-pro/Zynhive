@@ -183,6 +183,7 @@ export type FirestoreClientUpdate = {
   phase:             string;
   completionPercent: number;
   imageUrl?:         string;
+  category?:         "seo" | "digital-marketing" | "general";
   createdAt?:        Timestamp;
   updatedAt?:        Timestamp;
 };

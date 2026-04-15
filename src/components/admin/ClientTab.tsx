@@ -369,6 +369,7 @@ function UpdateFormModal({
   const [phase,      setPhase]      = useState(update?.phase              ?? "");
   const [pct,        setPct]        = useState(String(update?.completionPercent ?? 0));
   const [imageUrl,   setImageUrl]   = useState(update?.imageUrl           ?? "");
+  const [category,   setCategory]   = useState<FirestoreClientUpdate["category"]>(update?.category ?? "general");
   const [uploading,  setUploading]  = useState(false);
   const [uploadPct,  setUploadPct]  = useState(0);
   const [dragOver,   setDragOver]   = useState(false);
@@ -386,6 +387,7 @@ function UpdateFormModal({
     setPhase(t.phase);
     setStatus(t.status);
     setPct(String(t.pct));
+    setCategory(t.category);
     setShowTemplates(false);
   }
 
@@ -414,6 +416,7 @@ function UpdateFormModal({
       const data: Omit<FirestoreClientUpdate, "id" | "createdAt" | "updatedAt"> = {
         clientId, title: title.trim(), description: desc.trim(),
         status, phase: phase.trim(), completionPercent: Math.min(100, Math.max(0, Number(pct) || 0)),
+        category: category ?? "general",
         ...(imageUrl ? { imageUrl } : {}),
       };
       if (update?.id) {
@@ -607,6 +610,34 @@ function UpdateFormModal({
                       }}
                     >
                       {cfg.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Category */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--ink4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Section</label>
+              <div style={{ display: "flex", gap: 5 }}>
+                {([
+                  { value: "seo",               label: "SEO",               color: "#378ADD", bg: "rgba(55,138,221,0.1)"  },
+                  { value: "digital-marketing", label: "Digital Marketing", color: "#8B5CF6", bg: "rgba(139,92,246,0.1)" },
+                  { value: "general",           label: "General",           color: "#64748B", bg: "rgba(100,116,139,0.1)" },
+                ] as const).map(({ value, label, color, bg }) => {
+                  const active = category === value;
+                  return (
+                    <button
+                      key={value} onClick={() => setCategory(value)}
+                      style={{
+                        padding: "4px 10px", borderRadius: 99, fontSize: 11, fontWeight: active ? 600 : 400,
+                        border: `1px solid ${active ? color : "var(--border2)"}`,
+                        background: active ? bg : "transparent",
+                        color: active ? color : "var(--ink4)",
+                        cursor: "pointer", transition: "all .15s",
+                      }}
+                    >
+                      {label}
                     </button>
                   );
                 })}
