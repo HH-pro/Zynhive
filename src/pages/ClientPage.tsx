@@ -264,6 +264,69 @@ const PORTAL_CSS = `
     transition: border-color .3s;
   }
 
+  /* Update card — clickable */
+  .cp-update-card { cursor: pointer; }
+
+  /* Modal backdrop */
+  .cp-modal-backdrop {
+    position: fixed; inset: 0; z-index: 900;
+    background: rgba(0,0,0,.62);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+    animation: cp-fadeIn .22s ease both;
+  }
+
+  /* Modal box */
+  .cp-modal {
+    position: relative;
+    background: var(--cp-bg-glass);
+    border: 1px solid var(--cp-border);
+    border-radius: 20px;
+    box-shadow: var(--cp-shadow-lg);
+    width: 100%; max-width: 680px;
+    max-height: 90vh;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    animation: cp-fadeUp .3s cubic-bezier(.16,1,.3,1) both;
+    transition: border-radius .2s, max-width .2s, max-height .2s, border-radius .2s;
+  }
+  .cp-modal.is-fullscreen {
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Modal header */
+  .cp-modal-header {
+    display: flex; align-items: flex-start; gap: 12;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--cp-border-md);
+    flex-shrink: 0;
+  }
+
+  /* Modal body (scrollable) */
+  .cp-modal-body {
+    overflow-y: auto;
+    padding: 20px;
+    flex: 1;
+  }
+
+  /* Modal image */
+  .cp-modal-img {
+    width: 100%; border-radius: 12px; display: block;
+    border: 1px solid var(--cp-border-md);
+    object-fit: contain;
+  }
+  .cp-modal.is-fullscreen .cp-modal-img {
+    max-height: calc(100vh - 260px);
+    object-fit: contain;
+  }
+
   /* Responsive */
   @media (max-width: 640px) {
     .cp-hide-mobile { display: none !important; }
@@ -273,6 +336,8 @@ const PORTAL_CSS = `
     .cp-metrics-grid { grid-template-columns: 1fr 1fr !important; }
     .cp-hero-cols { flex-direction: column !important; }
     .cp-ring-col  { display: none !important; }
+    .cp-modal-backdrop { padding: 0; align-items: flex-end; }
+    .cp-modal { border-radius: 20px 20px 0 0; max-height: 92vh; max-width: 100%; }
   }
 `;
 
@@ -511,13 +576,124 @@ function ProgressRing({ pct, color = "#6366F1", size = 100 }: { pct: number; col
   );
 }
 
+// ─── Update Detail Modal ──────────────────────────────────────────────────────
+function UpdateDetailModal({ u, onClose }: { u: FirestoreClientUpdate; onClose: () => void }) {
+  const cfg = STATUS_CONFIG[u.status];
+  const [fullscreen, setFullscreen] = useState(false);
+
+  // Close on Escape
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  // Prevent body scroll while open
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  return (
+    <div className="cp-modal-backdrop" onClick={onClose}>
+      <div
+        className={`cp-modal${fullscreen ? " is-fullscreen" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="cp-modal-header" style={{ gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+            <div style={{ width: 4, height: 36, borderRadius: 99, background: cfg.color, flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginBottom: 4 }}>
+                <StatusDot status={u.status} color={cfg.color} />
+                <span style={{ fontSize: 16, fontWeight: 800, color: "var(--cp-text-h)", lineHeight: 1.3 }}>{u.title}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 9px", borderRadius: 99, background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
+                  {cfg.label}
+                </span>
+                {u.phase && (
+                  <span style={{ fontSize: 11, color: "var(--cp-text-dim)", display: "flex", alignItems: "center", gap: 3 }}>
+                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5h6M5 2l3 3-3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    {u.phase}
+                  </span>
+                )}
+                {u.createdAt && (
+                  <span style={{ fontSize: 11, color: "var(--cp-text-dim)" }}>{formatDate(u.createdAt)}</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            {/* Fullscreen toggle */}
+            <button
+              onClick={() => setFullscreen((v) => !v)}
+              title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 8, border: "1px solid var(--cp-border)", background: "var(--cp-bg-badge)", color: "var(--cp-text-dim)", cursor: "pointer" }}
+            >
+              {fullscreen
+                ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2v3M9 2h3v3M5 12H2V9M9 12h3V9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                : <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 5V2h3M9 2h3v3M2 9v3h3M12 9v3H9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              }
+            </button>
+            {/* Close */}
+            <button
+              onClick={onClose}
+              title="Close"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 8, border: "1px solid var(--cp-border)", background: "var(--cp-bg-badge)", color: "var(--cp-text-dim)", cursor: "pointer" }}
+            >
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 2l9 9M11 2L2 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="cp-modal-body">
+          {/* Image */}
+          {u.imageUrl && (
+            <div style={{ marginBottom: 20 }}>
+              <img src={u.imageUrl} alt="update attachment" className="cp-modal-img" />
+            </div>
+          )}
+
+          {/* Description */}
+          {u.description && (
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ fontSize: 14, color: "var(--cp-text-body)", lineHeight: 1.78 }}>{u.description}</p>
+            </div>
+          )}
+
+          {/* Progress */}
+          <div style={{ padding: "16px", borderRadius: 12, background: "var(--cp-bg-stat)", border: "1px solid var(--cp-border)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <span style={{ fontSize: 12, color: "var(--cp-text-muted)", fontWeight: 600 }}>Task Progress</span>
+              <span style={{ fontSize: 20, fontWeight: 800, color: cfg.color, fontFamily: "monospace" }}>{u.completionPercent}%</span>
+            </div>
+            <div style={{ height: 8, borderRadius: 99, background: "var(--cp-border)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${u.completionPercent}%`, borderRadius: 99, background: `linear-gradient(90deg, ${cfg.color}, ${cfg.color}99)`, transition: "width .9s cubic-bezier(.16,1,.3,1)" }}/>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+              <span style={{ fontSize: 11, color: "var(--cp-text-dim)" }}>Started</span>
+              <span style={{ fontSize: 11, color: cfg.color, fontWeight: 600 }}>{u.completionPercent}% complete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Update Card ──────────────────────────────────────────────────────────────
-function UpdateCard({ u, isLatest, sectionColor }: {
-  u: FirestoreClientUpdate; isLatest: boolean; sectionColor: string;
+function UpdateCard({ u, isLatest, sectionColor, onClick }: {
+  u: FirestoreClientUpdate; isLatest: boolean; sectionColor: string; onClick: () => void;
 }) {
   const cfg = STATUS_CONFIG[u.status];
   return (
-    <div className={`cp-update-card${isLatest ? " is-latest" : ""}`} style={{ position: "relative" }}>
+    <div className={`cp-update-card${isLatest ? " is-latest" : ""}`} style={{ position: "relative" }} onClick={onClick}>
       {/* Left accent border */}
       <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: "100%", background: cfg.color, borderRadius: "14px 0 0 14px" }}/>
 
@@ -584,10 +760,11 @@ function UpdateCard({ u, isLatest, sectionColor }: {
 }
 
 // ─── Section Block ────────────────────────────────────────────────────────────
-function SectionBlock({ sectionKey, items, latestId }: {
+function SectionBlock({ sectionKey, items, latestId, onCardClick }: {
   sectionKey: "seo" | "digital-marketing" | "general";
   items: FirestoreClientUpdate[];
   latestId: string | undefined;
+  onCardClick: (u: FirestoreClientUpdate) => void;
 }) {
   const cfg = SECTION_CONFIG[sectionKey];
   const completedCount = items.filter((u) => u.status === "completed").length;
@@ -632,7 +809,7 @@ function SectionBlock({ sectionKey, items, latestId }: {
       {/* Cards */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {items.map((u) => (
-          <UpdateCard key={u.id} u={u} isLatest={u.id === latestId} sectionColor={cfg.color} />
+          <UpdateCard key={u.id} u={u} isLatest={u.id === latestId} sectionColor={cfg.color} onClick={() => onCardClick(u)} />
         ))}
       </div>
     </div>
@@ -643,8 +820,9 @@ function SectionBlock({ sectionKey, items, latestId }: {
 function UpdatesView({ client, isDark, onToggleTheme, onLogout }: {
   client: FirestoreClient; isDark: boolean; onToggleTheme: () => void; onLogout: () => void;
 }) {
-  const [updates, setUpdates] = useState<FirestoreClientUpdate[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [updates,        setUpdates]        = useState<FirestoreClientUpdate[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [selectedUpdate, setSelectedUpdate] = useState<FirestoreClientUpdate | null>(null);
 
   useEffect(() => {
     fetchClientUpdates(client.id!).then(setUpdates).catch(() => {}).finally(() => setLoading(false));
@@ -670,6 +848,9 @@ function UpdatesView({ client, isDark, onToggleTheme, onLogout }: {
 
   return (
     <div className="cp-fade-in" style={{ minHeight: "100vh" }}>
+      {selectedUpdate && (
+        <UpdateDetailModal u={selectedUpdate} onClose={() => setSelectedUpdate(null)} />
+      )}
       <PortalNav client={client} isDark={isDark} onToggleTheme={onToggleTheme} onLogout={onLogout} />
 
       {/* ── Hero ── */}
@@ -776,7 +957,7 @@ function UpdatesView({ client, isDark, onToggleTheme, onLogout }: {
           <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
             {sections.map(({ key, items }, sIdx) => (
               <div key={key} className={`cp-fade-up cp-d${Math.min(sIdx + 2, 6)}`}>
-                <SectionBlock sectionKey={key} items={items} latestId={latest?.id} />
+                <SectionBlock sectionKey={key} items={items} latestId={latest?.id} onCardClick={setSelectedUpdate} />
               </div>
             ))}
           </div>
