@@ -6,12 +6,13 @@ import {
 import { ProjectForm }        from "../../components/admin/ProjectForm";
 import { TeamTab }            from "../../components/admin/TeamTab";
 import { LeadTab }            from "../../components/admin/Leadtab";
+import { ClientTab }          from "../../components/admin/ClientTab";
 import { getCloudinaryThumb } from "../../lib/cloudinary";
 import type { User }          from "firebase/auth";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Props { user: User; }
-type Tab = "projects" | "leads" | "team" | "analytics";
+type Tab = "projects" | "leads" | "team" | "analytics" | "clients";
 
 // ─── Theme helpers ────────────────────────────────────────────────────────────
 // Persists choice and writes data-theme to <html> so index.css vars swap.
@@ -118,6 +119,13 @@ const Ic = {
       <rect x="1" y="1" width="13" height="13" rx="1.5" stroke="currentColor" strokeWidth="1.1"/>
     </svg>
   ),
+  Clients: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+      <circle cx="5.5" cy="4" r="2.2" stroke="currentColor" strokeWidth="1.1"/>
+      <path d="M1 13c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+      <path d="M10.5 1.5v4M12.5 3.5h-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  ),
   Search: () => (
     <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
       <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" strokeWidth="1.2"/>
@@ -206,6 +214,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode; badge?: string
   { id: "leads",     label: "Leads",     icon: <Ic.Leads />,    badge: "3" },
   { id: "team",      label: "Team",      icon: <Ic.Team /> },
   { id: "analytics", label: "Analytics", icon: <Ic.Analytics /> },
+  { id: "clients",   label: "Clients",   icon: <Ic.Clients /> },
 ];
 
 const CTA_LABELS: Record<Tab, string> = {
@@ -213,6 +222,7 @@ const CTA_LABELS: Record<Tab, string> = {
   leads:     "Add Lead",
   team:      "Add Member",
   analytics: "",
+  clients:   "Add Client",
 };
 
 // ─── Responsive hook ──────────────────────────────────────────────────────────
@@ -806,8 +816,11 @@ export function AdminDashboard({ user }: Props) {
   const ctaLabel      = CTA_LABELS[tab];
   const activeNavItem = NAV_ITEMS.find((n) => n.id === tab);
 
+  const [clientAddOpen, setClientAddOpen] = useState(false);
+
   function handleCta() {
     if (tab === "projects") { setEditProject(null); setFormOpen(true); }
+    if (tab === "clients")  { setClientAddOpen(true); }
   }
 
   const sidebarW = effectiveSidebarOpen ? 210 : 52;
@@ -1045,6 +1058,13 @@ export function AdminDashboard({ user }: Props) {
             {tab === "leads"     && <LeadTab showToast={showToast} />}
             {tab === "team"      && <TeamTab showToast={showToast} />}
             {tab === "analytics" && <AnalyticsTab projects={projects} />}
+            {tab === "clients"   && (
+              <ClientTab
+                showToast={showToast}
+                openAdd={clientAddOpen}
+                onOpenAddDone={() => setClientAddOpen(false)}
+              />
+            )}
           </main>
         </div>
 

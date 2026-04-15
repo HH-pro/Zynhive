@@ -13,6 +13,7 @@ const AboutPage     = lazy(() => import("./pages/AboutPage").then((m) => ({ defa
 const TeamPage      = lazy(() => import("./pages/TeamPage").then((m) => ({ default: m.TeamPage })));
 const ContactPage   = lazy(() => import("./pages/ContactPage").then((m) => ({ default: m.ContactPage })));
 const AdminPage     = lazy(() => import("./pages/admin/AdminPage").then((m) => ({ default: m.AdminPage })));
+const ClientPage    = lazy(() => import("./pages/ClientPage").then((m) => ({ default: m.ClientPage })));
 
 // ─── Scroll progress bar ──────────────────────────────────────────────────────
 function ScrollProgress() {
@@ -113,10 +114,12 @@ function useRouter() {
 }
 
 // ─── Whether the current path is the admin section ────────────────────────────
-const isAdminPath = (path: string) => path === "/admin" || path.startsWith("/admin/");
+const isAdminPath  = (path: string) => path === "/admin" || path.startsWith("/admin/");
+const isClientPath = (path: string) => path.startsWith("/client");
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 function Router({ path }: { path: string }) {
+  if (path.startsWith("/client")) return <ClientPage />;
   switch (path) {
     case "/":          return <HomePage />;
     case "/services":  return <ServicesPage />;
@@ -155,7 +158,7 @@ export default function App() {
 
   // Show splash only once per session (skip for admin)
   const [splashDone, setSplashDone] = useState(
-    () => isAdminPath(window.location.pathname) || sessionStorage.getItem("zyn-splash") === "1"
+    () => isAdminPath(window.location.pathname) || isClientPath(window.location.pathname) || sessionStorage.getItem("zyn-splash") === "1"
   );
 
   const handleSplashDone = () => {
@@ -167,6 +170,14 @@ export default function App() {
     return (
       <Suspense fallback={<PageLoader />}>
         <AdminPage />
+      </Suspense>
+    );
+  }
+
+  if (isClientPath(path)) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <ClientPage />
       </Suspense>
     );
   }

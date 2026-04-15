@@ -6,7 +6,7 @@ import {
 } from "firebase/auth";
 import {
   getFirestore, collection, addDoc, updateDoc, deleteDoc,
-  doc, getDocs, query, orderBy, serverTimestamp, Timestamp,
+  doc, getDocs, getDoc, query, orderBy, serverTimestamp, Timestamp,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -138,3 +138,68 @@ export const createLead = (data: Omit<FirestoreLead, "id" | "createdAt" | "updat
 export const updateLead = (id: string, data: Partial<FirestoreLead>) =>
   updateDoc(doc(db, LEADS_COL, id), { ...data, updatedAt: serverTimestamp() });
 export const deleteLead = (id: string) => deleteDoc(doc(db, LEADS_COL, id));
+
+// ─── Clients ──────────────────────────────────────────────────────────────────
+export type FirestoreClient = {
+  id?:         string;
+  name:        string;
+  company:     string;
+  email:       string;
+  password:    string;
+  projectName: string;
+  createdAt?:  Timestamp;
+  updatedAt?:  Timestamp;
+};
+
+const CLIENTS_COL = "clients";
+export async function fetchClients(): Promise<FirestoreClient[]> {
+  const snap = await getDocs(collection(db, CLIENTS_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreClient))
+    .sort((a, b) => {
+      const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+}
+export async function fetchClientById(id: string): Promise<FirestoreClient | null> {
+  const snap = await getDoc(doc(db, CLIENTS_COL, id));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as FirestoreClient;
+}
+export const createClient = (data: Omit<FirestoreClient, "id" | "createdAt" | "updatedAt">) =>
+  addDoc(collection(db, CLIENTS_COL), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+export const updateClient = (id: string, data: Partial<FirestoreClient>) =>
+  updateDoc(doc(db, CLIENTS_COL, id), { ...data, updatedAt: serverTimestamp() });
+export const deleteClient = (id: string) => deleteDoc(doc(db, CLIENTS_COL, id));
+
+// ─── Client Updates ───────────────────────────────────────────────────────────
+export type FirestoreClientUpdate = {
+  id?:               string;
+  clientId:          string;
+  title:             string;
+  description:       string;
+  status:            "planning" | "in-progress" | "review" | "completed" | "on-hold";
+  phase:             string;
+  completionPercent: number;
+  createdAt?:        Timestamp;
+  updatedAt?:        Timestamp;
+};
+
+const CLIENT_UPDATES_COL = "client_updates";
+export async function fetchClientUpdates(clientId: string): Promise<FirestoreClientUpdate[]> {
+  const snap = await getDocs(collection(db, CLIENT_UPDATES_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreClientUpdate))
+    .filter((u) => u.clientId === clientId)
+    .sort((a, b) => {
+      const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+}
+export const createClientUpdate = (data: Omit<FirestoreClientUpdate, "id" | "createdAt" | "updatedAt">) =>
+  addDoc(collection(db, CLIENT_UPDATES_COL), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+export const updateClientUpdate = (id: string, data: Partial<FirestoreClientUpdate>) =>
+  updateDoc(doc(db, CLIENT_UPDATES_COL, id), { ...data, updatedAt: serverTimestamp() });
+export const deleteClientUpdate = (id: string) => deleteDoc(doc(db, CLIENT_UPDATES_COL, id));
