@@ -1,10 +1,11 @@
 // ─── src/components/admin/ClientTab.tsx ──────────────────────────────────────
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   fetchClients, createClient, updateClient, deleteClient,
   fetchClientUpdates, createClientUpdate, updateClientUpdate, deleteClientUpdate,
   type FirestoreClient, type FirestoreClientUpdate,
 } from "../../lib/firebase";
+import { uploadToCloudinary } from "../../lib/cloudinary";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<FirestoreClientUpdate["status"], { label: string; color: string; bg: string }> = {
@@ -367,6 +368,11 @@ function UpdateFormModal({
   const [status,     setStatus]     = useState<FirestoreClientUpdate["status"]>(update?.status ?? "in-progress");
   const [phase,      setPhase]      = useState(update?.phase              ?? "");
   const [pct,        setPct]        = useState(String(update?.completionPercent ?? 0));
+  const [imageUrl,   setImageUrl]   = useState(update?.imageUrl           ?? "");
+  const [uploading,  setUploading]  = useState(false);
+  const [uploadPct,  setUploadPct]  = useState(0);
+  const [dragOver,   setDragOver]   = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [saving,     setSaving]     = useState(false);
 
   // Template picker state (only shown for new updates)
@@ -383,6 +389,20 @@ function UpdateFormModal({
     setShowTemplates(false);
   }
 
+  async function handleImageFile(file: File) {
+    if (!file.type.startsWith("image/")) return;
+    setUploading(true);
+    setUploadPct(0);
+    try {
+      const res = await uploadToCloudinary(file, "zynhive/client-updates", setUploadPct);
+      setImageUrl(res.secure_url);
+    } catch {
+      // silently ignore — user can retry
+    } finally {
+      setUploading(false);
+    }
+  }
+
   const visibleTemplates = UPDATE_TEMPLATES.filter(
     (t) => t.category === templateCategory && t.frequency === templateFreq
   );
@@ -391,9 +411,10 @@ function UpdateFormModal({
     if (!title.trim()) return;
     setSaving(true);
     try {
-      const data = {
+      const data: Omit<FirestoreClientUpdate, "id" | "createdAt" | "updatedAt"> = {
         clientId, title: title.trim(), description: desc.trim(),
         status, phase: phase.trim(), completionPercent: Math.min(100, Math.max(0, Number(pct) || 0)),
+        ...(imageUrl ? { imageUrl } : {}),
       };
       if (update?.id) {
         await updateClientUpdate(update.id, data);
@@ -602,6 +623,74 @@ function UpdateFormModal({
                 onChange={(e) => setPct(e.target.value)}
                 style={{ accentColor: "var(--accent)", width: "100%", cursor: "pointer" }}
               />
+            </div>
+
+            {/* Image upload */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--ink4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Attachment Image <span style={{ color: "var(--ink4)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+              </label>
+
+              {/* Hidden file input */}
+              <input
+                ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value = ""; }}
+              />
+
+              {imageUrl ? (
+                /* Preview */
+                <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: "0.5px solid var(--border2)" }}>
+                  <img
+                    src={imageUrl} alt="attachment"
+                    style={{ width: "100%", maxHeight: 160, objectFit: "cover", display: "block" }}
+                  />
+                  <div style={{ position: "absolute", top: 6, right: 6, display: "flex", gap: 5 }}>
+                    <button
+                      onClick={() => fileRef.current?.click()}
+                      title="Change image"
+                      style={{ padding: "4px 8px", borderRadius: 6, border: "none", background: "rgba(0,0,0,.6)", color: "white", fontSize: 10, fontWeight: 600, cursor: "pointer" }}
+                    >
+                      Change
+                    </button>
+                    <button
+                      onClick={() => setImageUrl("")}
+                      title="Remove image"
+                      style={{ padding: "4px 7px", borderRadius: 6, border: "none", background: "rgba(239,68,68,.75)", color: "white", fontSize: 11, cursor: "pointer", lineHeight: 1 }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ) : uploading ? (
+                /* Upload progress */
+                <div style={{ borderRadius: 10, border: "0.5px solid var(--border2)", background: "var(--bg-alt)", padding: "16px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 11, color: "var(--ink4)" }}>Uploading…</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", fontFamily: "monospace" }}>{uploadPct}%</span>
+                  </div>
+                  <div style={{ height: 4, borderRadius: 99, background: "var(--border2)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${uploadPct}%`, background: "var(--accent)", borderRadius: 99, transition: "width .2s" }}/>
+                  </div>
+                </div>
+              ) : (
+                /* Drop zone */
+                <div
+                  onClick={() => fileRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleImageFile(f); }}
+                  style={{
+                    borderRadius: 10, border: `1.5px dashed ${dragOver ? "var(--accent)" : "var(--border2)"}`,
+                    background: dragOver ? "var(--accent-pale)" : "var(--bg-alt)",
+                    padding: "18px 14px", textAlign: "center", cursor: "pointer",
+                    transition: "all .15s",
+                  }}
+                >
+                  <div style={{ fontSize: 22, marginBottom: 6 }}>🖼️</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink3)", marginBottom: 3 }}>Click to upload or drag & drop</div>
+                  <div style={{ fontSize: 10, color: "var(--ink4)" }}>PNG, JPG, WEBP — max 10 MB</div>
+                </div>
+              )}
             </div>
           </div>
         </div>

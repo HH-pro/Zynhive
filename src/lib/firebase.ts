@@ -182,6 +182,7 @@ export type FirestoreClientUpdate = {
   status:            "planning" | "in-progress" | "review" | "completed" | "on-hold";
   phase:             string;
   completionPercent: number;
+  imageUrl?:         string;
   createdAt?:        Timestamp;
   updatedAt?:        Timestamp;
 };
