@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  MARQUEE_ITEMS, SERVICES, PROCESS_STEPS,
+  MARQUEE_ITEMS,
   TECH_STACK_AI, TECH_STACK_WEB, TECH_STACK_INFRA,
-  TESTIMONIALS, SITE_CONFIG, INTRO_BULLETS,
+  SITE_CONFIG,
   TECH_STACK_DATA,
   TECH_STACK_DEVOPS,
 } from "../lib/data";
 import { SectionHead, LinkButton } from "../components/ui/index";
 import { WhatsAppIcon } from "../components/ui/Icons";
 import { ServiceCard } from "../components/ui/Cards";
+import { useLanguage } from "../contexts/LanguageContext";
 
 // ─── Animated Counter ─────────────────────────────────────────────────────────
 function useCounter(target: number, duration = 1800, start = false) {
@@ -69,6 +70,7 @@ export function MarqueeSection() {
 
 // ══ INTRO / ABOUT ═════════════════════════════════════════════════════════════
 export function IntroSection() {
+  const { t } = useLanguage();
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLElement>(null);
 
@@ -85,11 +87,17 @@ export function IntroSection() {
   const c2 = useCounter(98,  1800, visible);
   const c3 = useCounter(5,   1400, visible);
 
-  const stats = [
-    { value: c1, suffix: "+",  label: "Projects" },
-    { value: c2, suffix: "%",  label: "Satisfaction" },
-    { value: c3, suffix: "yr", label: "Experience" },
+  const statsValues = [c1, c2, c3];
+
+  const CHIP_COLORS = ["var(--accent)", "var(--cyan)", "var(--accent2)", "var(--accent)"];
+  const CHIP_DELAYS = ["0s", "1s", "0.5s", "1.5s"];
+  const CHIP_POSITIONS = [
+    { top: "4%",  left: "60%" },
+    { top: "70%", left: "56%" },
+    { top: "12%", left: "0%"  },
+    { top: "66%", left: "-2%" },
   ];
+  const MOBILE_CHIP_COLORS = ["var(--accent)", "var(--cyan)", "var(--accent2)", "var(--accent)"];
 
   return (
     <section ref={ref} className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-alt)]" id="about">
@@ -104,7 +112,7 @@ export function IntroSection() {
               style={{ animation: "bPulse 2s infinite" }}
             />
             <span className="font-mono text-[10px] text-[var(--accent)] tracking-[0.16em] uppercase">
-              Who We Are
+              {t.intro.tag}
             </span>
           </div>
 
@@ -112,21 +120,19 @@ export function IntroSection() {
             className="font-display font-bold text-[var(--ink)] leading-[1.08] tracking-tight mb-4 md:mb-5"
             style={{ fontSize: "clamp(24px,3.2vw,48px)" }}
           >
-            Where{" "}
-            <span className="text-gradient-blue">Intelligence</span>
-            <br />Meets Design Excellence
+            {t.intro.headingBefore}{" "}
+            <span className="text-gradient-blue">{t.intro.headingGrad}</span>
+            <br />{t.intro.headingAfter}
           </h2>
 
           <p className="text-[14px] sm:text-[15px] text-[var(--ink3)] leading-[1.85] mb-7 md:mb-9 font-body max-w-[480px]">
-            ZynHive is an AI-first digital agency built for the intelligence era.
-            We combine deep LLM expertise with sharp creative vision to build products
-            that don't just work — they{" "}
-            <span className="text-[var(--accent)] font-semibold">think</span>,
-            adapt, and grow with your business.
+            {t.intro.bodyBefore}{" "}
+            <span className="text-[var(--accent)] font-semibold">{t.intro.bodyAccent}</span>
+            {t.intro.bodyAfter}
           </p>
 
           <ul className="flex flex-col gap-2.5 md:gap-3 mb-8 md:mb-10">
-            {INTRO_BULLETS.map((b, i) => (
+            {t.intro.bullets.map((b, i) => (
               <li
                 key={i}
                 className={`flex items-center gap-3 text-[13px] sm:text-[14px] text-[var(--ink2)] font-body reveal reveal-d${i + 1}`}
@@ -151,10 +157,10 @@ export function IntroSection() {
               overflow-hidden border border-[var(--border2)]"
             style={{ background: "var(--bg-surface)" }}
           >
-            {stats.map(({ value, suffix, label }, i) => (
+            {t.intro.stats.map(({ suffix, label }, i) => (
               <div key={i} className="flex flex-col items-center py-4 sm:py-5 px-2 sm:px-3 text-center">
                 <span className="font-display text-[22px] sm:text-[26px] font-bold leading-none mb-1 text-gradient-blue">
-                  {value}{suffix}
+                  {statsValues[i]}{suffix}
                 </span>
                 <span className="font-mono text-[8px] sm:text-[9px] text-[var(--ink4)] tracking-[0.1em] sm:tracking-[0.12em] uppercase">
                   {label}
@@ -231,43 +237,33 @@ export function IntroSection() {
                   stroke="var(--ink4)" strokeWidth="0.9" strokeLinecap="round"/>
               </svg>
             </div>
-            <span className="font-mono text-[9px] text-[var(--accent)] tracking-[0.14em] uppercase">AI Core</span>
+            <span className="font-mono text-[9px] text-[var(--accent)] tracking-[0.14em] uppercase">{t.intro.centerLabel}</span>
             <span className="font-display text-[10px] md:text-[11px] font-semibold text-[var(--ink3)] text-center leading-tight px-3 md:px-4">
-              Always Learning
+              {t.intro.centerCard}
             </span>
           </div>
 
           {/* Floating chips — responsive positions */}
-          {[
-            { top: "4%",  left: "60%", label: "LLM Ready", val: "GPT-4o",  color: "var(--accent)",  delay: "0s"   },
-            { top: "70%", left: "56%", label: "Accuracy",   val: "97.3%",   color: "var(--cyan)",    delay: "1s"   },
-            { top: "12%", left: "0%",  label: "Response",   val: "< 1ms",   color: "var(--accent2)", delay: "0.5s" },
-            { top: "66%", left: "-2%", label: "Uptime",     val: "99.9%",   color: "var(--accent)",  delay: "1.5s" },
-          ].map((c, i) => (
+          {t.intro.chips.map((c, i) => (
             <div
               key={i}
               className="absolute z-20 rounded-xl border border-[var(--border2)] px-2.5 md:px-3.5 py-2 md:py-2.5"
               style={{
-                top: c.top, left: c.left,
+                top: CHIP_POSITIONS[i].top, left: CHIP_POSITIONS[i].left,
                 background: "var(--bg-surface)",
                 boxShadow: "var(--shadow-md)",
-                animation: `float${i % 2 === 0 ? "A" : "B"} ${3.8 + i * 0.5}s ${c.delay} ease-in-out infinite`,
+                animation: `float${i % 2 === 0 ? "A" : "B"} ${3.8 + i * 0.5}s ${CHIP_DELAYS[i]} ease-in-out infinite`,
               }}
             >
               <div className="font-mono text-[8px] md:text-[9px] text-[var(--ink4)] mb-0.5">{c.label}</div>
-              <div className="font-display text-[11px] md:text-[13px] font-bold" style={{ color: c.color }}>{c.val}</div>
+              <div className="font-display text-[11px] md:text-[13px] font-bold" style={{ color: CHIP_COLORS[i] }}>{c.val}</div>
             </div>
           ))}
         </div>
 
         {/* ── Mobile-only stats visual (replaces orbit on small screens) ── */}
         <div className="md:hidden grid grid-cols-2 gap-3 reveal reveal-d2">
-          {[
-            { label: "LLM Ready",  val: "GPT-4o", color: "var(--accent)",  icon: "🤖" },
-            { label: "Accuracy",   val: "97.3%",  color: "var(--cyan)",    icon: "🎯" },
-            { label: "Response",   val: "< 1ms",  color: "var(--accent2)", icon: "⚡" },
-            { label: "Uptime",     val: "99.9%",  color: "var(--accent)",  icon: "🔒" },
-          ].map((c, i) => (
+          {t.intro.mobileChips.map((c, i) => (
             <div
               key={i}
               className="rounded-xl border border-[var(--border2)] px-4 py-3.5 flex items-center gap-3"
@@ -276,7 +272,7 @@ export function IntroSection() {
               <span className="text-xl flex-shrink-0">{c.icon}</span>
               <div>
                 <div className="font-mono text-[9px] text-[var(--ink4)] mb-0.5">{c.label}</div>
-                <div className="font-display text-[15px] font-bold" style={{ color: c.color }}>{c.val}</div>
+                <div className="font-display text-[15px] font-bold" style={{ color: MOBILE_CHIP_COLORS[i] }}>{c.val}</div>
               </div>
             </div>
           ))}
@@ -290,6 +286,7 @@ export function IntroSection() {
 
 // ══ SERVICES PREVIEW ══════════════════════════════════════════════════════════
 export function ServicesPreviewSection() {
+  const { t } = useLanguage();
   return (
     <section className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-base)] relative overflow-hidden" id="services">
 
@@ -307,22 +304,22 @@ export function ServicesPreviewSection() {
 
       <div className="max-w-7xl mx-auto relative z-10">
         <SectionHead
-          tag="What We Build"
-          heading={<>Services Powered by{" "}<span className="text-gradient-blue">Artificial Intelligence</span></>}
-          sub="Every service we offer is enhanced by AI — from design research to deployment monitoring. One investment that compounds."
+          tag={t.services.tag}
+          heading={<>{t.services.headingBefore}{" "}<span className="text-gradient-blue">{t.services.headingGrad}</span></>}
+          sub={t.services.sub}
         />
 
         <div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px rounded-2xl overflow-hidden reveal"
           style={{ background: "var(--border)", border: "1px solid var(--border2)" }}
         >
-          {SERVICES.map((svc, i) => (
-            <ServiceCard key={svc.id} service={svc} index={i} />
+          {t.services.list.map((svc, i) => (
+            <ServiceCard key={svc.id} service={{ ...svc, items: [...svc.items] }} index={i} />
           ))}
         </div>
 
         <div className="mt-8 md:mt-10 flex flex-wrap items-center justify-center gap-2 reveal">
-          {["GPT-4o Powered", "LangChain", "RAG Pipelines", "Real-time AI", "Custom LLMs"].map((badge) => (
+          {t.services.badges.map((badge) => (
             <span
               key={badge}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
@@ -360,7 +357,7 @@ export function ServicesPreviewSection() {
               el.style.boxShadow  = "none";
             }}
           >
-            View All Services
+            {t.services.viewAll}
             <svg
               width="14" height="14" viewBox="0 0 14 14" fill="none"
               className="transition-transform duration-200 group-hover:translate-x-0.5"
@@ -377,29 +374,22 @@ export function ServicesPreviewSection() {
 }
 // ══ PROCESS ═══════════════════════════════════════════════════════════════════
 export function ProcessSection() {
+  const { t } = useLanguage();
   const [active, setActive] = useState(0);
-  const step = PROCESS_STEPS[active];
-
-  const stepInsights: Record<string, string> = {
-    "Discovery & Strategy":  "We map your competitive landscape, define success metrics, and align on a clear roadmap before a single line of code is written.",
-    "Design & Prototyping":  "Interactive prototypes let you feel the product early — we iterate fast, validate assumptions, and lock in the vision.",
-    "Development & Build":   "Clean architecture, rigorous code reviews, and modern tooling mean less technical debt from day one.",
-    "Testing & QA":          "Every feature is stress-tested across devices, browsers, and edge cases before it reaches your users.",
-    "Deployment & Launch":   "Zero-downtime deployments, real-time monitoring, and a dedicated support window — so launch day is calm, not chaotic.",
-  };
+  const step = t.process.steps[active];
 
   return (
     <section className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-alt)]" id="process">
       <div className="max-w-7xl mx-auto">
         <SectionHead
-          tag="How We Work"
-          heading={<>A Proven{" "}<span className="text-gradient-blue">5-Step Process</span></>}
-          sub="From first conversation to live product — a clear, collaborative process that keeps you in the loop at every stage."
+          tag={t.process.tag}
+          heading={<>{t.process.headingBefore}{" "}<span className="text-gradient-blue">{t.process.headingGrad}</span></>}
+          sub={t.process.sub}
         />
 
         {/* Mobile step indicator */}
         <div className="lg:hidden flex items-center justify-center gap-2 mb-6">
-          {PROCESS_STEPS.map((_, i) => (
+          {t.process.steps.map((_, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
@@ -419,7 +409,7 @@ export function ProcessSection() {
 
           {/* Step list */}
           <div className="flex flex-col reveal">
-            {PROCESS_STEPS.map((p, i) => (
+            {t.process.steps.map((p, i) => (
               <button
                 key={p.step}
                 onClick={() => setActive(i)}
@@ -456,7 +446,7 @@ export function ProcessSection() {
                       {p.desc}
                     </p>
 
-                    {/* Insight block — neutral, professional */}
+                    {/* Insight block */}
                     <div
                       className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl text-[11px] md:text-[12px]"
                       style={{
@@ -469,7 +459,7 @@ export function ProcessSection() {
                         style={{ background: "var(--accent)" }}
                       />
                       <span className="font-body text-[var(--ink3)] leading-relaxed">
-                        {stepInsights[p.title]}
+                        {p.insight}
                       </span>
                     </div>
                   </div>
@@ -537,7 +527,7 @@ export function ProcessSection() {
                 {step.title}
               </p>
               <div className="flex items-center justify-center gap-2">
-                {PROCESS_STEPS.map((_, i) => (
+                {t.process.steps.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setActive(i)}
@@ -565,7 +555,7 @@ export function ProcessSection() {
                   background: "var(--bg-panel)",
                 }}
               >
-                Step {active + 1} of {PROCESS_STEPS.length}
+                {t.process.stepOf(active + 1, t.process.steps.length)}
               </span>
             </div>
           </div>
@@ -605,54 +595,17 @@ const TOOLS_MARKETING: string[] = [
 // ══ SERVICES SECTION ════════════════════════════════════════════════════════
 
 export function TechSection() {
+  const { t } = useLanguage();
   const [tab, setTab] = useState(0);
 
-  const categories: {
-    label: string;
-    short: string;
-    icon: string;
-    items: string[];
-    color: string;
-    shadowColor: string;
-    description: string;
-    note: string;
-  }[] = [
-    {
-      label: "AI Automations",
-      short: "AI",
-      icon: "🤖",
-      items: TOOLS_AI,
-      color: "var(--accent)",
-      shadowColor: "var(--accent-dim)",
-      description:
-        "N8N, Zapier, chatbots, and custom AI agents that replace repetitive work.",
-      note: "Automation-first. Every workflow is built to scale — from simple Zapier triggers to fully custom AI agents.",
-    },
-    {
-      label: "Web & Apps",
-      short: "Web",
-      icon: "💻",
-      items: TOOLS_WEB,
-      color: "var(--cyan)",
-      shadowColor: "rgba(6,182,212,0.25)",
-      description:
-        "Fast websites, SaaS dashboards, and mobile apps built for real users.",
-      note: "Performance by default. Every site targets sub-1s load times and 90+ Lighthouse scores.",
-    },
-    {
-      label: "Digital Marketing",
-      short: "Marketing",
-      icon: "📈",
-      items: TOOLS_MARKETING,
-      color: "var(--green)",
-      shadowColor: "var(--green-pale)",
-      description:
-        "SEO, paid ads, social, and content that drives measurable growth.",
-      note: "ROI-focused. Every campaign is tracked end-to-end — from impression to revenue.",
-    },
-  ];
+  // Colour + tool list stays static; only text labels/descriptions switch language
+  const COLORS      = ["var(--accent)", "var(--cyan)", "var(--green)"];
+  const SHADOW_COLORS = ["var(--accent-dim)", "rgba(6,182,212,0.25)", "var(--green-pale)"];
+  const TOOL_LISTS  = [TOOLS_AI, TOOLS_WEB, TOOLS_MARKETING];
 
-  const cur = categories[tab];
+  const curCat   = t.tech.categories[tab];
+  const curColor = COLORS[tab];
+  const curTools = TOOL_LISTS[tab];
 
   return (
     <section
@@ -662,27 +615,24 @@ export function TechSection() {
       {/* bg orb */}
       <div
         className="absolute -bottom-24 -left-24 w-80 md:w-96 h-80 md:h-96 rounded-full pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle, var(--accent-pale) 0%, transparent 70%)",
-        }}
+        style={{ background: "radial-gradient(circle, var(--accent-pale) 0%, transparent 70%)" }}
       />
 
       <div className="max-w-7xl mx-auto relative z-10">
         <SectionHead
-          tag="What We Do"
+          tag={t.tech.tag}
           heading={
             <>
-              Three Things,{" "}
-              <span className="text-gradient-cyan">Done Right</span>
+              {t.tech.headingBefore}{" "}
+              <span className="text-gradient-cyan">{t.tech.headingGrad}</span>
             </>
           }
-          sub="Automation, digital experiences, and growth — built to work together."
+          sub={t.tech.sub}
         />
 
         {/* ── Service cards (tab triggers) ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8 reveal">
-          {categories.map((c, i) => (
+          {t.tech.categories.map((c, i) => (
             <button
               key={c.short}
               onClick={() => setTab(i)}
@@ -692,18 +642,14 @@ export function TechSection() {
                     ? "border-[var(--border)] bg-[var(--bg-surface)]"
                     : "border-[var(--border2)] bg-[var(--bg-panel)] hover:bg-[var(--bg-surface)] hover:border-[var(--border)]"
                 }`}
-              style={
-                tab === i
-                  ? { boxShadow: `0 0 0 1px ${c.color}22` }
-                  : {}
-              }
+              style={tab === i ? { boxShadow: `0 0 0 1px ${COLORS[i]}22` } : {}}
             >
               {/* Icon */}
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center text-base mb-3 border border-[var(--border2)]"
                 style={
                   tab === i
-                    ? { background: `${c.color}18`, borderColor: `${c.color}30` }
+                    ? { background: `${COLORS[i]}18`, borderColor: `${COLORS[i]}30` }
                     : { background: "var(--bg-base)" }
                 }
               >
@@ -715,14 +661,14 @@ export function TechSection() {
                 <div
                   className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                   style={{
-                    background: tab === i ? c.color : "var(--ink4)",
-                    boxShadow: tab === i ? `0 0 6px ${c.color}` : "none",
+                    background: tab === i ? COLORS[i] : "var(--ink4)",
+                    boxShadow: tab === i ? `0 0 6px ${COLORS[i]}` : "none",
                     transition: "all 0.3s",
                   }}
                 />
                 <span
                   className="font-display text-[12px] font-semibold"
-                  style={{ color: tab === i ? c.color : "var(--ink2)" }}
+                  style={{ color: tab === i ? COLORS[i] : "var(--ink2)" }}
                 >
                   {c.label}
                 </span>
@@ -750,23 +696,20 @@ export function TechSection() {
               <div className="flex items-center gap-3">
                 <div
                   className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{
-                    background: cur.color,
-                    boxShadow: `0 0 8px ${cur.color}`,
-                  }}
+                  style={{ background: curColor, boxShadow: `0 0 8px ${curColor}` }}
                 />
                 <span
                   className="font-mono text-[10px] tracking-[0.14em] uppercase font-bold"
-                  style={{ color: cur.color }}
+                  style={{ color: curColor }}
                 >
-                  {cur.label}
+                  {curCat.label}
                 </span>
                 <span className="font-mono text-[10px] text-[var(--ink4)]">
-                  — {cur.items.length} tools
+                  — {curTools.length} {t.tech.toolsLabel}
                 </span>
               </div>
               <p className="text-[12px] text-[var(--ink3)] font-body leading-relaxed max-w-md">
-                {cur.description}
+                {curCat.description}
               </p>
             </div>
           </div>
@@ -774,7 +717,7 @@ export function TechSection() {
           {/* Tech pills */}
           <div className="px-5 sm:px-6 md:px-8 py-6 md:py-8">
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {cur.items.map((tool: string) => (
+              {curTools.map((tool: string) => (
                 <span
                   key={tool}
                   className="group relative font-mono text-[10px] sm:text-[11px] px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl
@@ -784,9 +727,7 @@ export function TechSection() {
                 >
                   <span
                     className="absolute bottom-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{
-                      background: `linear-gradient(90deg, transparent, ${cur.color}, transparent)`,
-                    }}
+                    style={{ background: `linear-gradient(90deg, transparent, ${curColor}, transparent)` }}
                   />
                   <span className="relative z-10">{tool}</span>
                 </span>
@@ -812,10 +753,10 @@ export function TechSection() {
                 </svg>
               </div>
               <p className="text-[11px] sm:text-[12px] font-body text-[var(--ink3)] leading-relaxed">
-                <span className="font-semibold" style={{ color: cur.color }}>
-                  {cur.label}.
+                <span className="font-semibold" style={{ color: curColor }}>
+                  {curCat.label}.
                 </span>{" "}
-                {cur.note.split(". ").slice(1).join(". ")}
+                {curCat.note.split(". ").slice(1).join(". ")}
               </p>
             </div>
           </div>
@@ -827,16 +768,17 @@ export function TechSection() {
 
 // ══ TESTIMONIALS ══════════════════════════════════════════════════════════════
 export function TestimonialsSection() {
+  const { t } = useLanguage();
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     if (paused) return;
-    const id = setInterval(() => setActive((p) => (p + 1) % TESTIMONIALS.length), 5000);
+    const id = setInterval(() => setActive((p) => (p + 1) % t.testimonials.list.length), 5000);
     return () => clearInterval(id);
-  }, [paused]);
+  }, [paused, t.testimonials.list.length]);
 
-  const t = TESTIMONIALS[active];
+  const testimonial = t.testimonials.list[active];
 
   return (
     <section className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 bg-[var(--bg-alt)] relative overflow-hidden" id="testimonials">
@@ -850,9 +792,9 @@ export function TestimonialsSection() {
 
       <div className="max-w-7xl mx-auto">
         <SectionHead
-          tag="Client Stories"
-          heading={<>Trusted by{" "}<span className="text-gradient-blue">Industry Leaders</span></>}
-          sub="Real outcomes. Real companies. Real AI impact."
+          tag={t.testimonials.tag}
+          heading={<>{t.testimonials.headingBefore}{" "}<span className="text-gradient-blue">{t.testimonials.headingGrad}</span></>}
+          sub={t.testimonials.sub}
         />
 
         {/* Featured card */}
@@ -886,7 +828,7 @@ export function TestimonialsSection() {
                 transition-all duration-500"
               style={{ fontSize: "clamp(14px,2vw,22px)" }}
             >
-              "{t.text}"
+              "{testimonial.text}"
             </blockquote>
 
             <div className="flex items-center gap-3 md:gap-4">
@@ -895,12 +837,12 @@ export function TestimonialsSection() {
                   text-xs md:text-sm font-bold text-white flex-shrink-0"
                 style={{ background: "linear-gradient(135deg, var(--accent), var(--cyan))" }}
               >
-                {t.initials}
+                {testimonial.initials}
               </div>
               <div>
-                <div className="font-display text-[13px] md:text-[14px] font-bold text-[var(--ink)]">{t.name}</div>
+                <div className="font-display text-[13px] md:text-[14px] font-bold text-[var(--ink)]">{testimonial.name}</div>
                 <div className="font-mono text-[9px] md:text-[10px] text-[var(--ink4)] tracking-[0.08em]">
-                  {t.role} · {t.company}
+                  {testimonial.role} · {testimonial.company}
                 </div>
               </div>
             </div>
@@ -909,7 +851,7 @@ export function TestimonialsSection() {
 
         {/* Selector */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 reveal">
-          {TESTIMONIALS.map((item, i) => (
+          {t.testimonials.list.map((item, i) => (
             <button
               key={item.id}
               onClick={() => { setActive(i); setPaused(true); }}
@@ -1083,6 +1025,7 @@ export function AICapabilitiesSection() {
 
 // ══ CTA ═══════════════════════════════════════════════════════════════════════
 export function CTASection() {
+  const { t } = useLanguage();
   return (
     <section
       className="relative px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-32 grid place-items-center text-center overflow-hidden"
@@ -1148,7 +1091,7 @@ export function CTASection() {
           </span>
           <span className="font-mono text-[9px] sm:text-[10px] tracking-[0.14em] sm:tracking-[0.16em] uppercase font-semibold"
             style={{ color: "#00D4FF" }}>
-            AI Systems Ready · Let's Build
+            {t.cta.badge}
           </span>
         </div>
 
@@ -1157,7 +1100,7 @@ export function CTASection() {
           className="font-display font-bold leading-[1.05] tracking-tight mb-4 md:mb-5"
           style={{ fontSize: "clamp(26px,5vw,64px)", color: "#F4F6FF" }}
         >
-          Ready to{" "}
+          {t.cta.headingBefore}{" "}
           <span
             style={{
               background: "linear-gradient(135deg, #5B8BFF, #00D4FF)",
@@ -1166,26 +1109,25 @@ export function CTASection() {
               backgroundClip: "text",
             }}
           >
-            Transform
+            {t.cta.headingGrad}
           </span>
-          <br />Your Business with AI?
+          <br />{t.cta.headingAfter}
         </h2>
 
         <p
           className="text-[13px] sm:text-[15px] leading-[1.85] mb-8 md:mb-10 font-body max-w-md mx-auto px-2"
           style={{ color: "rgba(232,237,255,0.58)" }}
         >
-          One conversation. We'll map where AI creates the most leverage in your business
-          and hand you a concrete plan — no fluff, no jargon, no sales pitch.
+          {t.cta.body}
         </p>
 
         <div className="flex gap-3 justify-center flex-wrap mb-8 md:mb-12">
           <LinkButton href={SITE_CONFIG.whatsapp} variant="whatsapp" size="lg" external>
             <WhatsAppIcon className="w-4 h-4" />
-            Chat on WhatsApp
+            {t.cta.chatBtn}
           </LinkButton>
           <LinkButton href="/contact" variant="outline" size="lg">
-            Send a Message →
+            {t.cta.messageBtn}
           </LinkButton>
         </div>
 
@@ -1194,12 +1136,7 @@ export function CTASection() {
           className="flex flex-wrap justify-center gap-4 md:gap-5 pt-5 md:pt-7 border-t"
           style={{ borderColor: "rgba(59,110,248,0.2)" }}
         >
-          {[
-            { icon: "🔒", text: "No lock-in contracts" },
-            { icon: "⚡", text: "48hr response time"   },
-            { icon: "🤖", text: "Free AI audit call"   },
-            { icon: "📄", text: "NDA on request"       },
-          ].map(({ icon, text }) => (
+          {t.cta.trust.map(({ icon, text }) => (
             <div
               key={text}
               className="flex items-center gap-2 text-[11px] sm:text-[12px] font-body"

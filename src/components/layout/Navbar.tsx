@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { NAV_LINKS, SITE_CONFIG }      from "../../lib/data";
+import { SITE_CONFIG }                 from "../../lib/data";
 import { ThemeToggle }                 from "../ui/ThemeToggle";
+import { useLanguage }                 from "../../contexts/LanguageContext";
 
 interface NavbarProps {
   dark: boolean;
@@ -12,6 +13,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
   const [scrolled,   setScrolled]   = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { lang, setLang, t } = useLanguage();
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 32);
@@ -119,7 +121,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
               className="hidden md:flex items-center gap-0.5 list-none"
               style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}
             >
-              {NAV_LINKS.map(({ label, href }) => {
+              {t.nav.links.map(({ label, href }) => {
                 const isActive = currentPage === href;
                 return (
                   <li key={label}>
@@ -224,6 +226,54 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                 />
               </button>
 
+              {/* Language Toggle — EN / SV */}
+              <button
+                aria-label="Toggle language"
+                onClick={() => setLang(lang === "en" ? "sv" : "en")}
+                className="hidden sm:flex items-center rounded-xl overflow-hidden flex-shrink-0"
+                style={{
+                  height: 28,
+                  border: "1.5px solid rgba(255,255,255,0.25)",
+                  background: "rgba(255,255,255,0.08)",
+                  cursor: "pointer",
+                  transition: "border-color .2s, box-shadow .2s",
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.borderColor = "rgba(255,255,255,0.45)";
+                  el.style.boxShadow   = "0 0 0 3px rgba(255,255,255,0.10)";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.borderColor = "rgba(255,255,255,0.25)";
+                  el.style.boxShadow   = "none";
+                }}
+              >
+                {(["en", "sv"] as const).map((l) => (
+                  <span
+                    key={l}
+                    style={{
+                      padding: "0 9px",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      fontFamily: "monospace",
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: lang === l ? "#fff" : "rgba(244,246,255,0.4)",
+                      background: lang === l
+                        ? "linear-gradient(135deg, var(--accent), var(--cyan))"
+                        : "transparent",
+                      transition: "all .25s ease",
+                    }}
+                  >
+                    {l === "en" ? "EN" : "SV"}
+                  </span>
+                ))}
+              </button>
+
               {/* Hire Us CTA */}
               <a
                 href={SITE_CONFIG.whatsapp}
@@ -263,7 +313,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                     fill="white"
                   />
                 </svg>
-                <span className="relative z-10">Hire Us</span>
+                <span className="relative z-10">{t.nav.hireUs}</span>
               </a>
 
               {/* Hamburger */}
@@ -314,7 +364,47 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
             />
 
             <div className="px-4 py-4 flex flex-col gap-1">
-              {NAV_LINKS.map(({ label, href }) => {
+              {/* Mobile language toggle */}
+              <div className="flex items-center justify-between px-4 py-2 mb-1">
+                <span
+                  className="font-mono text-[10px] tracking-[0.12em] uppercase"
+                  style={{ color: "rgba(244,246,255,0.4)" }}
+                >
+                  Language
+                </span>
+                <div
+                  className="flex items-center rounded-lg overflow-hidden"
+                  style={{
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    background: "rgba(255,255,255,0.06)",
+                  }}
+                >
+                  {(["en", "sv"] as const).map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => setLang(l)}
+                      className="font-mono font-bold"
+                      style={{
+                        padding: "4px 10px",
+                        fontSize: 10,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: lang === l ? "#fff" : "rgba(244,246,255,0.4)",
+                        background: lang === l
+                          ? "linear-gradient(135deg, var(--accent), var(--cyan))"
+                          : "transparent",
+                        cursor: "pointer",
+                        transition: "all .2s",
+                        border: "none",
+                      }}
+                    >
+                      {l === "en" ? "EN" : "SV"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {t.nav.links.map(({ label, href }) => {
                 const isActive = currentPage === href;
                 return (
                   <a
@@ -390,7 +480,7 @@ export function Navbar({ dark, onToggle, currentPage = "/" }: NavbarProps) {
                     fill="white"
                   />
                 </svg>
-                <span className="relative z-10">Chat on WhatsApp — Hire Us</span>
+                <span className="relative z-10">{t.nav.chatWhatsapp}</span>
               </a>
             </div>
           </div>

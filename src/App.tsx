@@ -1,9 +1,10 @@
 import { useState, useEffect, lazy, Suspense } from "react";
-import { Cursor }        from "./components/ui/Cursor";
-import { Navbar }        from "./components/layout/Navbar";
-import { Footer }        from "./components/layout/Footer";
-import { SplashScreen }  from "./components/ui/SplashScreen";
-import { useTheme }      from "./hooks/index";
+import { Cursor }            from "./components/ui/Cursor";
+import { Navbar }            from "./components/layout/Navbar";
+import { Footer }            from "./components/layout/Footer";
+import { SplashScreen }      from "./components/ui/SplashScreen";
+import { useTheme }          from "./hooks/index";
+import { LanguageProvider }  from "./contexts/LanguageContext";
 
 // ─── Lazy-loaded pages ────────────────────────────────────────────────────────
 const HomePage      = lazy(() => import("./pages/HomePage").then((m) => ({ default: m.HomePage })));
@@ -183,7 +184,7 @@ export default function App() {
   }
 
   return (
-    <>
+    <LanguageProvider>
       {/* Splash screen — shown once per session */}
       {!splashDone && <SplashScreen onDone={handleSplashDone} />}
 
@@ -203,6 +204,6 @@ export default function App() {
         </Suspense>
         <Footer />
       </div>
-    </> 
+    </LanguageProvider>
   );
 }

@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
-import { HERO_WORDS, HERO_STATS, SITE_CONFIG } from "../lib/data";
+import { SITE_CONFIG } from "../lib/data";
 import { useTypewriter, useCounter, useInView } from "../hooks/index";
 import { LinkButton, ArrowRightIcon } from "../components/ui/index";
 import { WhatsAppIcon } from "../components/ui/Icons";
+import { useLanguage } from "../contexts/LanguageContext";
 
 // ─── Neural Network Canvas ────────────────────────────────────────────────────
 function NeuralCanvas() {
@@ -141,6 +142,7 @@ function StatCounter({
 
 // ─── Performance Card (floating right) ───────────────────────────────────────
 function PerfCard() {
+  const { t } = useLanguage();
   const metrics = [
     { label: "Model Accuracy", val: 94, color: "linear-gradient(90deg,var(--accent),var(--accent2))" },
     { label: "Latency Reduction", val: 78, color: "linear-gradient(90deg,var(--cyan),#22d3ee)" },
@@ -189,10 +191,10 @@ function PerfCard() {
         </div>
         <div>
           <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(244,246,255,.88)", lineHeight: 1.3 }}>
-            Live Metrics
+            {t.hero.liveMetrics}
           </div>
           <div style={{ fontSize: 11, color: "rgba(244,246,255,.35)", marginTop: 1 }}>
-            AI pipeline · production
+            {t.hero.aiPipeline}
           </div>
         </div>
       </div>
@@ -234,12 +236,12 @@ function PerfCard() {
       {/* Tags */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 4 }}>
         {[
-          { label: "Production live", dot: true },
-          { label: "Lahore HQ" },
-          { label: "24 / 7 support" },
-        ].map((t) => (
+          { label: t.hero.productionLive, dot: true },
+          { label: t.hero.lahoreHQ },
+          { label: t.hero.support247 },
+        ].map((tag) => (
           <span
-            key={t.label}
+            key={tag.label}
             className="font-mono"
             style={{
               display: "inline-flex",
@@ -254,7 +256,7 @@ function PerfCard() {
               color: "rgba(165,180,252,.75)",
             }}
           >
-            {t.dot && (
+            {tag.dot && (
               <span
                 style={{
                   width: 5,
@@ -267,7 +269,7 @@ function PerfCard() {
                 }}
               />
             )}
-            {t.label}
+            {tag.label}
           </span>
         ))}
       </div>
@@ -277,7 +279,8 @@ function PerfCard() {
 
 // ─── HeroSection ─────────────────────────────────────────────────────────────
 export function HeroSection() {
-  const typed = useTypewriter(HERO_WORDS, 72, 2300);
+  const { t } = useLanguage();
+  const typed = useTypewriter([...t.hero.words], 72, 2300);
 
   const CAPS = ["GPT-4o", "Claude 3.5", "LangChain", "RAG Pipelines", "AI Agents", "Fine-Tuning", "Next.js", "FastAPI"];
 
@@ -355,7 +358,7 @@ export function HeroSection() {
           className="font-mono uppercase"
           style={{ fontSize: 10, letterSpacing: "0.1em", color: "rgba(244,246,255,0.65)" }}
         >
-          Available for projects
+          {t.hero.available}
         </span>
       </div>
 
@@ -395,7 +398,7 @@ export function HeroSection() {
             animation: "heroUp .9s .08s var(--ease) both",
           }}
         >
-          <span className="block">We Build</span>
+          <span className="block">{t.hero.weBuilt}</span>
 
           {/* Animated gradient line */}
           <span
@@ -431,7 +434,7 @@ export function HeroSection() {
               color: "transparent",
             }}
           >
-            That Scale.
+            {t.hero.thatScale}
           </span>
         </h1>
 
@@ -444,11 +447,10 @@ export function HeroSection() {
             animation: "heroUp .9s .16s var(--ease) both",
           }}
         >
-          From{" "}
-          <span style={{ color: "var(--cyan)", fontWeight: 500 }}>LLM fine-tuning</span>
-          {" "}to pixel-perfect interfaces — we engineer AI products that automate workflows,
-          delight users, and generate revenue. Lahore-based.{" "}
-          <span style={{ color: "rgba(244,246,255,0.72)", fontWeight: 400 }}>Global delivery.</span>
+          {t.hero.subBefore}{" "}
+          <span style={{ color: "var(--cyan)", fontWeight: 500 }}>{t.hero.subCyan}</span>
+          {" "}{t.hero.subMid}{" "}
+          <span style={{ color: "rgba(244,246,255,0.72)", fontWeight: 400 }}>{t.hero.subAfter}</span>
         </p>
 
         {/* CTAs */}
@@ -457,12 +459,12 @@ export function HeroSection() {
           style={{ animation: "heroUp .9s .24s var(--ease) both" }}
         >
           <LinkButton href="#services" variant="accent" size="lg">
-            Explore Services
+            {t.hero.exploreServices}
             <ArrowRightIcon />
           </LinkButton>
           <LinkButton href={SITE_CONFIG.whatsapp} variant="outline" size="lg" external>
             <WhatsAppIcon className="w-4 h-4" />
-            Let's Talk
+            {t.hero.letsTalk}
           </LinkButton>
         </div>
 
@@ -510,10 +512,10 @@ export function HeroSection() {
             animation: "heroUp .9s .4s var(--ease) both",
           }}
         >
-          {HERO_STATS.map((s, i) => (
+          {t.hero.stats.map((s, i) => (
             <div key={s.label} className="flex items-center gap-8">
               <StatCounter {...s} />
-              {i < HERO_STATS.length - 1 && (
+              {i < t.hero.stats.length - 1 && (
                 <div
                   style={{
                     width: 1,
@@ -558,7 +560,7 @@ export function HeroSection() {
             writingMode: "vertical-rl",
           }}
         >
-          Scroll
+          {t.hero.scroll}
         </span>
       </div>
     </section>
