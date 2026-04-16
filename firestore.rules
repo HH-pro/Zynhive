@@ -2,69 +2,60 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ─── Helper: only signed-in admin can write ──────────────────────────────
     function isAdmin() {
       return request.auth != null;
     }
 
-    // ─── Projects ────────────────────────────────────────────────────────────
-    // Public can read, only admin can create/update/delete
     match /projects/{projectId} {
-      allow read:             if true;
-      allow create, update:   if isAdmin();
-      allow delete:           if isAdmin();
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    // ─── Team Members ────────────────────────────────────────────────────────
     match /team/{memberId} {
-      allow read:             if true;
-      allow create, update:   if isAdmin();
-      allow delete:           if isAdmin();
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    // ─── Leads (contact form submissions) ───────────────────────────────────
-    // Anyone can submit a lead, only admin can read/delete
     match /leads/{leadId} {
-      allow create:           if true;           // contact form public
-      allow read, delete:     if isAdmin();
-      allow update:           if isAdmin();
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
 
-    // ─── Employees (internal HR data) ───────────────────────────────────────
-    // Fully restricted — admin only
     match /employees/{employeeId} {
-      allow read, write:      if isAdmin();
+      allow read, write: if isAdmin();
     }
 
-    // ─── Blogs ──────────────────────────────────────────────────────────────
-    // Public can read published posts, admin can write
     match /blogs/{blogId} {
-      allow read:             if true;
-      allow create, update:   if isAdmin();
-      allow delete:           if isAdmin();
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    // ─── Clients ────────────────────────────────────────────────────────────
-    // Public can read (client portal — unauthenticated access via portal URL)
-    // Only admin can create/update/delete
     match /clients/{clientId} {
-      allow read:             if true;
-      allow create, update:   if isAdmin();
-      allow delete:           if isAdmin();
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    // ─── Client Updates ──────────────────────────────────────────────────────
-    // Public can read (client portal — same as above)
-    // Only admin can create/update/delete
     match /client_updates/{updateId} {
-      allow read:             if true;
-      allow create, update:   if isAdmin();
-      allow delete:           if isAdmin();
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    // ─── Block everything else ───────────────────────────────────────────────
+    match /update_feedback/{feedbackId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /{document=**} {
-      allow read, write:      if false;
+      allow read, write: if false;
     }
   }
 }
+ 
+
+

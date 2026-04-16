@@ -5,7 +5,7 @@ import {
   onAuthStateChanged, type User,
 } from "firebase/auth";
 import {
-  getFirestore, collection, addDoc, updateDoc, deleteDoc,
+  getFirestore, collection, addDoc, updateDoc, deleteDoc, setDoc,
   doc, getDocs, getDoc, query, orderBy, serverTimestamp, Timestamp,
 } from "firebase/firestore";
 
@@ -141,14 +141,16 @@ export const deleteLead = (id: string) => deleteDoc(doc(db, LEADS_COL, id));
 
 // ─── Clients ──────────────────────────────────────────────────────────────────
 export type FirestoreClient = {
-  id?:         string;
-  name:        string;
-  company:     string;
-  email:       string;
-  password:    string;
-  projectName: string;
-  createdAt?:  Timestamp;
-  updatedAt?:  Timestamp;
+  id?:               string;
+  name:              string;
+  company:           string;
+  email:             string;
+  password:          string;
+  projectName:       string;
+  whatsappNumber?:   string;
+  whatsappApiKey?:   string;
+  createdAt?:        Timestamp;
+  updatedAt?:        Timestamp;
 };
 
 const CLIENTS_COL = "clients";
@@ -205,3 +207,54 @@ export const createClientUpdate = (data: Omit<FirestoreClientUpdate, "id" | "cre
 export const updateClientUpdate = (id: string, data: Partial<FirestoreClientUpdate>) =>
   updateDoc(doc(db, CLIENT_UPDATES_COL, id), { ...data, updatedAt: serverTimestamp() });
 export const deleteClientUpdate = (id: string) => deleteDoc(doc(db, CLIENT_UPDATES_COL, id));
+
+// ─── Update Feedback ──────────────────────────────────────────────────────────
+export type FirestoreUpdateFeedback = {
+  id?:         string;
+  updateId:    string;
+  clientId:    string;
+  message:     string;
+  fromClient:  boolean;  // true = client, false = team reply
+  senderName?: string;
+  createdAt?:  Timestamp;
+};
+
+const UPDATE_FEEDBACK_COL = "update_feedback";
+export async function fetchUpdateFeedback(updateId: string): Promise<FirestoreUpdateFeedback[]> {
+  const snap = await getDocs(collection(db, UPDATE_FEEDBACK_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreUpdateFeedback))
+    .filter((f) => f.updateId === updateId)
+    .sort((a, b) => {
+      const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      return ta - tb;
+    });
+}
+export async function fetchAllFeedbackForClient(clientId: string): Promise<FirestoreUpdateFeedback[]> {
+  const snap = await getDocs(collection(db, UPDATE_FEEDBACK_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreUpdateFeedback))
+    .filter((f) => f.clientId === clientId);
+}
+export const createUpdateFeedback = (data: Omit<FirestoreUpdateFeedback, "id" | "createdAt">) =>
+  addDoc(collection(db, UPDATE_FEEDBACK_COL), { ...data, createdAt: serverTimestamp() });
+
+// ─── Notification Settings ────────────────────────────────────────────────────
+export type TeamMemberNotif = {
+  name:   string;
+  number: string;   // with country code e.g. +923001234567
+  apiKey: string;   // CallMeBot API key
+};
+export type NotificationSettings = {
+  teamMembers: TeamMemberNotif[];
+};
+
+const SETTINGS_COL = "settings";
+export async function fetchNotificationSettings(): Promise<NotificationSettings | null> {
+  const snap = await getDoc(doc(db, SETTINGS_COL, "notifications"));
+  if (!snap.exists()) return null;
+  return snap.data() as NotificationSettings;
+}
+export const saveNotificationSettings = (data: NotificationSettings) =>
+  setDoc(doc(db, SETTINGS_COL, "notifications"), data);

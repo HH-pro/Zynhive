@@ -1,9 +1,12 @@
 // ─── src/pages/ClientPage.tsx ─────────────────────────────────────────────────
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   fetchClientById, fetchClientUpdates,
-  type FirestoreClient, type FirestoreClientUpdate,
+  fetchUpdateFeedback, createUpdateFeedback,
+  fetchNotificationSettings,
+  type FirestoreClient, type FirestoreClientUpdate, type FirestoreUpdateFeedback,
 } from "../lib/firebase";
+import { sendWhatsAppToAll } from "../lib/whatsapp";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<
@@ -327,6 +330,11 @@ const PORTAL_CSS = `
     object-fit: contain;
   }
 
+  /* Feedback thread */
+  .cp-feedback-msg { display: flex; flex-direction: column; gap: 3; max-width: 88%; }
+  .cp-feedback-msg.from-client { align-self: flex-start; }
+  .cp-feedback-msg.from-team   { align-self: flex-end; }
+
   /* Responsive */
   @media (max-width: 640px) {
     .cp-hide-mobile { display: none !important; }
@@ -528,8 +536,9 @@ function LoginScreen({ clientId, onAuth, isDark, onToggleTheme }: {
 }
 
 // ─── Portal Navbar ────────────────────────────────────────────────────────────
-function PortalNav({ client, isDark, onToggleTheme, onLogout }: {
-  client: FirestoreClient; isDark: boolean; onToggleTheme: () => void; onLogout: () => void;
+function PortalNav({ client, isDark, onToggleTheme, onLogout, onOpenWaSettings }: {
+  client: FirestoreClient; isDark: boolean; onToggleTheme: () => void;
+  onLogout: () => void; onOpenWaSettings: () => void;
 }) {
   return (
     <nav className="cp-nav">
@@ -539,6 +548,15 @@ function PortalNav({ client, isDark, onToggleTheme, onLogout }: {
         <span className="cp-hide-mobile" style={{ fontSize: 12, color: "var(--cp-text-dim)", fontWeight: 500 }}>Client Portal</span>
         <div style={{ flex: 1 }}/>
         <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
+        {/* WhatsApp notification setup */}
+        <button
+          onClick={onOpenWaSettings}
+          title="WhatsApp notification settings"
+          style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 8, border: "1px solid var(--cp-border)", background: client.whatsappNumber ? "rgba(16,185,129,.08)" : "transparent", color: client.whatsappNumber ? "#10B981" : "var(--cp-text-dim)", cursor: "pointer", fontSize: 11, transition: "all .15s" }}
+        >
+          <span style={{ fontSize: 13 }}>📱</span>
+          <span className="cp-hide-mobile">{client.whatsappNumber ? "Notifications On" : "Setup Alerts"}</span>
+        </button>
         <div style={{ width: 1, height: 18, background: "var(--cp-border-div)" }}/>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ textAlign: "right" }} className="cp-hide-mobile">
@@ -577,9 +595,60 @@ function ProgressRing({ pct, color = "#6366F1", size = 100 }: { pct: number; col
 }
 
 // ─── Update Detail Modal ──────────────────────────────────────────────────────
-function UpdateDetailModal({ u, onClose }: { u: FirestoreClientUpdate; onClose: () => void }) {
+function UpdateDetailModal({ u, client, onClose }: {
+  u: FirestoreClientUpdate;
+  client: FirestoreClient;
+  onClose: () => void;
+}) {
   const cfg = STATUS_CONFIG[u.status];
   const [fullscreen, setFullscreen] = useState(false);
+  const [feedback,   setFeedback]   = useState<FirestoreUpdateFeedback[]>([]);
+  const [fbLoading,  setFbLoading]  = useState(true);
+  const [fbText,     setFbText]     = useState("");
+  const [fbSending,  setFbSending]  = useState(false);
+  const fbBottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!u.id) return;
+    fetchUpdateFeedback(u.id)
+      .then(setFeedback)
+      .catch(() => {})
+      .finally(() => setFbLoading(false));
+  }, [u.id]);
+
+  useEffect(() => {
+    fbBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [feedback]);
+
+  async function handleSendFeedback() {
+    const msg = fbText.trim();
+    if (!msg || !u.id) return;
+    setFbSending(true);
+    try {
+      await createUpdateFeedback({
+        updateId: u.id, clientId: client.id!, message: msg,
+        fromClient: true, senderName: client.name,
+      });
+      setFbText("");
+      setFeedback(await fetchUpdateFeedback(u.id));
+      // Notify all team members via WhatsApp
+      fetchNotificationSettings().then((settings) => {
+        if (settings?.teamMembers?.length) {
+          const text = `💬 New feedback from *${client.name}*${client.company ? ` (${client.company})` : ""} on update *${u.title}*:\n"${msg}"`;
+          sendWhatsAppToAll(settings.teamMembers, text);
+        }
+      }).catch(() => {});
+    } catch (err) { console.error("[Feedback] send error:", err); }
+    finally { setFbSending(false); }
+  }
+
+  function formatFbTime(ts: unknown): string {
+    if (!ts) return "";
+    try {
+      const d = (ts as { toDate?: () => Date })?.toDate ? (ts as { toDate: () => Date }).toDate() : new Date(ts as string);
+      return d.toLocaleString("en-US", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    } catch { return ""; }
+  }
 
   // Close on Escape
   useEffect(() => {
@@ -629,7 +698,6 @@ function UpdateDetailModal({ u, onClose }: { u: FirestoreClientUpdate; onClose: 
 
           {/* Controls */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-            {/* Fullscreen toggle */}
             <button
               onClick={() => setFullscreen((v) => !v)}
               title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
@@ -640,7 +708,6 @@ function UpdateDetailModal({ u, onClose }: { u: FirestoreClientUpdate; onClose: 
                 : <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 5V2h3M9 2h3v3M2 9v3h3M12 9v3H9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
               }
             </button>
-            {/* Close */}
             <button
               onClick={onClose}
               title="Close"
@@ -668,7 +735,7 @@ function UpdateDetailModal({ u, onClose }: { u: FirestoreClientUpdate; onClose: 
           )}
 
           {/* Progress */}
-          <div style={{ padding: "16px", borderRadius: 12, background: "var(--cp-bg-stat)", border: "1px solid var(--cp-border)" }}>
+          <div style={{ padding: "16px", borderRadius: 12, background: "var(--cp-bg-stat)", border: "1px solid var(--cp-border)", marginBottom: 24 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
               <span style={{ fontSize: 12, color: "var(--cp-text-muted)", fontWeight: 600 }}>Task Progress</span>
               <span style={{ fontSize: 20, fontWeight: 800, color: cfg.color, fontFamily: "monospace" }}>{u.completionPercent}%</span>
@@ -680,6 +747,87 @@ function UpdateDetailModal({ u, onClose }: { u: FirestoreClientUpdate; onClose: 
               <span style={{ fontSize: 11, color: "var(--cp-text-dim)" }}>Started</span>
               <span style={{ fontSize: 11, color: cfg.color, fontWeight: 600 }}>{u.completionPercent}% complete</span>
             </div>
+          </div>
+
+          {/* ── Feedback Thread ── */}
+          <div style={{ borderTop: "1px solid var(--cp-border-md)", paddingTop: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M2 2h12v9H9l-3 3v-3H2V2z" stroke="var(--cp-text-muted)" strokeWidth="1.3" strokeLinejoin="round"/>
+              </svg>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--cp-text-h)" }}>Feedback</span>
+              {feedback.length > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 99, background: "rgba(99,102,241,.12)", color: "#818CF8", border: "1px solid rgba(99,102,241,.22)" }}>
+                  {feedback.length}
+                </span>
+              )}
+            </div>
+
+            {/* Messages */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14, maxHeight: 220, overflowY: "auto", paddingRight: 4 }}>
+              {fbLoading ? (
+                <div style={{ fontSize: 12, color: "var(--cp-text-dim)", padding: "8px 0" }}>Loading…</div>
+              ) : feedback.length === 0 ? (
+                <div style={{ fontSize: 12, color: "var(--cp-text-dim)", padding: "6px 0", fontStyle: "italic" }}>
+                  No feedback yet. Share your thoughts below.
+                </div>
+              ) : (
+                feedback.map((fb) => (
+                  <div key={fb.id} className={`cp-feedback-msg ${fb.fromClient ? "from-client" : "from-team"}`}>
+                    <div style={{
+                      padding: "9px 13px",
+                      borderRadius: fb.fromClient ? "4px 14px 14px 14px" : "14px 4px 14px 14px",
+                      background: fb.fromClient ? "var(--cp-bg-stat)" : "rgba(99,102,241,.12)",
+                      border: `1px solid ${fb.fromClient ? "var(--cp-border)" : "rgba(99,102,241,.22)"}`,
+                      fontSize: 13, color: "var(--cp-text-body)", lineHeight: 1.6,
+                    }}>
+                      {fb.message}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "2px 4px" }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: fb.fromClient ? "var(--cp-text-dim)" : "#818CF8" }}>
+                        {fb.fromClient ? (fb.senderName || "You") : (fb.senderName || "ZynHive Team")}
+                      </span>
+                      <span style={{ fontSize: 10, color: "var(--cp-text-dimmer)" }}>{formatFbTime(fb.createdAt)}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={fbBottomRef} />
+            </div>
+
+            {/* Input */}
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+              <textarea
+                value={fbText}
+                onChange={(e) => setFbText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendFeedback(); } }}
+                placeholder="Leave your feedback or ask a question…"
+                rows={2}
+                className="cp-input"
+                style={{
+                  flex: 1, padding: "10px 14px", borderRadius: 12, fontSize: 13,
+                  fontFamily: "inherit", border: "1.5px solid var(--cp-border)",
+                  resize: "none", lineHeight: 1.55,
+                }}
+              />
+              <button
+                onClick={handleSendFeedback}
+                disabled={fbSending || !fbText.trim()}
+                className="cp-btn"
+                style={{
+                  padding: "10px 16px", borderRadius: 12, border: "none", flexShrink: 0,
+                  background: fbSending || !fbText.trim() ? "rgba(99,102,241,.2)" : "linear-gradient(135deg,#6366F1 0%,#818CF8 100%)",
+                  color: fbSending || !fbText.trim() ? "#4C5580" : "white",
+                  fontSize: 13, fontWeight: 600, cursor: fbSending || !fbText.trim() ? "default" : "pointer",
+                }}
+              >
+                {fbSending
+                  ? <span style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(255,255,255,.2)", borderTopColor: "white", animation: "cp-spin .8s linear infinite", display: "inline-block" }} />
+                  : <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M14 2L2 7l5 2 2 5L14 2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>
+                }
+              </button>
+            </div>
+            <p style={{ fontSize: 10, color: "var(--cp-text-dimmer)", marginTop: 6 }}>Enter to send · Shift+Enter for new line</p>
           </div>
         </div>
       </div>
@@ -817,16 +965,33 @@ function SectionBlock({ sectionKey, items, latestId, onCardClick }: {
 }
 
 // ─── Updates View ─────────────────────────────────────────────────────────────
-function UpdatesView({ client, isDark, onToggleTheme, onLogout }: {
+function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }: {
   client: FirestoreClient; isDark: boolean; onToggleTheme: () => void; onLogout: () => void;
 }) {
+  const [client,         setClient]         = useState(initialClient);
   const [updates,        setUpdates]        = useState<FirestoreClientUpdate[]>([]);
   const [loading,        setLoading]        = useState(true);
   const [selectedUpdate, setSelectedUpdate] = useState<FirestoreClientUpdate | null>(null);
+  const [waModalOpen,    setWaModalOpen]    = useState(false);
+  const [waNumber,       setWaNumber]       = useState(initialClient.whatsappNumber ?? "");
+  const [waApiKey,       setWaApiKey]       = useState(initialClient.whatsappApiKey ?? "");
+  const [waSaving,       setWaSaving]       = useState(false);
 
   useEffect(() => {
     fetchClientUpdates(client.id!).then(setUpdates).catch(() => {}).finally(() => setLoading(false));
   }, [client.id]);
+
+  async function handleSaveWaSettings() {
+    if (!client.id) return;
+    setWaSaving(true);
+    try {
+      const { updateClient } = await import("../lib/firebase");
+      await updateClient(client.id, { whatsappNumber: waNumber.trim(), whatsappApiKey: waApiKey.trim() });
+      setClient((c) => ({ ...c, whatsappNumber: waNumber.trim(), whatsappApiKey: waApiKey.trim() }));
+      setWaModalOpen(false);
+    } catch { /* ignore */ }
+    finally { setWaSaving(false); }
+  }
 
   const latest    = updates[0];
   const completed = updates.filter((u) => u.status === "completed").length;
@@ -849,9 +1014,63 @@ function UpdatesView({ client, isDark, onToggleTheme, onLogout }: {
   return (
     <div className="cp-fade-in" style={{ minHeight: "100vh" }}>
       {selectedUpdate && (
-        <UpdateDetailModal u={selectedUpdate} onClose={() => setSelectedUpdate(null)} />
+        <UpdateDetailModal u={selectedUpdate} client={client} onClose={() => setSelectedUpdate(null)} />
       )}
-      <PortalNav client={client} isDark={isDark} onToggleTheme={onToggleTheme} onLogout={onLogout} />
+
+      {/* WhatsApp self-service modal */}
+      {waModalOpen && (
+        <div className="cp-modal-backdrop" onClick={() => setWaModalOpen(false)}>
+          <div className="cp-modal" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+            <div className="cp-modal-header" style={{ gap: 10 }}>
+              <span style={{ fontSize: 20 }}>📱</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: "var(--cp-text-h)" }}>WhatsApp Alerts</div>
+                <div style={{ fontSize: 11, color: "var(--cp-text-dim)", marginTop: 2 }}>Get notified when team replies to your feedback</div>
+              </div>
+              <button onClick={() => setWaModalOpen(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 8, border: "1px solid var(--cp-border)", background: "var(--cp-bg-badge)", color: "var(--cp-text-dim)", cursor: "pointer" }}>
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 2l9 9M11 2L2 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+            <div className="cp-modal-body" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <p style={{ fontSize: 12, color: "var(--cp-text-muted)", lineHeight: 1.7, margin: 0 }}>
+                To activate, send <strong style={{ color: "var(--cp-text-h)" }}>"I allow callmebot to send me messages"</strong> to <strong style={{ color: "var(--cp-text-h)" }}>+34 644 59 78 74</strong> on WhatsApp. You'll receive your API key instantly.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--cp-text-dim)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Your WhatsApp Number</label>
+                <input
+                  value={waNumber} onChange={(e) => setWaNumber(e.target.value)}
+                  placeholder="+923001234567 (with country code)"
+                  className="cp-input"
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13, fontFamily: "inherit", border: "1.5px solid var(--cp-border)" }}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--cp-text-dim)", textTransform: "uppercase", letterSpacing: "0.07em" }}>CallMeBot API Key</label>
+                <input
+                  value={waApiKey} onChange={(e) => setWaApiKey(e.target.value)}
+                  placeholder="API key received from CallMeBot"
+                  className="cp-input"
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13, fontFamily: "inherit", border: "1.5px solid var(--cp-border)" }}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+                <button onClick={() => setWaModalOpen(false)} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "1px solid var(--cp-border)", background: "transparent", color: "var(--cp-text-muted)", cursor: "pointer", fontSize: 13 }}>
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveWaSettings} disabled={waSaving}
+                  className="cp-btn"
+                  style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "none", background: waSaving ? "rgba(99,102,241,.2)" : "linear-gradient(135deg,#6366F1,#818CF8)", color: waSaving ? "#4C5580" : "white", cursor: waSaving ? "default" : "pointer", fontSize: 13, fontWeight: 600 }}
+                >
+                  {waSaving ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <PortalNav client={client} isDark={isDark} onToggleTheme={onToggleTheme} onLogout={onLogout} onOpenWaSettings={() => setWaModalOpen(true)} />
 
       {/* ── Hero ── */}
       <div style={{ background: "var(--cp-bg-hero)", borderBottom: "1px solid var(--cp-border-md)", transition: "background .3s, border-color .3s" }}>

@@ -3,8 +3,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   fetchClients, createClient, updateClient, deleteClient,
   fetchClientUpdates, createClientUpdate, updateClientUpdate, deleteClientUpdate,
-  type FirestoreClient, type FirestoreClientUpdate,
+  fetchUpdateFeedback, createUpdateFeedback,
+  fetchNotificationSettings, saveNotificationSettings,
+  type FirestoreClient, type FirestoreClientUpdate, type FirestoreUpdateFeedback,
+  type NotificationSettings, type TeamMemberNotif,
 } from "../../lib/firebase";
+import { sendWhatsApp, sendWhatsAppToAll } from "../../lib/whatsapp";
 import { uploadToCloudinary } from "../../lib/cloudinary";
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -99,7 +103,10 @@ function ClientFormModal({
     if (!name.trim() || !email.trim() || !password.trim()) return;
     setSaving(true);
     try {
-      const data = { name: name.trim(), company: company.trim(), email: email.trim(), password: password.trim(), projectName: projectName.trim() };
+      const data = {
+        name: name.trim(), company: company.trim(), email: email.trim(),
+        password: password.trim(), projectName: projectName.trim(),
+      };
       if (client?.id) {
         await updateClient(client.id, data);
         onSaved("Client updated!");
@@ -361,7 +368,7 @@ function UpdateFormModal({
   update: FirestoreClientUpdate | null;
   clientId: string;
   onClose: () => void;
-  onSaved: (msg: string) => void;
+  onSaved: (msg: string, updateTitle?: string) => void;
 }) {
   const [title,      setTitle]      = useState(update?.title              ?? "");
   const [desc,       setDesc]       = useState(update?.description        ?? "");
@@ -424,7 +431,7 @@ function UpdateFormModal({
         onSaved("Update saved!");
       } else {
         await createClientUpdate(data);
-        onSaved("Update added!");
+        onSaved("Update added!", title.trim());
       }
       onClose();
     } catch (err) {
@@ -799,17 +806,24 @@ function DeleteConfirm({ label, onConfirm, onCancel }: { label: string; onConfir
 
 // ─── Updates Panel ────────────────────────────────────────────────────────────
 function UpdatesPanel({
-  client, onClose, showToast,
+  client, onClose, showToast, notifSettings,
 }: {
   client: FirestoreClient;
   onClose: () => void;
   showToast: (msg: string, type?: "success" | "error") => void;
+  notifSettings: NotificationSettings;
 }) {
   const [updates,       setUpdates]       = useState<FirestoreClientUpdate[]>([]);
   const [loading,       setLoading]       = useState(true);
   const [updateForm,    setUpdateForm]    = useState<FirestoreClientUpdate | null | "new">(null);
   const [deleteTarget,  setDeleteTarget]  = useState<FirestoreClientUpdate | null>(null);
   const [copiedUrl,     setCopiedUrl]     = useState(false);
+  // Feedback state keyed by updateId
+  const [feedbackMap,   setFeedbackMap]   = useState<Record<string, FirestoreUpdateFeedback[]>>({});
+  const [fbOpenId,      setFbOpenId]      = useState<string | null>(null);
+  const [fbLoadingId,   setFbLoadingId]   = useState<string | null>(null);
+  const [fbReplyMap,    setFbReplyMap]    = useState<Record<string, string>>({});
+  const [fbSendingId,   setFbSendingId]   = useState<string | null>(null);
 
   const portalUrl = `${window.location.origin}/client/${client.id}`;
 
@@ -845,6 +859,42 @@ function UpdatesPanel({
   }
 
   const latest = updates[0];
+
+  async function toggleFeedback(updateId: string) {
+    if (fbOpenId === updateId) { setFbOpenId(null); return; }
+    setFbOpenId(updateId);
+    if (feedbackMap[updateId]) return; // already loaded
+    setFbLoadingId(updateId);
+    try {
+      const data = await fetchUpdateFeedback(updateId);
+      setFeedbackMap((prev) => ({ ...prev, [updateId]: data }));
+    } catch { /* ignore */ }
+    finally { setFbLoadingId(null); }
+  }
+
+  async function handleReply(u: FirestoreClientUpdate) {
+    const msg = (fbReplyMap[u.id!] ?? "").trim();
+    if (!msg || !u.id) return;
+    setFbSendingId(u.id);
+    try {
+      await createUpdateFeedback({
+        updateId: u.id, clientId: client.id!,
+        message: msg, fromClient: false, senderName: "ZynHive Team",
+      });
+      setFbReplyMap((prev) => ({ ...prev, [u.id!]: "" }));
+      const updated = await fetchUpdateFeedback(u.id);
+      setFeedbackMap((prev) => ({ ...prev, [u.id!]: updated }));
+    } catch { /* ignore */ }
+    finally { setFbSendingId(null); }
+  }
+
+  function formatFbTime(ts: unknown): string {
+    if (!ts) return "";
+    try {
+      const d = (ts as { toDate?: () => Date })?.toDate ? (ts as { toDate: () => Date }).toDate() : new Date(ts as string);
+      return d.toLocaleString("en-US", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    } catch { return ""; }
+  }
 
   return (
     <>
@@ -947,19 +997,20 @@ function UpdatesPanel({
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {updates.map((u, i) => {
-                  const cfg = STATUS_CONFIG[u.status];
+                  const cfg         = STATUS_CONFIG[u.status];
+                  const fbOpen      = fbOpenId === u.id;
+                  const fbList      = feedbackMap[u.id!] ?? [];
+                  const clientMsgs  = fbList.filter((f) => f.fromClient).length;
                   return (
                     <div
                       key={u.id}
                       style={{
-                        background: "var(--bg-alt)", border: "0.5px solid var(--border)",
-                        borderRadius: 12, padding: "14px 16px",
+                        background: "var(--bg-alt)", border: `0.5px solid ${fbOpen ? "var(--accent)" : "var(--border)"}`,
+                        borderRadius: 12, overflow: "hidden",
                         position: "relative", transition: "border-color .15s",
                       }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border2)"; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"; }}
                     >
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
                         {/* Step indicator */}
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, paddingTop: 2 }}>
                           <div style={{ width: 22, height: 22, borderRadius: "50%", background: i === 0 ? "var(--accent)" : "var(--bg-card)", border: `1.5px solid ${i === 0 ? "var(--accent)" : "var(--border2)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -995,6 +1046,27 @@ function UpdatesPanel({
 
                         {/* Actions */}
                         <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                          {/* Feedback toggle */}
+                          <button
+                            onClick={() => toggleFeedback(u.id!)}
+                            title="View / Reply feedback"
+                            style={{
+                              width: 26, height: 26, borderRadius: 7, border: `0.5px solid ${fbOpen ? "var(--accent)" : "var(--border)"}`,
+                              background: fbOpen ? "var(--accent-pale)" : "transparent",
+                              cursor: "pointer", color: fbOpen ? "var(--accent)" : "var(--ink4)",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              gap: 3, transition: "all .15s", position: "relative",
+                            }}
+                            onMouseEnter={(e) => { if (!fbOpen) { const el = e.currentTarget as HTMLElement; el.style.background = "var(--accent-pale)"; el.style.color = "var(--accent)"; el.style.borderColor = "var(--accent-pale2)"; } }}
+                            onMouseLeave={(e) => { if (!fbOpen) { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink4)"; el.style.borderColor = "var(--border)"; } }}
+                          >
+                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1.5 1.5h9v7H7.5L5.5 10.5v-2H1.5v-7z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/></svg>
+                            {clientMsgs > 0 && (
+                              <span style={{ position: "absolute", top: -4, right: -4, width: 14, height: 14, borderRadius: "50%", background: "var(--accent)", color: "white", fontSize: 8, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid var(--bg-card)" }}>
+                                {clientMsgs > 9 ? "9+" : clientMsgs}
+                              </span>
+                            )}
+                          </button>
                           <button
                             onClick={() => setUpdateForm(u)}
                             title="Edit"
@@ -1015,6 +1087,75 @@ function UpdatesPanel({
                           </button>
                         </div>
                       </div>
+
+                      {/* ── Feedback panel (inline) ── */}
+                      {fbOpen && (
+                        <div style={{ borderTop: "0.5px solid var(--border)", padding: "12px 16px", background: "var(--bg-card)" }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ink4)", marginBottom: 10 }}>
+                            Client Feedback & Replies
+                          </div>
+
+                          {/* Thread */}
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 200, overflowY: "auto", marginBottom: 10 }}>
+                            {fbLoadingId === u.id ? (
+                              <div style={{ fontSize: 11, color: "var(--ink4)", padding: "4px 0" }}>Loading…</div>
+                            ) : fbList.length === 0 ? (
+                              <div style={{ fontSize: 11, color: "var(--ink4)", fontStyle: "italic" }}>No feedback yet for this update.</div>
+                            ) : (
+                              fbList.map((fb) => (
+                                <div key={fb.id} style={{ display: "flex", flexDirection: "column", gap: 2, alignSelf: fb.fromClient ? "flex-start" : "flex-end", maxWidth: "86%" }}>
+                                  <div style={{
+                                    padding: "7px 11px", fontSize: 12, lineHeight: 1.55, color: "var(--ink2)",
+                                    borderRadius: fb.fromClient ? "4px 12px 12px 12px" : "12px 4px 12px 12px",
+                                    background: fb.fromClient ? "var(--bg-alt)" : "var(--accent-pale)",
+                                    border: `0.5px solid ${fb.fromClient ? "var(--border2)" : "var(--accent-pale2)"}`,
+                                  }}>
+                                    {fb.message}
+                                  </div>
+                                  <div style={{ display: "flex", gap: 5, padding: "1px 4px", alignSelf: fb.fromClient ? "flex-start" : "flex-end" }}>
+                                    <span style={{ fontSize: 9, fontWeight: 600, color: fb.fromClient ? "var(--ink4)" : "var(--accent)" }}>
+                                      {fb.fromClient ? (fb.senderName || "Client") : (fb.senderName || "Team")}
+                                    </span>
+                                    <span style={{ fontSize: 9, color: "var(--ink4)" }}>{formatFbTime(fb.createdAt)}</span>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+
+                          {/* Reply input */}
+                          <div style={{ display: "flex", gap: 7, alignItems: "flex-end" }}>
+                            <textarea
+                              value={fbReplyMap[u.id!] ?? ""}
+                              onChange={(e) => setFbReplyMap((prev) => ({ ...prev, [u.id!]: e.target.value }))}
+                              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(u); } }}
+                              placeholder="Reply to client…"
+                              rows={2}
+                              style={{
+                                flex: 1, padding: "8px 12px", borderRadius: 8, fontSize: 12,
+                                fontFamily: "inherit", border: "0.5px solid var(--border2)",
+                                background: "var(--bg-alt)", color: "var(--ink)", outline: "none",
+                                resize: "none", lineHeight: 1.5,
+                              }}
+                              onFocus={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = "var(--accent)"; }}
+                              onBlur={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = "var(--border2)"; }}
+                            />
+                            <button
+                              onClick={() => handleReply(u)}
+                              disabled={fbSendingId === u.id || !(fbReplyMap[u.id!] ?? "").trim()}
+                              style={{
+                                padding: "8px 13px", borderRadius: 8, border: "none", flexShrink: 0,
+                                background: fbSendingId === u.id || !(fbReplyMap[u.id!] ?? "").trim() ? "var(--bg-alt)" : "var(--accent)",
+                                color: fbSendingId === u.id || !(fbReplyMap[u.id!] ?? "").trim() ? "var(--ink4)" : "white",
+                                cursor: fbSendingId === u.id || !(fbReplyMap[u.id!] ?? "").trim() ? "default" : "pointer",
+                                fontSize: 11, fontWeight: 600, transition: "all .15s",
+                              }}
+                            >
+                              {fbSendingId === u.id ? "…" : "Reply"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1030,9 +1171,17 @@ function UpdatesPanel({
           update={updateForm === "new" ? null : updateForm}
           clientId={client.id!}
           onClose={() => setUpdateForm(null)}
-          onSaved={(msg) => {
+          onSaved={(msg, updateTitle) => {
             if (msg.startsWith("__error__")) { showToast(msg.replace("__error__", ""), "error"); }
-            else { showToast(msg); load(); }
+            else {
+              showToast(msg);
+              load();
+              // Notify all team members on new update (not edit)
+              if (msg === "Update added!" && notifSettings.teamMembers.length > 0) {
+                const text = `🆕 New update added for *${client.name}*${client.company ? ` (${client.company})` : ""}${updateTitle ? `\n📌 *${updateTitle}*` : ""}${client.projectName ? `\nProject: ${client.projectName}` : ""}`;
+                sendWhatsAppToAll(notifSettings.teamMembers, text);
+              }
+            }
           }}
         />
       )}
@@ -1143,6 +1292,10 @@ export function ClientTab({ showToast, openAdd = false, onOpenAddDone }: {
   const [deleteTarget,  setDeleteTarget]  = useState<FirestoreClient | null>(null);
   const [viewClient,    setViewClient]    = useState<FirestoreClient | null>(null);
   const [search,        setSearch]        = useState("");
+  // Team notification settings
+  const [notifSettings,     setNotifSettings]     = useState<NotificationSettings>({ teamMembers: [] });
+  const [notifSettingsOpen, setNotifSettingsOpen] = useState(false);
+  const [notifSaving,       setNotifSaving]       = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1158,6 +1311,20 @@ export function ClientTab({ showToast, openAdd = false, onOpenAddDone }: {
   }, [showToast]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    fetchNotificationSettings().then((s) => { if (s) setNotifSettings(s); }).catch(() => {});
+  }, []);
+
+  async function handleSaveNotifSettings() {
+    setNotifSaving(true);
+    try {
+      await saveNotificationSettings(notifSettings);
+      showToast("Notification settings saved!");
+      setNotifSettingsOpen(false);
+    } catch { showToast("Failed to save settings", "error"); }
+    finally { setNotifSaving(false); }
+  }
 
   // Open "Add Client" modal when parent header CTA is clicked
   useEffect(() => {
@@ -1222,6 +1389,19 @@ export function ClientTab({ showToast, openAdd = false, onOpenAddDone }: {
           <div style={{ marginLeft: "auto", fontSize: 11, padding: "5px 12px", borderRadius: 8, background: "var(--bg-card)", border: "0.5px solid var(--border)", color: "var(--ink4)" }}>
             <span style={{ color: "var(--accent)", fontWeight: 700 }}>{filtered.length}</span> / {clients.length}
           </div>
+          {/* WhatsApp Settings button */}
+          <button
+            onClick={() => setNotifSettingsOpen(true)}
+            title="WhatsApp Notification Settings"
+            style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", borderRadius: 8, border: "0.5px solid var(--border2)", background: "transparent", color: notifSettings.teamMembers.length > 0 ? "var(--green)" : "var(--ink4)", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all .15s" }}
+            onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--bg-alt)"; }}
+            onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; }}
+          >
+            <span style={{ fontSize: 14 }}>📱</span>
+            <span style={{ fontSize: 11 }}>
+              {notifSettings.teamMembers.length > 0 ? `WhatsApp (${notifSettings.teamMembers.length})` : "WhatsApp Setup"}
+            </span>
+          </button>
           <button
             onClick={() => setClientForm("new")}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, border: "none", background: "var(--accent)", color: "white", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
@@ -1297,7 +1477,125 @@ export function ClientTab({ showToast, openAdd = false, onOpenAddDone }: {
           client={viewClient}
           onClose={() => setViewClient(null)}
           showToast={showToast}
+          notifSettings={notifSettings}
         />
+      )}
+
+      {/* WhatsApp Notification Settings Modal */}
+      {notifSettingsOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+          style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)" }}
+          onClick={() => setNotifSettingsOpen(false)}
+        >
+          <div
+            style={{
+              background: "var(--bg-card)", border: "0.5px solid var(--border2)",
+              borderRadius: 16, padding: 28, width: "100%", maxWidth: 520,
+              maxHeight: "88vh", display: "flex", flexDirection: "column",
+              boxShadow: "var(--shadow-lg)",
+              animation: "fadeScaleIn .22s cubic-bezier(0.16,1,0.3,1) both",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 20 }}>📱</span>
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", margin: 0 }}>Team WhatsApp Notifications</h2>
+              </div>
+              <button onClick={() => setNotifSettingsOpen(false)} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--ink4)", padding: 4 }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+            <p style={{ fontSize: 11, color: "var(--ink4)", lineHeight: 1.6, marginBottom: 16, flexShrink: 0 }}>
+              All team members below will be notified when a client adds feedback or when an update is posted. Each person must activate CallMeBot once — send <strong style={{ color: "var(--ink3)" }}>"I allow callmebot to send me messages"</strong> to <strong style={{ color: "var(--ink3)" }}>+34 644 59 78 74</strong> on WhatsApp to get their API key.
+            </p>
+
+            {/* Members list */}
+            <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
+              {notifSettings.teamMembers.length === 0 && (
+                <div style={{ textAlign: "center", padding: "24px 0", color: "var(--ink4)", fontSize: 12 }}>
+                  No team members added yet. Click "+ Add Member" below.
+                </div>
+              )}
+              {notifSettings.teamMembers.map((m, idx) => (
+                <div key={idx} style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border)", borderRadius: 10, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink3)" }}>Member {idx + 1}</span>
+                    <button
+                      onClick={() => setNotifSettings((s) => ({ teamMembers: s.teamMembers.filter((_, i) => i !== idx) }))}
+                      style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--ink4)", padding: 2, display: "flex", alignItems: "center" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--red)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--ink4)"; }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 3h9M4 3V2h4v1M3.5 3l.5 7.5M8.5 3l-.5 7.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/></svg>
+                    </button>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <label style={{ fontSize: 10, fontWeight: 600, color: "var(--ink4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Name</label>
+                      <input
+                        value={m.name} placeholder="e.g. Ali"
+                        onChange={(e) => setNotifSettings((s) => ({ teamMembers: s.teamMembers.map((x, i) => i === idx ? { ...x, name: e.target.value } : x) }))}
+                        style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", borderRadius: 7, padding: "6px 10px", fontSize: 12, color: "var(--ink)", outline: "none", fontFamily: "inherit" }}
+                        onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; }}
+                        onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--border2)"; }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <label style={{ fontSize: 10, fontWeight: 600, color: "var(--ink4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>WhatsApp No.</label>
+                      <input
+                        value={m.number} placeholder="+923001234567"
+                        onChange={(e) => setNotifSettings((s) => ({ teamMembers: s.teamMembers.map((x, i) => i === idx ? { ...x, number: e.target.value } : x) }))}
+                        style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", borderRadius: 7, padding: "6px 10px", fontSize: 12, color: "var(--ink)", outline: "none", fontFamily: "inherit" }}
+                        onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; }}
+                        onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--border2)"; }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <label style={{ fontSize: 10, fontWeight: 600, color: "var(--ink4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>API Key</label>
+                      <input
+                        value={m.apiKey} placeholder="CallMeBot key"
+                        onChange={(e) => setNotifSettings((s) => ({ teamMembers: s.teamMembers.map((x, i) => i === idx ? { ...x, apiKey: e.target.value } : x) }))}
+                        style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", borderRadius: 7, padding: "6px 10px", fontSize: 12, color: "var(--ink)", outline: "none", fontFamily: "inherit" }}
+                        onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; }}
+                        onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--border2)"; }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Add member */}
+            <button
+              onClick={() => setNotifSettings((s) => ({ teamMembers: [...s.teamMembers, { name: "", number: "", apiKey: "" }] }))}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: "0.5px dashed var(--border2)", background: "transparent", color: "var(--ink3)", cursor: "pointer", fontSize: 12, fontWeight: 500, marginBottom: 14, transition: "all .15s" }}
+              onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "var(--accent)"; el.style.color = "var(--accent)"; }}
+              onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "var(--border2)"; el.style.color = "var(--ink3)"; }}
+            >
+              <svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M5.5 1v9M1 5.5h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+              Add Member
+            </button>
+
+            {/* Footer */}
+            <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+              <button
+                onClick={() => setNotifSettingsOpen(false)}
+                style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: "0.5px solid var(--border2)", background: "transparent", color: "var(--ink3)", cursor: "pointer", fontSize: 13 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveNotifSettings} disabled={notifSaving}
+                style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: "none", background: notifSaving ? "var(--bg-alt)" : "var(--accent)", color: notifSaving ? "var(--ink4)" : "white", cursor: notifSaving ? "default" : "pointer", fontSize: 13, fontWeight: 600 }}
+              >
+                {notifSaving ? "Saving…" : "Save Settings"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
