@@ -4,11 +4,9 @@ import {
   fetchClients, createClient, updateClient, deleteClient,
   fetchClientUpdates, createClientUpdate, updateClientUpdate, deleteClientUpdate,
   fetchUpdateFeedback, createUpdateFeedback,
-  fetchNotificationSettings, saveNotificationSettings,
   type FirestoreClient, type FirestoreClientUpdate, type FirestoreUpdateFeedback,
-  type NotificationSettings, type TeamMemberNotif,
 } from "../../lib/firebase";
-import { sendWhatsApp, sendWhatsAppToAll } from "../../lib/whatsapp";
+import { sendWhatsApp } from "../../lib/whatsapp";
 import { uploadToCloudinary } from "../../lib/cloudinary";
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -806,12 +804,11 @@ function DeleteConfirm({ label, onConfirm, onCancel }: { label: string; onConfir
 
 // ─── Updates Panel ────────────────────────────────────────────────────────────
 function UpdatesPanel({
-  client, onClose, showToast, notifSettings,
+  client, onClose, showToast,
 }: {
   client: FirestoreClient;
   onClose: () => void;
   showToast: (msg: string, type?: "success" | "error") => void;
-  notifSettings: NotificationSettings;
 }) {
   const [updates,       setUpdates]       = useState<FirestoreClientUpdate[]>([]);
   const [loading,       setLoading]       = useState(true);
@@ -1176,10 +1173,35 @@ function UpdatesPanel({
             else {
               showToast(msg);
               load();
-              // Notify all team members on new update (not edit)
-              if (msg === "Update added!" && notifSettings.teamMembers.length > 0) {
-                const text = `🆕 New update added for *${client.name}*${client.company ? ` (${client.company})` : ""}${updateTitle ? `\n📌 *${updateTitle}*` : ""}${client.projectName ? `\nProject: ${client.projectName}` : ""}`;
-                sendWhatsAppToAll(notifSettings.teamMembers, text);
+              // Notify client on new update — re-fetch to get latest whatsappNumber
+              if (msg === "Update added!") {
+                import("../../lib/firebase").then(({ fetchClientById }) =>
+                  fetchClientById(client.id!).then((latest) => {
+                    const num = latest?.whatsappNumber ?? client.whatsappNumber;
+                    console.log("[ClientTab] whatsappNumber for notification:", num);
+                    if (num) {
+                      const text = [
+                        `🔔 *Project Update — ZynHive*`,
+                        ``,
+                        `Hello ${client.name},`,
+                        ``,
+                        `We wanted to let you know that your project has a new update.`,
+                        ``,
+                        ...(client.projectName ? [`📁 *Project:* ${client.projectName}`] : []),
+                        ...(updateTitle        ? [`📌 *Update:* ${updateTitle}`]          : []),
+                        ``,
+                        `Please log in to your client portal to review the full details and share your feedback.`,
+                        ``,
+                        `🔗 ${window.location.origin}/client/${client.id}`,
+                        ``,
+                        `— ZynHive Team`,
+                      ].join("\n");
+                      sendWhatsApp(num, text);
+                    } else {
+                      console.warn("[ClientTab] No whatsappNumber found for client", client.id);
+                    }
+                  })
+                );
               }
             }
           }}
@@ -1292,10 +1314,6 @@ export function ClientTab({ showToast, openAdd = false, onOpenAddDone }: {
   const [deleteTarget,  setDeleteTarget]  = useState<FirestoreClient | null>(null);
   const [viewClient,    setViewClient]    = useState<FirestoreClient | null>(null);
   const [search,        setSearch]        = useState("");
-  // Team notification settings
-  const [notifSettings,     setNotifSettings]     = useState<NotificationSettings>({ teamMembers: [] });
-  const [notifSettingsOpen, setNotifSettingsOpen] = useState(false);
-  const [notifSaving,       setNotifSaving]       = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1311,20 +1329,6 @@ export function ClientTab({ showToast, openAdd = false, onOpenAddDone }: {
   }, [showToast]);
 
   useEffect(() => { load(); }, [load]);
-
-  useEffect(() => {
-    fetchNotificationSettings().then((s) => { if (s) setNotifSettings(s); }).catch(() => {});
-  }, []);
-
-  async function handleSaveNotifSettings() {
-    setNotifSaving(true);
-    try {
-      await saveNotificationSettings(notifSettings);
-      showToast("Notification settings saved!");
-      setNotifSettingsOpen(false);
-    } catch { showToast("Failed to save settings", "error"); }
-    finally { setNotifSaving(false); }
-  }
 
   // Open "Add Client" modal when parent header CTA is clicked
   useEffect(() => {
@@ -1389,19 +1393,6 @@ export function ClientTab({ showToast, openAdd = false, onOpenAddDone }: {
           <div style={{ marginLeft: "auto", fontSize: 11, padding: "5px 12px", borderRadius: 8, background: "var(--bg-card)", border: "0.5px solid var(--border)", color: "var(--ink4)" }}>
             <span style={{ color: "var(--accent)", fontWeight: 700 }}>{filtered.length}</span> / {clients.length}
           </div>
-          {/* WhatsApp Settings button */}
-          <button
-            onClick={() => setNotifSettingsOpen(true)}
-            title="WhatsApp Notification Settings"
-            style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", borderRadius: 8, border: "0.5px solid var(--border2)", background: "transparent", color: notifSettings.teamMembers.length > 0 ? "var(--green)" : "var(--ink4)", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all .15s" }}
-            onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--bg-alt)"; }}
-            onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; }}
-          >
-            <span style={{ fontSize: 14 }}>📱</span>
-            <span style={{ fontSize: 11 }}>
-              {notifSettings.teamMembers.length > 0 ? `WhatsApp (${notifSettings.teamMembers.length})` : "WhatsApp Setup"}
-            </span>
-          </button>
           <button
             onClick={() => setClientForm("new")}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, border: "none", background: "var(--accent)", color: "white", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
@@ -1477,126 +1468,9 @@ export function ClientTab({ showToast, openAdd = false, onOpenAddDone }: {
           client={viewClient}
           onClose={() => setViewClient(null)}
           showToast={showToast}
-          notifSettings={notifSettings}
         />
       )}
 
-      {/* WhatsApp Notification Settings Modal */}
-      {notifSettingsOpen && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center px-4"
-          style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)" }}
-          onClick={() => setNotifSettingsOpen(false)}
-        >
-          <div
-            style={{
-              background: "var(--bg-card)", border: "0.5px solid var(--border2)",
-              borderRadius: 16, padding: 28, width: "100%", maxWidth: 520,
-              maxHeight: "88vh", display: "flex", flexDirection: "column",
-              boxShadow: "var(--shadow-lg)",
-              animation: "fadeScaleIn .22s cubic-bezier(0.16,1,0.3,1) both",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, flexShrink: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 20 }}>📱</span>
-                <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", margin: 0 }}>Team WhatsApp Notifications</h2>
-              </div>
-              <button onClick={() => setNotifSettingsOpen(false)} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--ink4)", padding: 4 }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-              </button>
-            </div>
-            <p style={{ fontSize: 11, color: "var(--ink4)", lineHeight: 1.6, marginBottom: 16, flexShrink: 0 }}>
-              All team members below will be notified when a client adds feedback or when an update is posted. Each person must activate CallMeBot once — send <strong style={{ color: "var(--ink3)" }}>"I allow callmebot to send me messages"</strong> to <strong style={{ color: "var(--ink3)" }}>+34 644 59 78 74</strong> on WhatsApp to get their API key.
-            </p>
-
-            {/* Members list */}
-            <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
-              {notifSettings.teamMembers.length === 0 && (
-                <div style={{ textAlign: "center", padding: "24px 0", color: "var(--ink4)", fontSize: 12 }}>
-                  No team members added yet. Click "+ Add Member" below.
-                </div>
-              )}
-              {notifSettings.teamMembers.map((m, idx) => (
-                <div key={idx} style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border)", borderRadius: 10, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink3)" }}>Member {idx + 1}</span>
-                    <button
-                      onClick={() => setNotifSettings((s) => ({ teamMembers: s.teamMembers.filter((_, i) => i !== idx) }))}
-                      style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--ink4)", padding: 2, display: "flex", alignItems: "center" }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--red)"; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--ink4)"; }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 3h9M4 3V2h4v1M3.5 3l.5 7.5M8.5 3l-.5 7.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/></svg>
-                    </button>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <label style={{ fontSize: 10, fontWeight: 600, color: "var(--ink4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Name</label>
-                      <input
-                        value={m.name} placeholder="e.g. Ali"
-                        onChange={(e) => setNotifSettings((s) => ({ teamMembers: s.teamMembers.map((x, i) => i === idx ? { ...x, name: e.target.value } : x) }))}
-                        style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", borderRadius: 7, padding: "6px 10px", fontSize: 12, color: "var(--ink)", outline: "none", fontFamily: "inherit" }}
-                        onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; }}
-                        onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--border2)"; }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <label style={{ fontSize: 10, fontWeight: 600, color: "var(--ink4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>WhatsApp No.</label>
-                      <input
-                        value={m.number} placeholder="+923001234567"
-                        onChange={(e) => setNotifSettings((s) => ({ teamMembers: s.teamMembers.map((x, i) => i === idx ? { ...x, number: e.target.value } : x) }))}
-                        style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", borderRadius: 7, padding: "6px 10px", fontSize: 12, color: "var(--ink)", outline: "none", fontFamily: "inherit" }}
-                        onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; }}
-                        onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--border2)"; }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <label style={{ fontSize: 10, fontWeight: 600, color: "var(--ink4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>API Key</label>
-                      <input
-                        value={m.apiKey} placeholder="CallMeBot key"
-                        onChange={(e) => setNotifSettings((s) => ({ teamMembers: s.teamMembers.map((x, i) => i === idx ? { ...x, apiKey: e.target.value } : x) }))}
-                        style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", borderRadius: 7, padding: "6px 10px", fontSize: 12, color: "var(--ink)", outline: "none", fontFamily: "inherit" }}
-                        onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; }}
-                        onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--border2)"; }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Add member */}
-            <button
-              onClick={() => setNotifSettings((s) => ({ teamMembers: [...s.teamMembers, { name: "", number: "", apiKey: "" }] }))}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: "0.5px dashed var(--border2)", background: "transparent", color: "var(--ink3)", cursor: "pointer", fontSize: 12, fontWeight: 500, marginBottom: 14, transition: "all .15s" }}
-              onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "var(--accent)"; el.style.color = "var(--accent)"; }}
-              onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "var(--border2)"; el.style.color = "var(--ink3)"; }}
-            >
-              <svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M5.5 1v9M1 5.5h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-              Add Member
-            </button>
-
-            {/* Footer */}
-            <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
-              <button
-                onClick={() => setNotifSettingsOpen(false)}
-                style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: "0.5px solid var(--border2)", background: "transparent", color: "var(--ink3)", cursor: "pointer", fontSize: 13 }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveNotifSettings} disabled={notifSaving}
-                style={{ flex: 1, padding: "9px 0", borderRadius: 9, border: "none", background: notifSaving ? "var(--bg-alt)" : "var(--accent)", color: notifSaving ? "var(--ink4)" : "white", cursor: notifSaving ? "default" : "pointer", fontSize: 13, fontWeight: 600 }}
-              >
-                {notifSaving ? "Saving…" : "Save Settings"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

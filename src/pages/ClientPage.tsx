@@ -3,10 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import {
   fetchClientById, fetchClientUpdates,
   fetchUpdateFeedback, createUpdateFeedback,
-  fetchNotificationSettings,
   type FirestoreClient, type FirestoreClientUpdate, type FirestoreUpdateFeedback,
 } from "../lib/firebase";
-import { sendWhatsAppToAll } from "../lib/whatsapp";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<
@@ -631,13 +629,6 @@ function UpdateDetailModal({ u, client, onClose }: {
       });
       setFbText("");
       setFeedback(await fetchUpdateFeedback(u.id));
-      // Notify all team members via WhatsApp
-      fetchNotificationSettings().then((settings) => {
-        if (settings?.teamMembers?.length) {
-          const text = `💬 New feedback from *${client.name}*${client.company ? ` (${client.company})` : ""} on update *${u.title}*:\n"${msg}"`;
-          sendWhatsAppToAll(settings.teamMembers, text);
-        }
-      }).catch(() => {});
     } catch (err) { console.error("[Feedback] send error:", err); }
     finally { setFbSending(false); }
   }
@@ -974,7 +965,6 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
   const [selectedUpdate, setSelectedUpdate] = useState<FirestoreClientUpdate | null>(null);
   const [waModalOpen,    setWaModalOpen]    = useState(false);
   const [waNumber,       setWaNumber]       = useState(initialClient.whatsappNumber ?? "");
-  const [waApiKey,       setWaApiKey]       = useState(initialClient.whatsappApiKey ?? "");
   const [waSaving,       setWaSaving]       = useState(false);
 
   useEffect(() => {
@@ -986,8 +976,8 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
     setWaSaving(true);
     try {
       const { updateClient } = await import("../lib/firebase");
-      await updateClient(client.id, { whatsappNumber: waNumber.trim(), whatsappApiKey: waApiKey.trim() });
-      setClient((c) => ({ ...c, whatsappNumber: waNumber.trim(), whatsappApiKey: waApiKey.trim() }));
+      await updateClient(client.id, { whatsappNumber: waNumber.trim() });
+      setClient((c) => ({ ...c, whatsappNumber: waNumber.trim() }));
       setWaModalOpen(false);
     } catch { /* ignore */ }
     finally { setWaSaving(false); }
@@ -1025,7 +1015,7 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
               <span style={{ fontSize: 20 }}>📱</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 800, color: "var(--cp-text-h)" }}>WhatsApp Alerts</div>
-                <div style={{ fontSize: 11, color: "var(--cp-text-dim)", marginTop: 2 }}>Get notified when team replies to your feedback</div>
+                <div style={{ fontSize: 11, color: "var(--cp-text-dim)", marginTop: 2 }}>Get notified when a project update is added</div>
               </div>
               <button onClick={() => setWaModalOpen(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 8, border: "1px solid var(--cp-border)", background: "var(--cp-bg-badge)", color: "var(--cp-text-dim)", cursor: "pointer" }}>
                 <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 2l9 9M11 2L2 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -1033,22 +1023,13 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
             </div>
             <div className="cp-modal-body" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <p style={{ fontSize: 12, color: "var(--cp-text-muted)", lineHeight: 1.7, margin: 0 }}>
-                To activate, send <strong style={{ color: "var(--cp-text-h)" }}>"I allow callmebot to send me messages"</strong> to <strong style={{ color: "var(--cp-text-h)" }}>+34 644 59 78 74</strong> on WhatsApp. You'll receive your API key instantly.
+                Enter your WhatsApp number to receive notifications whenever a new update is posted to your project.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={{ fontSize: 11, fontWeight: 600, color: "var(--cp-text-dim)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Your WhatsApp Number</label>
                 <input
                   value={waNumber} onChange={(e) => setWaNumber(e.target.value)}
-                  placeholder="+923001234567 (with country code)"
-                  className="cp-input"
-                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13, fontFamily: "inherit", border: "1.5px solid var(--cp-border)" }}
-                />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--cp-text-dim)", textTransform: "uppercase", letterSpacing: "0.07em" }}>CallMeBot API Key</label>
-                <input
-                  value={waApiKey} onChange={(e) => setWaApiKey(e.target.value)}
-                  placeholder="API key received from CallMeBot"
+                  placeholder="923001234567 (with country code, no +)"
                   className="cp-input"
                   style={{ width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13, fontFamily: "inherit", border: "1.5px solid var(--cp-border)" }}
                 />
