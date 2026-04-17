@@ -5,7 +5,7 @@ import { SectionHead, LinkButton } from "../components/ui/index";
 import { CTASection } from "../sections/HomeSections";
 
 // ── Values ───────────────────────────────────────────────────────────────────
-// hamza
+// khalil
 const VALUES = [
   {
     title: "Craft over commodity",
