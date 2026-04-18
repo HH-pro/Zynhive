@@ -1054,6 +1054,9 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [notifEmail,     setNotifEmail]     = useState(initialClient.notificationEmail ?? "");
   const [emailSaving,    setEmailSaving]    = useState(false);
+  const [search,         setSearch]         = useState("");
+  const [dateFrom,       setDateFrom]       = useState("");
+  const [dateTo,         setDateTo]         = useState("");
 
   useEffect(() => {
     fetchClientUpdates(client.id!).then(setUpdates).catch(() => {}).finally(() => setLoading(false));
@@ -1077,9 +1080,32 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
   const onHold    = updates.filter((u) => u.status === "on-hold").length;
   const overallPct = latest?.completionPercent ?? 0;
 
-  const seoItems = updates.filter((u) => u.category === "seo");
-  const dmItems  = updates.filter((u) => u.category === "digital-marketing");
-  const genItems = updates.filter((u) => !u.category || u.category === "general");
+  const hasFilters = search.trim() !== "" || dateFrom !== "" || dateTo !== "";
+
+  const filteredUpdates = updates.filter((u) => {
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const match =
+        u.title.toLowerCase().includes(q) ||
+        (u.description ?? "").toLowerCase().includes(q) ||
+        (u.phase ?? "").toLowerCase().includes(q);
+      if (!match) return false;
+    }
+    if (dateFrom || dateTo) {
+      const ts = (u.createdAt as { toDate?: () => Date } | null)?.toDate
+        ? (u.createdAt as { toDate: () => Date }).toDate()
+        : u.createdAt ? new Date(u.createdAt as unknown as string) : null;
+      if (!ts) return false;
+      const d = ts.toISOString().slice(0, 10);
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo   && d > dateTo)   return false;
+    }
+    return true;
+  });
+
+  const seoItems = filteredUpdates.filter((u) => u.category === "seo");
+  const dmItems  = filteredUpdates.filter((u) => u.category === "digital-marketing");
+  const genItems = filteredUpdates.filter((u) => !u.category || u.category === "general");
 
   const sections = ([
     { key: "seo"               as const, items: seoItems },
@@ -1249,6 +1275,79 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
           const hasBothMain = !!(seoSection && dmSection);
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+              {/* ── Search & Date filter bar ── */}
+              <div className="cp-fade-up" style={{
+                display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+                background: "var(--cp-bg-stat)", border: "1px solid var(--cp-border)",
+                borderRadius: 14, padding: "12px 14px",
+              }}>
+                {/* Search */}
+                <div style={{ position: "relative", flex: "1 1 180px", minWidth: 160 }}>
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
+                    style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--cp-text-dim)", pointerEvents: "none" }}>
+                    <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
+                    <path d="M9 9l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  <input
+                    type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search updates…"
+                    className="cp-input"
+                    style={{ width: "100%", paddingLeft: 30, paddingRight: 10, paddingTop: 8, paddingBottom: 8, borderRadius: 9, fontSize: 13, fontFamily: "inherit", border: "1.5px solid var(--cp-border)" }}
+                  />
+                </div>
+
+                {/* Divider */}
+                <div style={{ width: 1, height: 28, background: "var(--cp-border-div)", flexShrink: 0 }} className="cp-hide-mobile"/>
+
+                {/* Date from */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "0 0 auto" }}>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "var(--cp-text-dim)", whiteSpace: "nowrap" }}>From</label>
+                  <input
+                    type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+                    className="cp-input"
+                    style={{ padding: "7px 10px", borderRadius: 9, fontSize: 12, fontFamily: "inherit", border: "1.5px solid var(--cp-border)", color: dateFrom ? "var(--cp-text-h)" : "var(--cp-text-dim)", minWidth: 130 }}
+                  />
+                </div>
+
+                {/* Date to */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "0 0 auto" }}>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "var(--cp-text-dim)", whiteSpace: "nowrap" }}>To</label>
+                  <input
+                    type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+                    className="cp-input"
+                    style={{ padding: "7px 10px", borderRadius: 9, fontSize: 12, fontFamily: "inherit", border: "1.5px solid var(--cp-border)", color: dateTo ? "var(--cp-text-h)" : "var(--cp-text-dim)", minWidth: 130 }}
+                  />
+                </div>
+
+                {/* Clear button */}
+                {hasFilters && (
+                  <button
+                    onClick={() => { setSearch(""); setDateFrom(""); setDateTo(""); }}
+                    style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", borderRadius: 9, border: "1px solid rgba(239,68,68,.28)", background: "rgba(239,68,68,.07)", color: "#EF4444", cursor: "pointer", fontSize: 11, fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                    Clear
+                  </button>
+                )}
+
+                {/* Result count when filtered */}
+                {hasFilters && (
+                  <span style={{ fontSize: 11, color: "var(--cp-text-dim)", marginLeft: "auto", whiteSpace: "nowrap" }}>
+                    <strong style={{ color: "var(--cp-text-h)" }}>{filteredUpdates.length}</strong> of {updates.length} updates
+                  </span>
+                )}
+              </div>
+
+              {/* No results */}
+              {hasFilters && filteredUpdates.length === 0 && (
+                <div className="cp-fade-up" style={{ textAlign: "center", padding: "48px 0" }}>
+                  <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: "var(--cp-text-h)", marginBottom: 8 }}>No updates found</p>
+                  <p style={{ fontSize: 13, color: "var(--cp-text-dim)", lineHeight: 1.65 }}>Try adjusting your search or date range.</p>
+                </div>
+              )}
+
               {/* SEO + DM side by side */}
               {(seoSection || dmSection) && (
                 <div className={`cp-sections-grid cp-fade-up cp-d1${hasBothMain ? "" : " single"}`}>
