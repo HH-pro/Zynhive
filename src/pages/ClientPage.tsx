@@ -534,9 +534,9 @@ function LoginScreen({ clientId, onAuth, isDark, onToggleTheme }: {
 }
 
 // ─── Portal Navbar ────────────────────────────────────────────────────────────
-function PortalNav({ client, isDark, onToggleTheme, onLogout, onOpenWaSettings }: {
+function PortalNav({ client, isDark, onToggleTheme, onLogout, onOpenEmailSettings }: {
   client: FirestoreClient; isDark: boolean; onToggleTheme: () => void;
-  onLogout: () => void; onOpenWaSettings: () => void;
+  onLogout: () => void; onOpenEmailSettings: () => void;
 }) {
   return (
     <nav className="cp-nav">
@@ -546,14 +546,14 @@ function PortalNav({ client, isDark, onToggleTheme, onLogout, onOpenWaSettings }
         <span className="cp-hide-mobile" style={{ fontSize: 12, color: "var(--cp-text-dim)", fontWeight: 500 }}>Client Portal</span>
         <div style={{ flex: 1 }}/>
         <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
-        {/* WhatsApp notification setup */}
+        {/* Email notification setup */}
         <button
-          onClick={onOpenWaSettings}
-          title="WhatsApp notification settings"
-          style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 8, border: "1px solid var(--cp-border)", background: client.whatsappNumber ? "rgba(16,185,129,.08)" : "transparent", color: client.whatsappNumber ? "#10B981" : "var(--cp-text-dim)", cursor: "pointer", fontSize: 11, transition: "all .15s" }}
+          onClick={onOpenEmailSettings}
+          title="Email notification settings"
+          style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 8, border: "1px solid var(--cp-border)", background: client.notificationEmail ? "rgba(16,185,129,.08)" : "transparent", color: client.notificationEmail ? "#10B981" : "var(--cp-text-dim)", cursor: "pointer", fontSize: 11, transition: "all .15s" }}
         >
-          <span style={{ fontSize: 13 }}>📱</span>
-          <span className="cp-hide-mobile">{client.whatsappNumber ? "Notifications On" : "Setup Alerts"}</span>
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="8.5" rx="1.5" stroke="currentColor" strokeWidth="1.1"/><path d="M1 4l6 4 6-4" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/></svg>
+          <span className="cp-hide-mobile">{client.notificationEmail ? "Alerts On" : "Setup Alerts"}</span>
         </button>
         <div style={{ width: 1, height: 18, background: "var(--cp-border-div)" }}/>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -963,24 +963,24 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
   const [updates,        setUpdates]        = useState<FirestoreClientUpdate[]>([]);
   const [loading,        setLoading]        = useState(true);
   const [selectedUpdate, setSelectedUpdate] = useState<FirestoreClientUpdate | null>(null);
-  const [waModalOpen,    setWaModalOpen]    = useState(false);
-  const [waNumber,       setWaNumber]       = useState(initialClient.whatsappNumber ?? "");
-  const [waSaving,       setWaSaving]       = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [notifEmail,     setNotifEmail]     = useState(initialClient.notificationEmail ?? "");
+  const [emailSaving,    setEmailSaving]    = useState(false);
 
   useEffect(() => {
     fetchClientUpdates(client.id!).then(setUpdates).catch(() => {}).finally(() => setLoading(false));
   }, [client.id]);
 
-  async function handleSaveWaSettings() {
+  async function handleSaveEmailSettings() {
     if (!client.id) return;
-    setWaSaving(true);
+    setEmailSaving(true);
     try {
       const { updateClient } = await import("../lib/firebase");
-      await updateClient(client.id, { whatsappNumber: waNumber.trim() });
-      setClient((c) => ({ ...c, whatsappNumber: waNumber.trim() }));
-      setWaModalOpen(false);
+      await updateClient(client.id, { notificationEmail: notifEmail.trim() });
+      setClient((c) => ({ ...c, notificationEmail: notifEmail.trim() }));
+      setEmailModalOpen(false);
     } catch { /* ignore */ }
-    finally { setWaSaving(false); }
+    finally { setEmailSaving(false); }
   }
 
   const latest    = updates[0];
@@ -1007,43 +1007,44 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
         <UpdateDetailModal u={selectedUpdate} client={client} onClose={() => setSelectedUpdate(null)} />
       )}
 
-      {/* WhatsApp self-service modal */}
-      {waModalOpen && (
-        <div className="cp-modal-backdrop" onClick={() => setWaModalOpen(false)}>
+      {/* Email notification modal */}
+      {emailModalOpen && (
+        <div className="cp-modal-backdrop" onClick={() => setEmailModalOpen(false)}>
           <div className="cp-modal" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
             <div className="cp-modal-header" style={{ gap: 10 }}>
-              <span style={{ fontSize: 20 }}>📱</span>
+              <span style={{ fontSize: 20 }}>📧</span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: "var(--cp-text-h)" }}>WhatsApp Alerts</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: "var(--cp-text-h)" }}>Email Notifications</div>
                 <div style={{ fontSize: 11, color: "var(--cp-text-dim)", marginTop: 2 }}>Get notified when a project update is added</div>
               </div>
-              <button onClick={() => setWaModalOpen(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 8, border: "1px solid var(--cp-border)", background: "var(--cp-bg-badge)", color: "var(--cp-text-dim)", cursor: "pointer" }}>
+              <button onClick={() => setEmailModalOpen(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 8, border: "1px solid var(--cp-border)", background: "var(--cp-bg-badge)", color: "var(--cp-text-dim)", cursor: "pointer" }}>
                 <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 2l9 9M11 2L2 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
               </button>
             </div>
             <div className="cp-modal-body" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <p style={{ fontSize: 12, color: "var(--cp-text-muted)", lineHeight: 1.7, margin: 0 }}>
-                Enter your WhatsApp number to receive notifications whenever a new update is posted to your project.
+                Enter the email address where you'd like to receive notifications whenever a new update is posted to your project.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--cp-text-dim)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Your WhatsApp Number</label>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--cp-text-dim)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Notification Email</label>
                 <input
-                  value={waNumber} onChange={(e) => setWaNumber(e.target.value)}
-                  placeholder="923001234567 (with country code, no +)"
+                  type="email"
+                  value={notifEmail} onChange={(e) => setNotifEmail(e.target.value)}
+                  placeholder="you@example.com"
                   className="cp-input"
                   style={{ width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13, fontFamily: "inherit", border: "1.5px solid var(--cp-border)" }}
                 />
               </div>
               <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-                <button onClick={() => setWaModalOpen(false)} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "1px solid var(--cp-border)", background: "transparent", color: "var(--cp-text-muted)", cursor: "pointer", fontSize: 13 }}>
+                <button onClick={() => setEmailModalOpen(false)} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "1px solid var(--cp-border)", background: "transparent", color: "var(--cp-text-muted)", cursor: "pointer", fontSize: 13 }}>
                   Cancel
                 </button>
                 <button
-                  onClick={handleSaveWaSettings} disabled={waSaving}
+                  onClick={handleSaveEmailSettings} disabled={emailSaving}
                   className="cp-btn"
-                  style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "none", background: waSaving ? "rgba(99,102,241,.2)" : "linear-gradient(135deg,#6366F1,#818CF8)", color: waSaving ? "#4C5580" : "white", cursor: waSaving ? "default" : "pointer", fontSize: 13, fontWeight: 600 }}
+                  style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "none", background: emailSaving ? "rgba(99,102,241,.2)" : "linear-gradient(135deg,#6366F1,#818CF8)", color: emailSaving ? "#4C5580" : "white", cursor: emailSaving ? "default" : "pointer", fontSize: 13, fontWeight: 600 }}
                 >
-                  {waSaving ? "Saving…" : "Save"}
+                  {emailSaving ? "Saving…" : "Save"}
                 </button>
               </div>
             </div>
@@ -1051,7 +1052,7 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
         </div>
       )}
 
-      <PortalNav client={client} isDark={isDark} onToggleTheme={onToggleTheme} onLogout={onLogout} onOpenWaSettings={() => setWaModalOpen(true)} />
+      <PortalNav client={client} isDark={isDark} onToggleTheme={onToggleTheme} onLogout={onLogout} onOpenEmailSettings={() => setEmailModalOpen(true)} />
 
       {/* ── Hero ── */}
       <div style={{ background: "var(--cp-bg-hero)", borderBottom: "1px solid var(--cp-border-md)", transition: "background .3s, border-color .3s" }}>

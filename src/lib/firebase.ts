@@ -147,8 +147,7 @@ export type FirestoreClient = {
   email:             string;
   password:          string;
   projectName:       string;
-  whatsappNumber?:   string;
-  whatsappApiKey?:   string;
+  notificationEmail?: string;
   createdAt?:        Timestamp;
   updatedAt?:        Timestamp;
 };

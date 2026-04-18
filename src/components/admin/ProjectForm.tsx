@@ -5,7 +5,7 @@ import { createProject, updateProject, type FirestoreProject } from "../../lib/f
 
 const EMOJI_OPTIONS = ["🤖","🌐","📱","✦","📈","⚙️","🏦","🎨","🚀","🛒","🔒","💡","🧠","📊","🎯"];
 const COLOR_OPTIONS = ["#3B6EF8","#00AACC","#7B5CFA","#1A66FF","#0DBFA8","#4D5BFF","#FF6B6B","#F59E0B"];
-const CATEGORIES    = ["AI Development","Web Application","Mobile App","UI/UX Design","Digital Marketing","Software Consulting"];
+const CATEGORIES    = ["AI Development","Web Application","Mobile App","UI/UX Design","Digital Marketing","Software Consulting","SEO"];
 
 type Props = {
   project?:  FirestoreProject | null;

@@ -6,7 +6,7 @@ import {
   fetchUpdateFeedback, createUpdateFeedback,
   type FirestoreClient, type FirestoreClientUpdate, type FirestoreUpdateFeedback,
 } from "../../lib/firebase";
-import { sendWhatsApp } from "../../lib/whatsapp";
+import { sendUpdateNotificationEmail } from "../../lib/email";
 import { uploadToCloudinary } from "../../lib/cloudinary";
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -1173,32 +1173,19 @@ function UpdatesPanel({
             else {
               showToast(msg);
               load();
-              // Notify client on new update — re-fetch to get latest whatsappNumber
+              // Email notification on new update
               if (msg === "Update added!") {
                 import("../../lib/firebase").then(({ fetchClientById }) =>
-                  fetchClientById(client.id!).then((latest) => {
-                    const num = latest?.whatsappNumber ?? client.whatsappNumber;
-                    console.log("[ClientTab] whatsappNumber for notification:", num);
-                    if (num) {
-                      const text = [
-                        `🔔 *Project Update — ZynHive*`,
-                        ``,
-                        `Hello ${client.name},`,
-                        ``,
-                        `We wanted to let you know that your project has a new update.`,
-                        ``,
-                        ...(client.projectName ? [`📁 *Project:* ${client.projectName}`] : []),
-                        ...(updateTitle        ? [`📌 *Update:* ${updateTitle}`]          : []),
-                        ``,
-                        `Please log in to your client portal to review the full details and share your feedback.`,
-                        ``,
-                        `🔗 ${window.location.origin}/client/${client.id}`,
-                        ``,
-                        `— ZynHive Team`,
-                      ].join("\n");
-                      sendWhatsApp(num, text);
-                    } else {
-                      console.warn("[ClientTab] No whatsappNumber found for client", client.id);
+                  fetchClientById(client.id!).then((fresh) => {
+                    const toEmail = fresh?.notificationEmail || fresh?.email || client.email;
+                    if (toEmail) {
+                      sendUpdateNotificationEmail({
+                        toEmail,
+                        toName:      client.name,
+                        projectName: client.projectName || "Your Project",
+                        updateTitle: updateTitle || "New Update",
+                        portalUrl:   `${window.location.origin}/client/${client.id}`,
+                      });
                     }
                   })
                 );

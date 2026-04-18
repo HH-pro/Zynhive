@@ -12,7 +12,7 @@ const ROLES = [
   "CEO & Founder", "CTO", "Head of Design", "Lead Engineer",
   "AI/ML Engineer", "Mobile Lead", "Growth Director",
   "Full Stack Developer", "UI/UX Designer", "DevOps Engineer",
-  "Project Manager", "Marketing Lead", "Sales Director", "Other",
+  "Project Manager", "Marketing Lead", "Sales Director", "SEO", "Other",
 ];
 
 type Props = {
