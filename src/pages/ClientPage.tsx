@@ -22,30 +22,39 @@ const STATUS_CONFIG: Record<
 const SECTION_CONFIG = {
   seo: {
     label: "SEO",
-    subtitle: "Search engine optimization — improving your visibility on Google",
+    subtitle: "Search engine optimization",
+    badge: "Search & Visibility",
     icon: "🔍",
-    color: "#3B82F6",
-    colorDim: "rgba(59,130,246,0.14)",
-    colorBorder: "rgba(59,130,246,0.22)",
-    grad: "linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0.03) 100%)",
+    color: "#2563EB",
+    colorLight: "#3B82F6",
+    colorDim: "rgba(59,130,246,0.1)",
+    colorBorder: "rgba(59,130,246,0.2)",
+    gradHead: "linear-gradient(135deg, #1D4ED8 0%, #2563EB 60%, #3B82F6 100%)",
+    gradBody: "linear-gradient(180deg, rgba(59,130,246,0.06) 0%, transparent 100%)",
   },
   "digital-marketing": {
     label: "Digital Marketing",
-    subtitle: "Campaigns, social media, ads & brand growth activities",
+    subtitle: "Campaigns & brand growth",
+    badge: "Marketing & Social",
     icon: "📣",
-    color: "#8B5CF6",
-    colorDim: "rgba(139,92,246,0.14)",
-    colorBorder: "rgba(139,92,246,0.22)",
-    grad: "linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(139,92,246,0.03) 100%)",
+    color: "#7C3AED",
+    colorLight: "#8B5CF6",
+    colorDim: "rgba(139,92,246,0.1)",
+    colorBorder: "rgba(139,92,246,0.2)",
+    gradHead: "linear-gradient(135deg, #6D28D9 0%, #7C3AED 60%, #8B5CF6 100%)",
+    gradBody: "linear-gradient(180deg, rgba(139,92,246,0.06) 0%, transparent 100%)",
   },
   general: {
     label: "General Updates",
-    subtitle: "Project milestones and other activities",
+    subtitle: "Project milestones & activities",
+    badge: "Project Updates",
     icon: "📋",
-    color: "#6366F1",
-    colorDim: "rgba(99,102,241,0.14)",
-    colorBorder: "rgba(99,102,241,0.22)",
-    grad: "linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(99,102,241,0.03) 100%)",
+    color: "#4F46E5",
+    colorLight: "#6366F1",
+    colorDim: "rgba(99,102,241,0.1)",
+    colorBorder: "rgba(99,102,241,0.2)",
+    gradHead: "linear-gradient(135deg, #4338CA 0%, #4F46E5 60%, #6366F1 100%)",
+    gradBody: "linear-gradient(180deg, rgba(99,102,241,0.06) 0%, transparent 100%)",
   },
 };
 
@@ -192,13 +201,36 @@ const PORTAL_CSS = `
     box-shadow: var(--cp-shadow-card);
   }
 
-  /* Section banner */
-  .cp-section-banner {
-    border-radius: 16px;
+  /* ── Section container ── */
+  .cp-section-wrap {
+    border-radius: 20px;
+    overflow: hidden;
     border: 1px solid var(--cp-border-md);
-    padding: 20px 24px;
-    margin-bottom: 16px;
-    transition: background .3s, border-color .3s;
+    box-shadow: var(--cp-shadow-card);
+    transition: box-shadow .3s, border-color .3s;
+  }
+  .cp-section-wrap:hover { box-shadow: 0 8px 40px rgba(0,0,0,.18); }
+
+  .cp-section-head {
+    padding: 22px 24px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cp-section-head::after {
+    content: "";
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.06);
+    pointer-events: none;
+  }
+
+  .cp-section-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
   /* Update card */
@@ -211,13 +243,23 @@ const PORTAL_CSS = `
   }
   .cp-update-card:hover {
     background: var(--cp-bg-card-hover);
-    transform: translateY(-1px);
-    box-shadow: var(--cp-shadow-card);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0,0,0,.15);
   }
   .cp-update-card.is-latest {
-    border-color: rgba(99,102,241,.22);
+    border-color: rgba(99,102,241,.28);
     background: var(--cp-bg-card-new);
   }
+
+  /* Sections grid — 2 col on desktop */
+  .cp-sections-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .cp-sections-grid.single { grid-template-columns: 1fr; }
+  @media (max-width: 720px) { .cp-sections-grid { grid-template-columns: 1fr !important; } }
 
   /* Input */
   .cp-input {
@@ -711,12 +753,26 @@ function UpdateDetailModal({ u, client, onClose }: {
 
         {/* Body */}
         <div className="cp-modal-body">
-          {/* Image */}
-          {u.imageUrl && (
-            <div style={{ marginBottom: 20 }}>
-              <img src={u.imageUrl} alt="update attachment" className="cp-modal-img" />
-            </div>
-          )}
+          {/* Images */}
+          {(() => {
+            const allImages = u.images && u.images.length > 0
+              ? u.images
+              : u.imageUrl ? [u.imageUrl] : [];
+            if (allImages.length === 0) return null;
+            return (
+              <div style={{ marginBottom: 20 }}>
+                {allImages.length === 1 ? (
+                  <img src={allImages[0]} alt="update attachment" className="cp-modal-img" />
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+                    {allImages.map((src, idx) => (
+                      <img key={idx} src={src} alt={`attachment-${idx + 1}`} style={{ width: "100%", borderRadius: 10, objectFit: "cover", aspectRatio: "4/3", display: "block", border: "1px solid var(--cp-border-md)" }} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Description */}
           {u.description && (
@@ -832,66 +888,79 @@ function UpdateCard({ u, isLatest, sectionColor, onClick }: {
 }) {
   const cfg = STATUS_CONFIG[u.status];
   return (
-    <div className={`cp-update-card${isLatest ? " is-latest" : ""}`} style={{ position: "relative" }} onClick={onClick}>
-      {/* Left accent border */}
-      <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: "100%", background: cfg.color, borderRadius: "14px 0 0 14px" }}/>
+    <div
+      className={`cp-update-card${isLatest ? " is-latest" : ""}`}
+      style={{ position: "relative", cursor: "pointer" }}
+      onClick={onClick}
+    >
+      {/* Top accent line */}
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${cfg.color}, ${cfg.color}55)`, borderRadius: "14px 14px 0 0" }}/>
 
-      <div style={{ padding: "18px 20px 18px 22px" }}>
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+      <div style={{ padding: "14px 16px 15px" }}>
+        {/* Row 1: title + date + latest badge */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5, flexWrap: "wrap" }}>
               <StatusDot status={u.status} color={cfg.color} />
-              <span style={{ fontSize: 15, fontWeight: 700, color: "var(--cp-text-h)", lineHeight: 1.3 }}>{u.title}</span>
+              <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--cp-text-h)", lineHeight: 1.35, flex: 1 }}>{u.title}</span>
+            </div>
+            {/* Tags row */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 99, background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
+                {cfg.label}
+              </span>
               {isLatest && (
-                <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 99, background: "rgba(99,102,241,.15)", color: "#818CF8", border: "1px solid rgba(99,102,241,.25)", textTransform: "uppercase", letterSpacing: "0.07em", flexShrink: 0 }}>
+                <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 99, background: "rgba(99,102,241,.12)", color: "#818CF8", border: "1px solid rgba(99,102,241,.22)", textTransform: "uppercase", letterSpacing: "0.07em" }}>
                   Latest
                 </span>
               )}
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 9px", borderRadius: 99, background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
-                {cfg.label}
-              </span>
               {u.phase && (
-                <span style={{ fontSize: 11, color: "var(--cp-text-dim)", display: "flex", alignItems: "center", gap: 3 }}>
-                  <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5h6M5 2l3 3-3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  {u.phase}
-                </span>
+                <span style={{ fontSize: 10, color: "var(--cp-text-dim)", fontStyle: "italic" }}>{u.phase}</span>
               )}
             </div>
           </div>
           {u.createdAt && (
-            <span style={{ fontSize: 11, color: "var(--cp-text-dim)", flexShrink: 0, marginTop: 2 }}>
+            <span style={{ fontSize: 10, color: "var(--cp-text-dim)", flexShrink: 0, marginTop: 2, whiteSpace: "nowrap" }}>
               {formatDateShort(u.createdAt)}
             </span>
           )}
         </div>
 
-        {/* Description */}
+        {/* Image thumbnail */}
+        {(() => {
+          const allImages = u.images && u.images.length > 0 ? u.images : u.imageUrl ? [u.imageUrl] : [];
+          if (allImages.length === 0) return null;
+          return (
+            <div style={{ position: "relative", marginBottom: 10, borderRadius: 8, overflow: "hidden", maxHeight: 100 }}>
+              <img src={allImages[0]} alt="thumbnail" style={{ width: "100%", height: 100, objectFit: "cover", display: "block" }} />
+              {allImages.length > 1 && (
+                <span style={{ position: "absolute", bottom: 6, right: 6, fontSize: 10, fontWeight: 700, background: "rgba(0,0,0,.6)", color: "white", borderRadius: 6, padding: "2px 7px" }}>
+                  +{allImages.length - 1} more
+                </span>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Description — 2 lines max */}
         {u.description && (
-          <p style={{ fontSize: 13.5, color: "var(--cp-text-muted)", lineHeight: 1.72, marginBottom: 14 }}>
+          <p style={{ fontSize: 12.5, color: "var(--cp-text-muted)", lineHeight: 1.65, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>
             {u.description}
           </p>
         )}
 
-        {/* Image */}
-        {u.imageUrl && (
-          <div style={{ marginBottom: 14 }}>
-            <img src={u.imageUrl} alt="update attachment"
-              style={{ width: "100%", borderRadius: 10, display: "block", border: "1px solid var(--cp-border-md)", maxHeight: 300, objectFit: "cover" }}/>
-          </div>
-        )}
-
         {/* Progress bar */}
-        <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-            <span style={{ fontSize: 11, color: "var(--cp-text-dim)", fontWeight: 500 }}>Task Progress</span>
-            <span style={{ fontSize: 12, fontWeight: 800, color: cfg.color, fontFamily: "monospace" }}>{u.completionPercent}%</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ flex: 1, height: 5, borderRadius: 99, background: "var(--cp-border)", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${u.completionPercent}%`, borderRadius: 99, background: `linear-gradient(90deg, ${sectionColor}, ${sectionColor}88)`, transition: "width 1s cubic-bezier(.16,1,.3,1)" }}/>
           </div>
-          <div style={{ height: 6, borderRadius: 99, background: "var(--cp-border)", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${u.completionPercent}%`, borderRadius: 99, background: `linear-gradient(90deg, ${cfg.color}, ${cfg.color}99)`, transition: "width .9s cubic-bezier(.16,1,.3,1)" }}/>
-          </div>
+          <span style={{ fontSize: 11, fontWeight: 800, color: sectionColor, fontFamily: "monospace", flexShrink: 0 }}>{u.completionPercent}%</span>
+        </div>
+
+        {/* Click hint */}
+        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 4, color: "var(--cp-text-dimmer)" }}>
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <span style={{ fontSize: 10 }}>Click to view details &amp; leave feedback</span>
         </div>
       </div>
     </div>
@@ -905,50 +974,69 @@ function SectionBlock({ sectionKey, items, latestId, onCardClick }: {
   latestId: string | undefined;
   onCardClick: (u: FirestoreClientUpdate) => void;
 }) {
-  const cfg = SECTION_CONFIG[sectionKey];
+  const cfg           = SECTION_CONFIG[sectionKey];
   const completedCount = items.filter((u) => u.status === "completed").length;
-  const pct = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
+  const activeCount    = items.filter((u) => u.status === "in-progress").length;
+  const pct            = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
 
   return (
-    <div>
-      {/* Section banner */}
-      <div className="cp-section-banner" style={{ background: cfg.grad }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: cfg.colorDim, border: `1px solid ${cfg.colorBorder}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
+    <div className="cp-section-wrap" style={{ background: "var(--cp-bg-card)" }}>
+
+      {/* ── Colored header ── */}
+      <div className="cp-section-head" style={{ background: cfg.gradHead }}>
+        {/* Top row: icon + title + badge */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 16, position: "relative", zIndex: 1 }}>
+          {/* Icon circle */}
+          <div style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, backdropFilter: "blur(8px)" }}>
             {cfg.icon}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 3, flexWrap: "wrap" }}>
-              <h2 style={{ fontSize: 16, fontWeight: 800, color: "var(--cp-text-h)", letterSpacing: "-0.2px" }}>{cfg.label}</h2>
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 9px", borderRadius: 99, background: cfg.colorDim, color: cfg.color, border: `1px solid ${cfg.colorBorder}` }}>
-                {items.length} {items.length === 1 ? "task" : "tasks"}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+              <h2 style={{ fontSize: 17, fontWeight: 800, color: "#fff", letterSpacing: "-0.3px", margin: 0 }}>{cfg.label}</h2>
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 9px", borderRadius: 99, background: "rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.95)", border: "1px solid rgba(255,255,255,0.25)", letterSpacing: "0.04em" }}>
+                {cfg.badge}
               </span>
             </div>
-            <p style={{ fontSize: 12, color: "var(--cp-text-muted)", lineHeight: 1.5 }}>{cfg.subtitle}</p>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.72)", margin: 0, lineHeight: 1.5 }}>{cfg.subtitle}</p>
           </div>
-          {/* Mini progress */}
-          <div style={{ textAlign: "center", flexShrink: 0 }} className="cp-hide-mobile">
-            <div style={{ fontSize: 18, fontWeight: 800, color: cfg.color, fontFamily: "monospace", lineHeight: 1 }}>{pct}%</div>
-            <div style={{ fontSize: 10, color: "var(--cp-text-dim)", marginTop: 2 }}>done</div>
+          {/* Pct badge */}
+          <div style={{ textAlign: "center", background: "rgba(255,255,255,0.15)", borderRadius: 12, padding: "8px 14px", border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0 }}>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#fff", fontFamily: "monospace", lineHeight: 1 }}>{pct}%</div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 2, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Done</div>
           </div>
         </div>
 
-        {/* Section progress bar */}
-        <div style={{ marginTop: 14 }}>
-          <div style={{ height: 4, borderRadius: 99, background: "var(--cp-border)", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${pct}%`, borderRadius: 99, background: `linear-gradient(90deg, ${cfg.color}, ${cfg.color}99)`, transition: "width 1s cubic-bezier(.16,1,.3,1)" }}/>
+        {/* Stats row */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 14, position: "relative", zIndex: 1 }}>
+          {[
+            { label: "Total", value: items.length, icon: "📋" },
+            { label: "Completed", value: completedCount, icon: "✅" },
+            { label: "Active", value: activeCount, icon: "⚡" },
+          ].map(({ label, value, icon }) => (
+            <div key={label} style={{ flex: 1, background: "rgba(255,255,255,0.12)", borderRadius: 10, padding: "8px 10px", border: "1px solid rgba(255,255,255,0.15)", textAlign: "center" }}>
+              <div style={{ fontSize: 10, marginBottom: 2 }}>{icon}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", fontFamily: "monospace", lineHeight: 1 }}>{value}</div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.65)", marginTop: 2, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Progress bar */}
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ height: 6, borderRadius: 99, background: "rgba(255,255,255,0.2)", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${pct}%`, borderRadius: 99, background: "rgba(255,255,255,0.9)", transition: "width 1.2s cubic-bezier(.16,1,.3,1)" }}/>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
-            <span style={{ fontSize: 10, color: "var(--cp-text-dim)" }}>{completedCount} of {items.length} completed</span>
-            <span style={{ fontSize: 10, color: cfg.color, fontWeight: 600 }}>{items.length - completedCount} remaining</span>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.65)" }}>{completedCount} of {items.length} completed</span>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>{items.length - completedCount} remaining</span>
           </div>
         </div>
       </div>
 
-      {/* Cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* ── Cards body ── */}
+      <div className="cp-section-body" style={{ background: cfg.gradBody }}>
         {items.map((u) => (
-          <UpdateCard key={u.id} u={u} isLatest={u.id === latestId} sectionColor={cfg.color} onClick={() => onCardClick(u)} />
+          <UpdateCard key={u.id} u={u} isLatest={u.id === latestId} sectionColor={cfg.colorLight} onClick={() => onCardClick(u)} />
         ))}
       </div>
     </div>
@@ -1154,15 +1242,33 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
               Your project has been kicked off. Updates will appear here as work is completed.
             </p>
           </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
-            {sections.map(({ key, items }, sIdx) => (
-              <div key={key} className={`cp-fade-up cp-d${Math.min(sIdx + 2, 6)}`}>
-                <SectionBlock sectionKey={key} items={items} latestId={latest?.id} onCardClick={setSelectedUpdate} />
-              </div>
-            ))}
-          </div>
-        )}
+        ) : (() => {
+          const seoSection  = sections.find((s) => s.key === "seo");
+          const dmSection   = sections.find((s) => s.key === "digital-marketing");
+          const genSection  = sections.find((s) => s.key === "general");
+          const hasBothMain = !!(seoSection && dmSection);
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {/* SEO + DM side by side */}
+              {(seoSection || dmSection) && (
+                <div className={`cp-sections-grid cp-fade-up cp-d1${hasBothMain ? "" : " single"}`}>
+                  {seoSection && (
+                    <SectionBlock sectionKey="seo" items={seoSection.items} latestId={latest?.id} onCardClick={setSelectedUpdate} />
+                  )}
+                  {dmSection && (
+                    <SectionBlock sectionKey="digital-marketing" items={dmSection.items} latestId={latest?.id} onCardClick={setSelectedUpdate} />
+                  )}
+                </div>
+              )}
+              {/* General — full width below */}
+              {genSection && (
+                <div className="cp-fade-up cp-d2">
+                  <SectionBlock sectionKey="general" items={genSection.items} latestId={latest?.id} onCardClick={setSelectedUpdate} />
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── Footer ── */}

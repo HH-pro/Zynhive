@@ -373,7 +373,12 @@ function UpdateFormModal({
   const [status,     setStatus]     = useState<FirestoreClientUpdate["status"]>(update?.status ?? "in-progress");
   const [phase,      setPhase]      = useState(update?.phase              ?? "");
   const [pct,        setPct]        = useState(String(update?.completionPercent ?? 0));
-  const [imageUrl,   setImageUrl]   = useState(update?.imageUrl           ?? "");
+  const [images,     setImages]     = useState<string[]>(() => {
+    const existing = update?.images ?? [];
+    return update?.imageUrl && !existing.includes(update.imageUrl)
+      ? [update.imageUrl, ...existing]
+      : existing;
+  });
   const [category,   setCategory]   = useState<FirestoreClientUpdate["category"]>(update?.category ?? "general");
   const [uploading,  setUploading]  = useState(false);
   const [uploadPct,  setUploadPct]  = useState(0);
@@ -402,7 +407,7 @@ function UpdateFormModal({
     setUploadPct(0);
     try {
       const res = await uploadToCloudinary(file, "zynhive/client-updates", setUploadPct);
-      setImageUrl(res.secure_url);
+      setImages((prev) => [...prev, res.secure_url]);
     } catch {
       // silently ignore — user can retry
     } finally {
@@ -422,7 +427,8 @@ function UpdateFormModal({
         clientId, title: title.trim(), description: desc.trim(),
         status, phase: phase.trim(), completionPercent: Math.min(100, Math.max(0, Number(pct) || 0)),
         category: category ?? "general",
-        ...(imageUrl ? { imageUrl } : {}),
+        images,
+        ...(images.length > 0 ? { imageUrl: images[0] } : {}),
       };
       if (update?.id) {
         await updateClientUpdate(update.id, data);
@@ -661,10 +667,10 @@ function UpdateFormModal({
               />
             </div>
 
-            {/* Image upload */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            {/* Images upload */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <label style={{ fontSize: 11, fontWeight: 600, color: "var(--ink4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                Attachment Image <span style={{ color: "var(--ink4)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+                Images <span style={{ color: "var(--ink4)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional, multiple)</span>
               </label>
 
               {/* Hidden file input */}
@@ -673,33 +679,30 @@ function UpdateFormModal({
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value = ""; }}
               />
 
-              {imageUrl ? (
-                /* Preview */
-                <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: "0.5px solid var(--border2)" }}>
-                  <img
-                    src={imageUrl} alt="attachment"
-                    style={{ width: "100%", maxHeight: 160, objectFit: "cover", display: "block" }}
-                  />
-                  <div style={{ position: "absolute", top: 6, right: 6, display: "flex", gap: 5 }}>
-                    <button
-                      onClick={() => fileRef.current?.click()}
-                      title="Change image"
-                      style={{ padding: "4px 8px", borderRadius: 6, border: "none", background: "rgba(0,0,0,.6)", color: "white", fontSize: 10, fontWeight: 600, cursor: "pointer" }}
-                    >
-                      Change
-                    </button>
-                    <button
-                      onClick={() => setImageUrl("")}
-                      title="Remove image"
-                      style={{ padding: "4px 7px", borderRadius: 6, border: "none", background: "rgba(239,68,68,.75)", color: "white", fontSize: 11, cursor: "pointer", lineHeight: 1 }}
-                    >
-                      ✕
-                    </button>
-                  </div>
+              {/* Thumbnail grid */}
+              {images.length > 0 && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+                  {images.map((url, idx) => (
+                    <div key={idx} style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: "0.5px solid var(--border2)", aspectRatio: "1" }}>
+                      <img src={url} alt={`img-${idx}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      <button
+                        onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))}
+                        title="Remove"
+                        style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", border: "none", background: "rgba(239,68,68,.85)", color: "white", fontSize: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
+                      >
+                        ✕
+                      </button>
+                      {idx === 0 && (
+                        <span style={{ position: "absolute", bottom: 4, left: 4, fontSize: 8, fontWeight: 700, background: "rgba(0,0,0,.6)", color: "white", borderRadius: 4, padding: "1px 5px" }}>COVER</span>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ) : uploading ? (
-                /* Upload progress */
-                <div style={{ borderRadius: 10, border: "0.5px solid var(--border2)", background: "var(--bg-alt)", padding: "16px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+              )}
+
+              {/* Upload progress or drop zone */}
+              {uploading ? (
+                <div style={{ borderRadius: 10, border: "0.5px solid var(--border2)", background: "var(--bg-alt)", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <span style={{ fontSize: 11, color: "var(--ink4)" }}>Uploading…</span>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", fontFamily: "monospace" }}>{uploadPct}%</span>
@@ -709,7 +712,6 @@ function UpdateFormModal({
                   </div>
                 </div>
               ) : (
-                /* Drop zone */
                 <div
                   onClick={() => fileRef.current?.click()}
                   onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -718,13 +720,19 @@ function UpdateFormModal({
                   style={{
                     borderRadius: 10, border: `1.5px dashed ${dragOver ? "var(--accent)" : "var(--border2)"}`,
                     background: dragOver ? "var(--accent-pale)" : "var(--bg-alt)",
-                    padding: "18px 14px", textAlign: "center", cursor: "pointer",
-                    transition: "all .15s",
+                    padding: images.length > 0 ? "10px 14px" : "18px 14px",
+                    textAlign: "center", cursor: "pointer", transition: "all .15s",
                   }}
                 >
-                  <div style={{ fontSize: 22, marginBottom: 6 }}>🖼️</div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink3)", marginBottom: 3 }}>Click to upload or drag & drop</div>
-                  <div style={{ fontSize: 10, color: "var(--ink4)" }}>PNG, JPG, WEBP — max 10 MB</div>
+                  {images.length > 0 ? (
+                    <div style={{ fontSize: 12, color: "var(--ink4)" }}>+ Add another image</div>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: 22, marginBottom: 6 }}>🖼️</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink3)", marginBottom: 3 }}>Click to upload or drag & drop</div>
+                      <div style={{ fontSize: 10, color: "var(--ink4)" }}>PNG, JPG, WEBP — max 10 MB each</div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
