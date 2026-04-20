@@ -1,5 +1,6 @@
 // ─── src/pages/PortfolioPage.tsx ─────────────────────────────────────────────
 import { useState, useEffect, useRef } from "react";
+import { Helmet }                      from "react-helmet-async";
 import { useReveal }                   from "../hooks/index";
 import { fetchProjects }               from "../lib/firebase";
 import { PROJECTS }                    from "../lib/data";
@@ -397,31 +398,24 @@ const ALL = "All";
 export function PortfolioPage() {
   useReveal();
 
-  // ── FIX: start with static fallback, replace with Firestore data if available
-  const [projects,  setProjects]  = useState<Project[]>(PROJECTS as Project[]);
-  const [active,    setActive]    = useState(ALL);
-  const [modal,     setModal]     = useState<Project | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [projects,   setProjects]   = useState<Project[]>(PROJECTS as Project[]);
+  const [active,     setActive]     = useState(ALL);
+  const [modal,      setModal]      = useState<Project | null>(null);
+  const [isLoading,  setIsLoading]  = useState(true);
   const [fetchError, setFetchError] = useState(false);
-  const [view,      setView]      = useState<"grid" | "list">("grid");
+  const [view,       setView]       = useState<"grid" | "list">("grid");
 
   useEffect(() => {
     fetchProjects()
       .then((fps) => {
-        // ── FIX: always update from Firestore if the call succeeds —
-        //    even if fps.length === 0 (which would mean "Firestore is
-        //    authoritative and currently empty").
-        //    Remove the length-guard so a single uploaded project shows up.
         const mapped = fps.map(toProject);
         if (mapped.length > 0) {
           setProjects(mapped);
         }
-        // If Firestore returns empty, keep the static PROJECTS fallback.
       })
       .catch((err) => {
         console.error("Failed to fetch projects:", err);
         setFetchError(true);
-        // Static fallback already set as initial state — no action needed.
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -430,355 +424,423 @@ export function PortfolioPage() {
   const filtered   = active === ALL ? projects : projects.filter((p) => p.category === active);
 
   return (
-    <main>
-      {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section
-        className="relative min-h-[60vh] flex items-end px-4 sm:px-6 lg:px-14 pb-16 sm:pb-20 pt-40 sm:pt-44 overflow-hidden"
-        style={{ background: "var(--hero-bg)" }}
-      >
-        {/* Grid overlay — FIX: was missing backgroundImage */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(59,110,248,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(59,110,248,0.06) 1px, transparent 1px)",
-            backgroundSize: "64px 64px",
-            maskImage: "radial-gradient(ellipse 80% 80% at 50% 40%, black 30%, transparent 100%)",
-          }}
+    <>
+      <Helmet>
+        {/* Basic SEO */}
+        <title>Portfolio | Zynhive – Web, Mobile & Design Projects</title>
+        <meta
+          name="description"
+          content={`Browse ${projects.length}+ projects by Zynhive — web apps, mobile apps, SaaS products, and growth work built by senior engineers and designers. Real results, no fluff.`}
+        />
+        <meta
+          name="keywords"
+          content="Zynhive portfolio, web app projects, mobile app development, SaaS case studies, UI UX design work, software development portfolio, startup product examples"
         />
 
-        {/* Glows */}
-        <div
-          className="absolute top-1/3 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] pointer-events-none"
-          style={{ background: "radial-gradient(ellipse, rgba(59,110,248,0.11) 0%, transparent 60%)" }}
-        />
-        <div
-          className="absolute top-2/3 right-1/4 w-[400px] h-[300px] pointer-events-none"
-          style={{ background: "radial-gradient(ellipse, rgba(0,212,255,0.07) 0%, transparent 65%)" }}
-        />
+        {/* Canonical */}
+        <link rel="canonical" href="https://www.zynhive.com/portfolio" />
 
-        {/* Bottom fade — FIX: use gradient, not solid color */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-36 pointer-events-none"
-          style={{ background: "var(--bg-base)" }}
+        {/* Open Graph */}
+        <meta property="og:type"        content="website" />
+        <meta property="og:title"       content="Zynhive Portfolio – Work That Speaks for Itself" />
+        <meta
+          property="og:description"
+          content="Real projects. Real results. Explore Zynhive's portfolio of web, mobile, and SaaS products built by senior engineers."
         />
+        <meta property="og:url"         content="https://www.zynhive.com/portfolio" />
+        <meta property="og:image"       content="https://www.zynhive.com/og-portfolio.jpg" />
 
-        <div
-          className="relative z-10 max-w-4xl w-full"
-          style={{ animation: "heroUp .8s cubic-bezier(0.16,1,0.3,1) both" }}
+        {/* Twitter */}
+        <meta name="twitter:card"        content="summary_large_image" />
+        <meta name="twitter:title"       content="Zynhive Portfolio – Work That Speaks for Itself" />
+        <meta
+          name="twitter:description"
+          content="Browse 120+ projects by Zynhive — web apps, mobile apps, and SaaS products with real measurable results."
+        />
+        <meta name="twitter:image"       content="https://www.zynhive.com/og-portfolio.jpg" />
+
+        {/* Robots */}
+        <meta name="robots" content="index, follow" />
+
+        {/* Structured Data — ItemList of featured projects */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: "Zynhive Portfolio",
+            description: "A curated collection of web, mobile, and SaaS projects built by Zynhive.",
+            url: "https://www.zynhive.com/portfolio",
+            publisher: {
+              "@type": "Organization",
+              name: "Zynhive",
+              url: "https://www.zynhive.com",
+              logo: "https://www.zynhive.com/logo.png",
+            },
+            mainEntity: {
+              "@type": "ItemList",
+              itemListElement: projects
+                .filter((p) => p.featured)
+                .map((p, i) => ({
+                  "@type": "ListItem",
+                  position: i + 1,
+                  name: p.title,
+                  description: p.description,
+                  url: p.liveUrl || "https://www.zynhive.com/portfolio",
+                })),
+            },
+          })}
+        </script>
+      </Helmet>
+
+      <main>
+        {/* ── HERO ─────────────────────────────────────────────────────────── */}
+        <section
+          className="relative min-h-[60vh] flex items-end px-4 sm:px-6 lg:px-14 pb-16 sm:pb-20 pt-40 sm:pt-44 overflow-hidden"
+          style={{ background: "var(--hero-bg)" }}
         >
+          {/* Grid overlay */}
           <div
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 mb-6 rounded-full"
-            style={{ border: "1px solid var(--accent-pale2)", background: "var(--accent-pale)" }}
-          >
-            <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: "var(--accent)", animation: "bPulse 2s infinite" }}
-            />
-            <span
-              className="font-mono text-[10px] tracking-[0.16em] uppercase"
-              style={{ color: "var(--accent)" }}
-            >
-              Our Work
-            </span>
-          </div>
-
-          <h1
-            className="font-syne font-extrabold leading-[0.95] tracking-tight mb-5"
-            style={{ fontSize: "clamp(38px,7vw,90px)", color: "var(--hero-text)" }}
-          >
-            Work that
-            <br />
-            <em className="not-italic" style={{ color: "var(--accent)" }}>speaks for itself.</em>
-          </h1>
-
-          <p
-            className="text-[16px] sm:text-[18px] font-light leading-relaxed max-w-xl"
-            style={{ color: "var(--hero-muted)" }}
-          >
-            {projects.length}+ projects across web, mobile, design, and growth. Every one built to win.
-          </p>
-
-          {/* Stats row — FIX: label color was hardcoded rgb(10,15,80), invisible in dark mode */}
-          <div className="flex flex-wrap gap-2.5 mt-1">
-            {[
-              { label: "Web Apps",      val: projects.filter((p) => p.category === "Web Application").length || projects.length },
-              { label: "Mobile Apps",   val: projects.filter((p) => p.category === "Mobile App").length      || "–" },
-              { label: "Featured",      val: projects.filter((p) => p.featured).length                       || "–" },
-              { label: "Total Projects",val: projects.length },
-            ].map(({ label, val }) => (
-              <div
-                key={label}
-                className="flex items-center gap-2.5 px-4 py-2 mt-10 rounded-full border"
-                style={{ borderColor: "rgba(59,110,248,0.22)", background: "rgba(59,110,248,0.08)" }}
-              >
-                <span className="font-syne text-[15px] font-bold" style={{ color: "var(--accent)" }}>
-                  {val}
-                </span>
-                {/* FIX: was rgb(10,15,80) — use CSS variable for dark mode compat */}
-                <span className="font-mono text-[10px]" style={{ color: "var(--ink3)" }}>
-                  {label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FILTER + GRID ────────────────────────────────────────────────── */}
-      <section
-        className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-28"
-        style={{ background: "var(--bg-base)" }}
-      >
-        <div className="max-w-7xl mx-auto">
-
-          <SectionHead
-            tag="Portfolio"
-            heading={<>Selected <span className="text-gradient-blue">projects.</span></>}
-            sub="A curated look at our most impactful work across industries."
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(59,110,248,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(59,110,248,0.06) 1px, transparent 1px)",
+              backgroundSize: "64px 64px",
+              maskImage: "radial-gradient(ellipse 80% 80% at 50% 40%, black 30%, transparent 100%)",
+            }}
           />
 
-          {/* Controls row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 reveal">
-            {/* Filter pills */}
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActive(cat)}
-                  className="font-mono text-[10px] tracking-wider uppercase px-4 py-2 rounded-full border transition-all duration-200"
-                  style={
-                    active === cat
-                      ? { background: "linear-gradient(135deg, var(--accent), var(--cyan))", borderColor: "transparent", color: "white" }
-                      : { background: "var(--bg-surface)", borderColor: "var(--border2)", color: "var(--ink3)" }
-                  }
-                  onMouseEnter={(e) => {
-                    if (active !== cat) {
-                      (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
-                      (e.currentTarget as HTMLElement).style.color = "var(--accent)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (active !== cat) {
-                      (e.currentTarget as HTMLElement).style.borderColor = "var(--border2)";
-                      (e.currentTarget as HTMLElement).style.color = "var(--ink3)";
-                    }
-                  }}
-                >
-                  {cat}
-                  {cat !== ALL && (
-                    <span className="ml-1.5 opacity-50">
-                      ({projects.filter((p) => p.category === cat).length})
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+          {/* Glows */}
+          <div
+            className="absolute top-1/3 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] pointer-events-none"
+            style={{ background: "radial-gradient(ellipse, rgba(59,110,248,0.11) 0%, transparent 60%)" }}
+          />
+          <div
+            className="absolute top-2/3 right-1/4 w-[400px] h-[300px] pointer-events-none"
+            style={{ background: "radial-gradient(ellipse, rgba(0,212,255,0.07) 0%, transparent 65%)" }}
+          />
 
-            {/* View toggle */}
+          {/* Bottom fade */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-36 pointer-events-none"
+            style={{ background: "var(--bg-base)" }}
+          />
+
+          <div
+            className="relative z-10 max-w-4xl w-full"
+            style={{ animation: "heroUp .8s cubic-bezier(0.16,1,0.3,1) both" }}
+          >
             <div
-              className="flex items-center gap-1 p-1 rounded-xl border self-start sm:self-auto"
-              style={{ background: "var(--bg-surface)", borderColor: "var(--border2)" }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 mb-6 rounded-full"
+              style={{ border: "1px solid var(--accent-pale2)", background: "var(--accent-pale)" }}
             >
-              {(["grid", "list"] as const).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className="px-3.5 py-2 rounded-lg transition-all duration-200"
-                  style={
-                    view === v
-                      ? { background: "linear-gradient(135deg, var(--accent), var(--cyan))", color: "white" }
-                      : { background: "transparent", color: "var(--ink4)" }
-                  }
-                >
-                  {v === "grid" ? (
-                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                      <rect x="1"   y="1"   width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1"/>
-                      <rect x="7.5" y="1"   width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1"/>
-                      <rect x="1"   y="7.5" width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1"/>
-                      <rect x="7.5" y="7.5" width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1"/>
-                    </svg>
-                  ) : (
-                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                      <rect x="1" y="1.5" width="11" height="3"   rx="1.2" stroke="currentColor" strokeWidth="1"/>
-                      <rect x="1" y="5.5" width="11" height="3"   rx="1.2" stroke="currentColor" strokeWidth="1"/>
-                      <rect x="1" y="9.5" width="11" height="2.5" rx="1.2" stroke="currentColor" strokeWidth="1"/>
-                    </svg>
-                  )}
-                </button>
-              ))}
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: "var(--accent)", animation: "bPulse 2s infinite" }}
+              />
+              <span
+                className="font-mono text-[10px] tracking-[0.16em] uppercase"
+                style={{ color: "var(--accent)" }}
+              >
+                Our Work
+              </span>
             </div>
-          </div>
 
-          {/* Fetch error banner */}
-          {fetchError && (
-            <div
-              className="mb-8 px-5 py-3.5 rounded-xl text-[13px] flex items-center gap-3"
-              style={{
-                background: "var(--bg-surface)",
-                border: "1px solid var(--border2)",
-                color: "var(--ink3)",
-              }}
+            <h1
+              className="font-syne font-extrabold leading-[0.95] tracking-tight mb-5"
+              style={{ fontSize: "clamp(38px,7vw,90px)", color: "var(--hero-text)" }}
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="6.5" stroke="var(--ink4)" strokeWidth="1.2"/>
-                <path d="M8 5v3.5M8 10.5v.5" stroke="var(--ink4)" strokeWidth="1.4" strokeLinecap="round"/>
-              </svg>
-              Showing cached projects — couldn't reach the database.
-            </div>
-          )}
+              Work that
+              <br />
+              <em className="not-italic" style={{ color: "var(--accent)" }}>speaks for itself.</em>
+            </h1>
 
-          {/* Loading skeleton */}
-          {isLoading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              {Array.from({ length: 6 }).map((_, i) => (
+            <p
+              className="text-[16px] sm:text-[18px] font-light leading-relaxed max-w-xl"
+              style={{ color: "var(--hero-muted)" }}
+            >
+              {projects.length}+ projects across web, mobile, design, and growth. Every one built to win.
+            </p>
+
+            {/* Stats row */}
+            <div className="flex flex-wrap gap-2.5 mt-1">
+              {[
+                { label: "Web Apps",       val: projects.filter((p) => p.category === "Web Application").length || projects.length },
+                { label: "Mobile Apps",    val: projects.filter((p) => p.category === "Mobile App").length      || "–" },
+                { label: "Featured",       val: projects.filter((p) => p.featured).length                       || "–" },
+                { label: "Total Projects", val: projects.length },
+              ].map(({ label, val }) => (
                 <div
-                  key={i}
-                  className="rounded-3xl overflow-hidden"
-                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border2)" }}
+                  key={label}
+                  className="flex items-center gap-2.5 px-4 py-2 mt-10 rounded-full border"
+                  style={{ borderColor: "rgba(59,110,248,0.22)", background: "rgba(59,110,248,0.08)" }}
                 >
-                  <div className="h-52 animate-pulse" style={{ background: "var(--bg-alt)" }}/>
-                  <div className="p-6 flex flex-col gap-3">
-                    <div className="h-5 rounded-lg animate-pulse" style={{ width: "75%", background: "var(--bg-alt)" }}/>
-                    <div className="h-4 rounded-lg animate-pulse" style={{ background: "var(--bg-alt)" }}/>
-                    <div className="h-4 rounded-lg animate-pulse" style={{ width: "60%", background: "var(--bg-alt)" }}/>
-                  </div>
+                  <span className="font-syne text-[15px] font-bold" style={{ color: "var(--accent)" }}>
+                    {val}
+                  </span>
+                  <span className="font-mono text-[10px]" style={{ color: "var(--ink3)" }}>
+                    {label}
+                  </span>
                 </div>
               ))}
             </div>
-          )}
+          </div>
+        </section>
 
-          {/* Grid view */}
-          {!isLoading && view === "grid" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              {filtered.map((p, i) => (
-                <PortfolioCard key={p.id} project={p} index={i} onClick={setModal} />
-              ))}
-            </div>
-          )}
+        {/* ── FILTER + GRID ────────────────────────────────────────────────── */}
+        <section
+          className="px-4 sm:px-6 lg:px-14 py-16 md:py-24 lg:py-28"
+          style={{ background: "var(--bg-base)" }}
+        >
+          <div className="max-w-7xl mx-auto">
 
-          {/* List view */}
-          {!isLoading && view === "list" && (
-            <div className="flex flex-col gap-3 mb-12">
-              {filtered.map((p, i) => {
-                const delayClass = REVEAL_DELAYS[i % 3];
-                return (
-                  <div
-                    key={p.id}
-                    onClick={() => setModal(p)}
-                    className="group flex items-center gap-5 p-4 sm:p-5 rounded-2xl cursor-pointer transition-all duration-300"
-                    style={{
-                      background: "var(--bg-surface)",
-                      border: "1px solid var(--border2)",
-                      boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
-                      opacity: 1,
-                    }}
+            <SectionHead
+              tag="Portfolio"
+              heading={<>Selected <span className="text-gradient-blue">projects.</span></>}
+              sub="A curated look at our most impactful work across industries."
+            />
+
+            {/* Controls row */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 reveal">
+              {/* Filter pills */}
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActive(cat)}
+                    className="font-mono text-[10px] tracking-wider uppercase px-4 py-2 rounded-full border transition-all duration-200"
+                    style={
+                      active === cat
+                        ? { background: "linear-gradient(135deg, var(--accent), var(--cyan))", borderColor: "transparent", color: "white" }
+                        : { background: "var(--bg-surface)", borderColor: "var(--border2)", color: "var(--ink3)" }
+                    }
                     onMouseEnter={(e) => {
-                      const el = e.currentTarget as HTMLElement;
-                      el.style.borderColor = `${p.color}45`;
-                      el.style.boxShadow = `0 8px 30px rgba(0,0,0,0.08), 0 0 0 1px ${p.color}18`;
+                      if (active !== cat) {
+                        (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
+                        (e.currentTarget as HTMLElement).style.color = "var(--accent)";
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      const el = e.currentTarget as HTMLElement;
-                      el.style.borderColor = "var(--border2)";
-                      el.style.boxShadow = "0 2px 12px rgba(0,0,0,0.03)";
+                      if (active !== cat) {
+                        (e.currentTarget as HTMLElement).style.borderColor = "var(--border2)";
+                        (e.currentTarget as HTMLElement).style.color = "var(--ink3)";
+                      }
                     }}
                   >
-                    {/* Thumbnail */}
-                    <div
-                      className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden transition-transform duration-300 group-hover:scale-105"
-                      style={{ background: `${p.color}15`, border: `1px solid ${p.color}22` }}
-                    >
-                      {p.imageUrl ? (
-                        <img
-                          src={getCloudinaryThumb(p.imageUrl, 112, 112)}
-                          alt={p.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-2xl select-none">{p.emoji}</span>
-                      )}
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className="font-syne text-[15px] font-bold truncate" style={{ color: "var(--ink)" }}>
-                          {p.title}
-                        </h3>
-                        {p.featured && (
-                          <span
-                            className="hidden sm:inline px-1.5 py-0.5 rounded text-[8px] font-mono tracking-widest uppercase text-white flex-shrink-0"
-                            style={{ background: "linear-gradient(90deg, var(--accent), var(--cyan))" }}
-                          >
-                            Featured
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[12px] line-clamp-1 font-light" style={{ color: "var(--ink4)" }}>
-                        {p.description}
-                      </p>
-                    </div>
-
-                    {/* Result */}
-                    {p.result && (
-                      <div
-                        className="hidden md:flex items-center gap-1.5 flex-shrink-0 text-[11px] font-mono"
-                        style={{ color: p.color }}
-                      >
-                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                          <path d="M1 8.5l3-4 3 2 3-5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                        </svg>
-                        {p.result}
-                      </div>
+                    {cat}
+                    {cat !== ALL && (
+                      <span className="ml-1.5 opacity-50">
+                        ({projects.filter((p) => p.category === cat).length})
+                      </span>
                     )}
+                  </button>
+                ))}
+              </div>
 
-                    {/* Arrow */}
-                    <div
-                      className="flex-shrink-0 transition-all duration-300 group-hover:translate-x-0.5"
-                      style={{ color: "var(--ink4)" }}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M5 3l5 5-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              {/* View toggle */}
+              <div
+                className="flex items-center gap-1 p-1 rounded-xl border self-start sm:self-auto"
+                style={{ background: "var(--bg-surface)", borderColor: "var(--border2)" }}
+              >
+                {(["grid", "list"] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className="px-3.5 py-2 rounded-lg transition-all duration-200"
+                    style={
+                      view === v
+                        ? { background: "linear-gradient(135deg, var(--accent), var(--cyan))", color: "white" }
+                        : { background: "transparent", color: "var(--ink4)" }
+                    }
+                  >
+                    {v === "grid" ? (
+                      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                        <rect x="1"   y="1"   width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1"/>
+                        <rect x="7.5" y="1"   width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1"/>
+                        <rect x="1"   y="7.5" width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1"/>
+                        <rect x="7.5" y="7.5" width="4.5" height="4.5" rx="1.2" stroke="currentColor" strokeWidth="1"/>
                       </svg>
+                    ) : (
+                      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                        <rect x="1" y="1.5" width="11" height="3"   rx="1.2" stroke="currentColor" strokeWidth="1"/>
+                        <rect x="1" y="5.5" width="11" height="3"   rx="1.2" stroke="currentColor" strokeWidth="1"/>
+                        <rect x="1" y="9.5" width="11" height="2.5" rx="1.2" stroke="currentColor" strokeWidth="1"/>
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Fetch error banner */}
+            {fetchError && (
+              <div
+                className="mb-8 px-5 py-3.5 rounded-xl text-[13px] flex items-center gap-3"
+                style={{
+                  background: "var(--bg-surface)",
+                  border: "1px solid var(--border2)",
+                  color: "var(--ink3)",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="6.5" stroke="var(--ink4)" strokeWidth="1.2"/>
+                  <path d="M8 5v3.5M8 10.5v.5" stroke="var(--ink4)" strokeWidth="1.4" strokeLinecap="round"/>
+                </svg>
+                Showing cached projects — couldn't reach the database.
+              </div>
+            )}
+
+            {/* Loading skeleton */}
+            {isLoading && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="rounded-3xl overflow-hidden"
+                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border2)" }}
+                  >
+                    <div className="h-52 animate-pulse" style={{ background: "var(--bg-alt)" }}/>
+                    <div className="p-6 flex flex-col gap-3">
+                      <div className="h-5 rounded-lg animate-pulse" style={{ width: "75%", background: "var(--bg-alt)" }}/>
+                      <div className="h-4 rounded-lg animate-pulse" style={{ background: "var(--bg-alt)" }}/>
+                      <div className="h-4 rounded-lg animate-pulse" style={{ width: "60%", background: "var(--bg-alt)" }}/>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Empty state */}
-          {!isLoading && filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-24 gap-5">
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                style={{ background: "var(--bg-surface)", border: "1px solid var(--border2)" }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <circle cx="11" cy="11" r="8" stroke="var(--ink4)" strokeWidth="1.5"/>
-                  <path d="M8 14s1-2 3-2 3 2 3 2M8.5 9h.01M13.5 9h.01" stroke="var(--ink4)" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
+                ))}
               </div>
-              <p className="font-syne text-[16px] font-semibold" style={{ color: "var(--ink3)" }}>
-                No projects in this category yet
-              </p>
-              <button
-                onClick={() => setActive(ALL)}
-                className="font-mono text-[11px] transition-colors"
-                style={{ color: "var(--accent)" }}
-              >
-                Show all projects →
-              </button>
-            </div>
-          )}
+            )}
 
-        </div>
-      </section>
+            {/* Grid view */}
+            {!isLoading && view === "grid" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                {filtered.map((p, i) => (
+                  <PortfolioCard key={p.id} project={p} index={i} onClick={setModal} />
+                ))}
+              </div>
+            )}
 
-      <CTASection />
+            {/* List view */}
+            {!isLoading && view === "list" && (
+              <div className="flex flex-col gap-3 mb-12">
+                {filtered.map((p, i) => {
+                  const delayClass = REVEAL_DELAYS[i % 3];
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => setModal(p)}
+                      className="group flex items-center gap-5 p-4 sm:p-5 rounded-2xl cursor-pointer transition-all duration-300"
+                      style={{
+                        background: "var(--bg-surface)",
+                        border: "1px solid var(--border2)",
+                        boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
+                        opacity: 1,
+                      }}
+                      onMouseEnter={(e) => {
+                        const el = e.currentTarget as HTMLElement;
+                        el.style.borderColor = `${p.color}45`;
+                        el.style.boxShadow = `0 8px 30px rgba(0,0,0,0.08), 0 0 0 1px ${p.color}18`;
+                      }}
+                      onMouseLeave={(e) => {
+                        const el = e.currentTarget as HTMLElement;
+                        el.style.borderColor = "var(--border2)";
+                        el.style.boxShadow = "0 2px 12px rgba(0,0,0,0.03)";
+                      }}
+                    >
+                      {/* Thumbnail */}
+                      <div
+                        className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden transition-transform duration-300 group-hover:scale-105"
+                        style={{ background: `${p.color}15`, border: `1px solid ${p.color}22` }}
+                      >
+                        {p.imageUrl ? (
+                          <img
+                            src={getCloudinaryThumb(p.imageUrl, 112, 112)}
+                            alt={p.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-2xl select-none">{p.emoji}</span>
+                        )}
+                      </div>
 
-      {modal && <ProjectDetailModal project={modal} onClose={() => setModal(null)} />}
-    </main>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h3 className="font-syne text-[15px] font-bold truncate" style={{ color: "var(--ink)" }}>
+                            {p.title}
+                          </h3>
+                          {p.featured && (
+                            <span
+                              className="hidden sm:inline px-1.5 py-0.5 rounded text-[8px] font-mono tracking-widest uppercase text-white flex-shrink-0"
+                              style={{ background: "linear-gradient(90deg, var(--accent), var(--cyan))" }}
+                            >
+                              Featured
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[12px] line-clamp-1 font-light" style={{ color: "var(--ink4)" }}>
+                          {p.description}
+                        </p>
+                      </div>
+
+                      {/* Result */}
+                      {p.result && (
+                        <div
+                          className="hidden md:flex items-center gap-1.5 flex-shrink-0 text-[11px] font-mono"
+                          style={{ color: p.color }}
+                        >
+                          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                            <path d="M1 8.5l3-4 3 2 3-5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                          </svg>
+                          {p.result}
+                        </div>
+                      )}
+
+                      {/* Arrow */}
+                      <div
+                        className="flex-shrink-0 transition-all duration-300 group-hover:translate-x-0.5"
+                        style={{ color: "var(--ink4)" }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M5 3l5 5-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!isLoading && filtered.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-24 gap-5">
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border2)" }}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <circle cx="11" cy="11" r="8" stroke="var(--ink4)" strokeWidth="1.5"/>
+                    <path d="M8 14s1-2 3-2 3 2 3 2M8.5 9h.01M13.5 9h.01" stroke="var(--ink4)" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <p className="font-syne text-[16px] font-semibold" style={{ color: "var(--ink3)" }}>
+                  No projects in this category yet
+                </p>
+                <button
+                  onClick={() => setActive(ALL)}
+                  className="font-mono text-[11px] transition-colors"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Show all projects →
+                </button>
+              </div>
+            )}
+
+          </div>
+        </section>
+
+        <CTASection />
+
+        {modal && <ProjectDetailModal project={modal} onClose={() => setModal(null)} />}
+      </main>
+    </>
   );
 }

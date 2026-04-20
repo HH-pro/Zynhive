@@ -1,4 +1,5 @@
 // ─── src/pages/TeamPage.tsx ──────────────────────────────────────────────────
+import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback } from "react";
 import { useReveal }                         from "../hooks/index";
 import { fetchMembers }                      from "../lib/firebase";
@@ -242,6 +243,66 @@ export function TeamPage() {
   useEffect(() => { load(); }, [load]);
 
   return (
+    <>
+    <Helmet>
+  {/* Basic SEO */}
+  <title>Our Team | Zynhive – Experts Behind the Products</title>
+  <meta
+    name="description"
+    content="Meet the Zynhive team — senior engineers, designers, and product experts building scalable, high-performance digital products. No juniors. No outsourcing."
+  />
+  <meta
+    name="keywords"
+    content="Zynhive team, software engineers, product developers, design team, remote tech team, startup developers, SaaS builders"
+  />
+
+  {/* Canonical */}
+  <link rel="canonical" href="https://www.zynhive.com/team" />
+
+  {/* Open Graph (Facebook, LinkedIn) */}
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Zynhive Team – Experts Behind the Products" />
+  <meta
+    property="og:description"
+    content="Senior-only team building scalable digital products. Meet the people behind Zynhive."
+  />
+  <meta property="og:url" content="https://www.zynhive.com/team" />
+  <meta property="og:image" content="https://www.zynhive.com/og-team.jpg" />
+
+  {/* Twitter */}
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Zynhive Team – Experts Behind the Products" />
+  <meta
+    name="twitter:description"
+    content="Meet Zynhive's senior engineers and designers building world-class products."
+  />
+  <meta name="twitter:image" content="https://www.zynhive.com/og-team.jpg" />
+
+  {/* Robots */}
+  <meta name="robots" content="index, follow" />
+
+  {/* Structured Data (VERY IMPORTANT for SEO) */}
+  <script type="application/ld+json">
+    {JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "Zynhive",
+      url: "https://www.zynhive.com",
+      logo: "https://www.zynhive.com/logo.png",
+      sameAs: [
+        "https://www.linkedin.com/company/zynhive",
+        "https://twitter.com/zynhive"
+      ],
+      employee: members.map((m) => ({
+        "@type": "Person",
+        name: m.name,
+        jobTitle: m.role,
+        url: "https://www.zynhive.com/team",
+      })),
+    })}
+  </script>
+</Helmet>
+    
     <main>
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
        <section
@@ -264,9 +325,9 @@ export function TeamPage() {
         <div className="absolute top-1/2 right-1/4 w-[400px] h-[300px] pointer-events-none"
           style={{ background: "radial-gradient(ellipse, rgba(0,212,255,0.06) 0%, transparent 65%)" }}/>
 
-        {/* Bottom fade */}
+        {/* Bottom fade — FIXED: was "(--bg-base))" missing var() and had extra paren */}
         <div className="absolute bottom-0 left-0 right-0 h-36 pointer-events-none"
-          style={{ background: "(--bg-base))" }}/>
+          style={{ background: "var(--bg-base)" }}/>
 
         <div className="relative z-10 max-w-3xl w-full"
           style={{ animation: "heroUp .8s cubic-bezier(0.16,1,0.3,1) both" }}>
@@ -470,5 +531,6 @@ export function TeamPage() {
 
       <CTASection />
     </main>
+    </>
   );
 }
