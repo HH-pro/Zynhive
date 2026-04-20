@@ -50,7 +50,7 @@ function HomePageSEO() {
           description,
           potentialAction: {
             "@type":       "SearchAction",
-            target:        ⁠ ${canonical}search?q={search_term_string} ⁠,
+            target:        `${canonical}search?q={search_term_string}`,
             "query-input": "required name=search_term_string",
           },
         })}
@@ -79,9 +79,9 @@ function FloatingOrbs() {
             top:    o.top,
             left:   (o as any).left,
             right:  (o as any).right,
-            background: ⁠ radial-gradient(circle, ${o.color} 0%, transparent 70%) ⁠,
+            background: `radial-gradient(circle, ${o.color} 0%, transparent 70%)`,
             filter: "blur(40px)",
-            animation: ⁠ orbFloat ${o.dur} ${o.delay} ease-in-out infinite ⁠,
+            animation: `orbFloat ${o.dur} ${o.delay} ease-in-out infinite`,
           }}
         />
       ))}
