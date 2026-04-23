@@ -5,7 +5,8 @@
 import { sendEmail } from "./email-sender";
 
 // ─── Shared brand helpers ─────────────────────────────────────────────────────
-const BRAND_GRADIENT = "linear-gradient(135deg,#4338CA 0%,#6366F1 48%,#818CF8 100%)";
+const BRAND_GRADIENT = "linear-gradient(135deg,#3730A3 0%,#6366F1 50%,#818CF8 100%)";
+const BRAND_GRADIENT_SUBTLE = "linear-gradient(135deg,#EEF2FF 0%,#F5F3FF 100%)";
 
 function emailWrapper(bodyHtml: string): string {
   return `<!DOCTYPE html>
@@ -16,39 +17,50 @@ function emailWrapper(bodyHtml: string): string {
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <title>ZynHive</title>
 </head>
-<body style="margin:0;padding:0;background-color:#05080F;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;">
+<body style="margin:0;padding:0;background-color:#0B0F1A;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;">
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
-  style="background-color:#05080F;padding:48px 16px;">
+  style="background-color:#0B0F1A;padding:48px 16px 56px;">
 <tr><td align="center">
+
+  <!-- Pre-card tagline -->
+  <p style="color:#4B5563;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;
+            margin:0 0 20px;font-family:Arial,sans-serif;">ZynHive Client Portal</p>
 
   <!-- Outer card -->
   <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
-    style="max-width:580px;background:#ffffff;border-radius:20px;overflow:hidden;
-           box-shadow:0 40px 100px rgba(0,0,0,0.6);">
+    style="max-width:600px;background:#ffffff;border-radius:24px;overflow:hidden;
+           box-shadow:0 32px 80px rgba(0,0,0,0.55),0 0 0 1px rgba(99,102,241,0.12);">
 
     ${bodyHtml}
 
     <!-- FOOTER -->
     <tr>
-      <td style="background:#F8FAFF;border-top:1px solid #E5EAF5;padding:24px 36px;text-align:center;">
-        <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:12px;">
+      <td style="background:#F8F9FF;border-top:1px solid #E8ECF8;padding:28px 40px 32px;text-align:center;">
+        <!-- Logo row -->
+        <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:14px;">
           <tr>
-            <td style="background:${BRAND_GRADIENT};border-radius:9px;width:30px;height:30px;
-                       text-align:center;vertical-align:middle;line-height:30px;">
-              <span style="color:#fff;font-size:9px;font-weight:800;font-family:Arial,sans-serif;">ZH</span>
+            <td style="background:${BRAND_GRADIENT};border-radius:10px;width:32px;height:32px;
+                       text-align:center;vertical-align:middle;line-height:32px;">
+              <span style="color:#fff;font-size:10px;font-weight:900;font-family:Arial,sans-serif;
+                           letter-spacing:-0.5px;">ZH</span>
             </td>
-            <td style="padding-left:9px;vertical-align:middle;">
-              <span style="color:#0F172A;font-size:14px;font-weight:800;font-family:Arial,sans-serif;
-                           letter-spacing:-0.3px;">ZynHive</span>
+            <td style="padding-left:10px;vertical-align:middle;">
+              <span style="color:#0F172A;font-size:15px;font-weight:800;font-family:Arial,sans-serif;
+                           letter-spacing:-0.4px;">ZynHive</span>
+              <span style="color:#94A3B8;font-size:11px;font-weight:500;font-family:Arial,sans-serif;
+                           margin-left:6px;">· Your Digital Growth Partner</span>
             </td>
           </tr>
         </table>
-        <p style="color:#94A3B8;font-size:11px;margin:0 0 8px;font-family:Arial,sans-serif;">
-          Your Digital Growth Partner &nbsp;·&nbsp; © 2025
+        <!-- Divider dots -->
+        <p style="color:#CBD5E1;font-size:10px;margin:0 0 10px;letter-spacing:0.15em;
+                  font-family:Arial,sans-serif;">· · ·</p>
+        <p style="color:#94A3B8;font-size:11px;margin:0 0 6px;font-family:Arial,sans-serif;">
+          © 2026 ZynHive. All rights reserved.
         </p>
         <p style="color:#CBD5E1;font-size:10px;margin:0;line-height:1.7;font-family:Arial,sans-serif;">
-          You're receiving this because you enabled email alerts on your client portal.
+          You received this because you have active notifications enabled on your client portal.
         </p>
       </td>
     </tr>
@@ -70,107 +82,162 @@ function buildUpdateHtml(
   const body = `
     <!-- HEADER -->
     <tr>
-      <td style="background:${BRAND_GRADIENT};padding:44px 36px 38px;text-align:center;">
-        <!-- Logo badge -->
-        <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:26px;">
+      <td style="background:${BRAND_GRADIENT};padding:0;text-align:center;position:relative;">
+        <!-- Top accent bar -->
+        <div style="height:4px;background:linear-gradient(90deg,#818CF8,#C7D2FE,#818CF8);"></div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
-            <td style="background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.26);
-                       border-radius:12px;padding:10px 22px;">
-              <span style="color:#fff;font-size:15px;font-weight:800;letter-spacing:-0.3px;
-                           font-family:Arial,sans-serif;">✦ ZynHive</span>
+            <td style="padding:40px 40px 44px;text-align:center;">
+              <!-- Logo pill -->
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.22);
+                             border-radius:100px;padding:8px 20px;">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background:rgba(255,255,255,0.2);border-radius:6px;
+                                   width:20px;height:20px;text-align:center;vertical-align:middle;line-height:20px;">
+                          <span style="color:#fff;font-size:7px;font-weight:900;font-family:Arial,sans-serif;">ZH</span>
+                        </td>
+                        <td style="padding-left:8px;vertical-align:middle;">
+                          <span style="color:#fff;font-size:13px;font-weight:800;letter-spacing:-0.2px;
+                                       font-family:Arial,sans-serif;">ZynHive</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Status badge -->
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:20px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.18);border-radius:100px;padding:6px 16px;">
+                    <span style="color:rgba(255,255,255,0.95);font-size:11px;font-weight:700;
+                                 letter-spacing:0.08em;text-transform:uppercase;font-family:Arial,sans-serif;">
+                      ● &nbsp;Project Update
+                    </span>
+                  </td>
+                </tr>
+              </table>
+
+              <h1 style="color:#ffffff;font-size:28px;font-weight:800;margin:0 0 12px;line-height:1.2;
+                         letter-spacing:-0.7px;font-family:Arial,sans-serif;">
+                You've Got a New Update
+              </h1>
+              <p style="color:rgba(255,255,255,0.75);font-size:14px;margin:0;line-height:1.65;
+                        font-family:Arial,sans-serif;max-width:380px;margin-left:auto;margin-right:auto;">
+                Your project team posted a new update that needs your attention.
+              </p>
             </td>
           </tr>
         </table>
-        <!-- Icon circle -->
-        <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:18px;">
+        <!-- Wave divider -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
-            <td style="background:rgba(255,255,255,0.16);border-radius:16px;
-                       width:58px;height:58px;text-align:center;vertical-align:middle;
-                       font-size:26px;line-height:58px;">
-              📋
-            </td>
+            <td style="background:#ffffff;height:1px;font-size:0;line-height:0;"></td>
           </tr>
         </table>
-        <h1 style="color:#fff;font-size:26px;font-weight:800;margin:0 0 10px;line-height:1.2;
-                   letter-spacing:-0.6px;font-family:Arial,sans-serif;">New Project Update</h1>
-        <p style="color:rgba(255,255,255,0.72);font-size:14px;margin:0;line-height:1.6;
-                  font-family:Arial,sans-serif;">
-          Your team just posted something new for you to review
-        </p>
       </td>
     </tr>
 
     <!-- BODY -->
     <tr>
-      <td style="padding:38px 36px 32px;background:#ffffff;">
+      <td style="padding:40px 40px 36px;background:#ffffff;">
 
         <!-- Greeting -->
-        <p style="color:#1E293B;font-size:16px;font-weight:500;margin:0 0 28px;
-                  line-height:1.65;font-family:Arial,sans-serif;">
-          Hello <strong style="color:#0F172A;">${toName}</strong> 👋<br/>
-          <span style="color:#64748B;font-size:14px;">There's a new update on your project — here's a quick summary:</span>
+        <p style="color:#0F172A;font-size:17px;font-weight:600;margin:0 0 6px;
+                  line-height:1.5;font-family:Arial,sans-serif;">
+          Hello, ${toName} 👋
+        </p>
+        <p style="color:#64748B;font-size:14px;margin:0 0 32px;line-height:1.65;font-family:Arial,sans-serif;">
+          There's a new update ready for you to review on your project portal.
         </p>
 
-        <!-- Update info card -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0"
-          style="margin-bottom:26px;border-radius:14px;overflow:hidden;
-                 border:1px solid #DDE3F5;background:#F5F7FF;">
+        <!-- Update highlight card -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
           <tr>
-            <td style="border-left:4px solid #6366F1;padding:22px 24px;">
-              <p style="color:#6366F1;font-size:10px;font-weight:800;text-transform:uppercase;
-                        letter-spacing:0.09em;margin:0 0 9px;font-family:Arial,sans-serif;">
-                📋 &nbsp;Update
-              </p>
-              <p style="color:#0F172A;font-size:18px;font-weight:700;margin:0 0 ${projectName ? "12px" : "0"};
-                        line-height:1.3;font-family:Arial,sans-serif;">${updateTitle}</p>
-              ${projectName ? `
-              <table cellpadding="0" cellspacing="0" border="0">
+            <td style="background:${BRAND_GRADIENT_SUBTLE};border:1.5px solid #C7D2FE;
+                       border-radius:16px;padding:24px 26px;">
+              <!-- Card header -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
                 <tr>
-                  <td style="background:#EEF2FF;border-radius:7px;padding:5px 12px;">
-                    <span style="color:#6366F1;font-size:12px;font-weight:600;
-                                 font-family:Arial,sans-serif;">📁 &nbsp;${projectName}</span>
+                  <td>
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background:${BRAND_GRADIENT};border-radius:8px;
+                                   width:28px;height:28px;text-align:center;vertical-align:middle;line-height:28px;">
+                          <span style="font-size:13px;line-height:28px;">📋</span>
+                        </td>
+                        <td style="padding-left:10px;vertical-align:middle;">
+                          <span style="color:#6366F1;font-size:11px;font-weight:700;text-transform:uppercase;
+                                       letter-spacing:0.08em;font-family:Arial,sans-serif;">New Update</span>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
+                  ${projectName ? `
+                  <td align="right">
+                    <span style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:100px;
+                                 color:#4338CA;font-size:11px;font-weight:600;padding:4px 12px;
+                                 font-family:Arial,sans-serif;">📁 ${projectName}</span>
+                  </td>` : ""}
                 </tr>
-              </table>` : ""}
+              </table>
+              <!-- Update title -->
+              <p style="color:#1E1B4B;font-size:20px;font-weight:700;margin:0;
+                        line-height:1.3;font-family:Arial,sans-serif;">${updateTitle}</p>
             </td>
           </tr>
         </table>
 
-        <!-- Feature badges row -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:30px;">
+        <!-- Three feature columns -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:36px;">
           <tr>
-            <td width="33%" align="center" style="padding:4px;">
-              <table cellpadding="0" cellspacing="0" border="0" align="center">
+            <!-- Track Progress -->
+            <td width="32%" style="padding-right:6px;vertical-align:top;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;
-                             padding:12px 10px;text-align:center;min-width:100px;">
-                    <div style="font-size:20px;line-height:1;margin-bottom:5px;">📊</div>
-                    <p style="color:#15803D;font-size:10px;font-weight:700;margin:0;
-                              font-family:Arial,sans-serif;line-height:1.4;">Live Progress<br/>Tracking</p>
+                  <td style="background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:14px;
+                             padding:16px 14px;text-align:center;">
+                    <div style="background:#DCFCE7;border-radius:10px;width:40px;height:40px;
+                                text-align:center;line-height:40px;font-size:18px;margin:0 auto 10px;">
+                      📊
+                    </div>
+                    <p style="color:#166534;font-size:11px;font-weight:700;margin:0;
+                              font-family:Arial,sans-serif;line-height:1.4;">Track<br/>Progress</p>
                   </td>
                 </tr>
               </table>
             </td>
-            <td width="33%" align="center" style="padding:4px;">
-              <table cellpadding="0" cellspacing="0" border="0" align="center">
+            <!-- Give Feedback -->
+            <td width="32%" style="padding:0 3px;vertical-align:top;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;
-                             padding:12px 10px;text-align:center;min-width:100px;">
-                    <div style="font-size:20px;line-height:1;margin-bottom:5px;">💬</div>
-                    <p style="color:#1D4ED8;font-size:10px;font-weight:700;margin:0;
-                              font-family:Arial,sans-serif;line-height:1.4;">Leave Your<br/>Feedback</p>
+                  <td style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:14px;
+                             padding:16px 14px;text-align:center;">
+                    <div style="background:#DBEAFE;border-radius:10px;width:40px;height:40px;
+                                text-align:center;line-height:40px;font-size:18px;margin:0 auto 10px;">
+                      💬
+                    </div>
+                    <p style="color:#1D4ED8;font-size:11px;font-weight:700;margin:0;
+                              font-family:Arial,sans-serif;line-height:1.4;">Leave<br/>Feedback</p>
                   </td>
                 </tr>
               </table>
             </td>
-            <td width="33%" align="center" style="padding:4px;">
-              <table cellpadding="0" cellspacing="0" border="0" align="center">
+            <!-- Approve -->
+            <td width="32%" style="padding-left:6px;vertical-align:top;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;
-                             padding:12px 10px;text-align:center;min-width:100px;">
-                    <div style="font-size:20px;line-height:1;margin-bottom:5px;">✅</div>
-                    <p style="color:#6D28D9;font-size:10px;font-weight:700;margin:0;
-                              font-family:Arial,sans-serif;line-height:1.4;">Mark as<br/>Reviewed</p>
+                  <td style="background:#F5F3FF;border:1.5px solid #DDD6FE;border-radius:14px;
+                             padding:16px 14px;text-align:center;">
+                    <div style="background:#EDE9FE;border-radius:10px;width:40px;height:40px;
+                                text-align:center;line-height:40px;font-size:18px;margin:0 auto 10px;">
+                      ✅
+                    </div>
+                    <p style="color:#5B21B6;font-size:11px;font-weight:700;margin:0;
+                              font-family:Arial,sans-serif;line-height:1.4;">Approve<br/>Deliverable</p>
                   </td>
                 </tr>
               </table>
@@ -179,32 +246,41 @@ function buildUpdateHtml(
         </table>
 
         <!-- CTA Button -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
           <tr>
             <td align="center">
-              <a href="${portalUrl}"
-                style="display:inline-block;background:${BRAND_GRADIENT};color:#ffffff;
-                       text-decoration:none;padding:16px 52px;border-radius:13px;
-                       font-size:15px;font-weight:800;letter-spacing:-0.2px;
-                       font-family:Arial,sans-serif;">
-                View Update in Portal &nbsp;→
-              </a>
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background:${BRAND_GRADIENT};border-radius:14px;
+                             box-shadow:0 8px 24px rgba(99,102,241,0.4);">
+                    <a href="${portalUrl}"
+                      style="display:block;color:#ffffff;text-decoration:none;
+                             padding:16px 56px;font-size:15px;font-weight:800;
+                             letter-spacing:-0.2px;font-family:Arial,sans-serif;
+                             white-space:nowrap;">
+                      Open Project Portal &nbsp;→
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
         </table>
 
-        <!-- Divider -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
-          <tr><td style="border-top:1px solid #E8EDF5;font-size:0;line-height:0;">&nbsp;</td></tr>
+        <!-- Bottom note -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="border-top:1px solid #F1F5F9;padding-top:22px;text-align:center;">
+              <p style="color:#94A3B8;font-size:12px;margin:0 0 6px;line-height:1.7;font-family:Arial,sans-serif;">
+                Have questions? Reply to your project manager directly.
+              </p>
+              <a href="${portalUrl}" style="color:#6366F1;font-size:12px;font-weight:600;
+                                            text-decoration:none;font-family:Arial,sans-serif;">
+                Manage notification settings →
+              </a>
+            </td>
+          </tr>
         </table>
-
-        <p style="color:#94A3B8;font-size:12px;text-align:center;margin:0;line-height:1.7;
-                  font-family:Arial,sans-serif;">
-          Questions? Just reply to your project manager or visit your portal.<br/>
-          <a href="${portalUrl}" style="color:#6366F1;text-decoration:none;font-weight:600;">
-            Manage notification preferences →
-          </a>
-        </p>
 
       </td>
     </tr>
@@ -216,115 +292,168 @@ function buildUpdateHtml(
 function buildReplyHtml(
   toName: string, projectName: string, updateTitle: string, replyMessage: string, portalUrl: string
 ): string {
+  const REPLY_GRADIENT = "linear-gradient(135deg,#0C4A6E 0%,#0369A1 45%,#0EA5E9 100%)";
   const body = `
     <!-- HEADER -->
     <tr>
-      <td style="background:linear-gradient(135deg,#0F4C8A 0%,#1D4ED8 45%,#3B82F6 100%);
-                 padding:44px 36px 38px;text-align:center;">
-        <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:26px;">
+      <td style="background:${REPLY_GRADIENT};padding:0;text-align:center;">
+        <!-- Top accent bar -->
+        <div style="height:4px;background:linear-gradient(90deg,#38BDF8,#BAE6FD,#38BDF8);"></div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
-            <td style="background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.26);
-                       border-radius:12px;padding:10px 22px;">
-              <span style="color:#fff;font-size:15px;font-weight:800;letter-spacing:-0.3px;
-                           font-family:Arial,sans-serif;">✦ ZynHive</span>
+            <td style="padding:40px 40px 44px;text-align:center;">
+              <!-- Logo pill -->
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.22);
+                             border-radius:100px;padding:8px 20px;">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background:rgba(255,255,255,0.2);border-radius:6px;
+                                   width:20px;height:20px;text-align:center;vertical-align:middle;line-height:20px;">
+                          <span style="color:#fff;font-size:7px;font-weight:900;font-family:Arial,sans-serif;">ZH</span>
+                        </td>
+                        <td style="padding-left:8px;vertical-align:middle;">
+                          <span style="color:#fff;font-size:13px;font-weight:800;letter-spacing:-0.2px;
+                                       font-family:Arial,sans-serif;">ZynHive</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Status badge -->
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:20px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.18);border-radius:100px;padding:6px 16px;">
+                    <span style="color:rgba(255,255,255,0.95);font-size:11px;font-weight:700;
+                                 letter-spacing:0.08em;text-transform:uppercase;font-family:Arial,sans-serif;">
+                      ● &nbsp;Team Reply
+                    </span>
+                  </td>
+                </tr>
+              </table>
+
+              <h1 style="color:#ffffff;font-size:28px;font-weight:800;margin:0 0 12px;line-height:1.2;
+                         letter-spacing:-0.7px;font-family:Arial,sans-serif;">
+                The Team Replied to You
+              </h1>
+              <p style="color:rgba(255,255,255,0.75);font-size:14px;margin:0;line-height:1.65;
+                        font-family:Arial,sans-serif;max-width:360px;margin-left:auto;margin-right:auto;">
+                ZynHive has responded to your feedback — tap below to continue the conversation.
+              </p>
             </td>
           </tr>
         </table>
-        <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:18px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
-            <td style="background:rgba(255,255,255,0.16);border-radius:16px;
-                       width:58px;height:58px;text-align:center;vertical-align:middle;
-                       font-size:26px;line-height:58px;">
-              💬
-            </td>
+            <td style="background:#ffffff;height:1px;font-size:0;line-height:0;"></td>
           </tr>
         </table>
-        <h1 style="color:#fff;font-size:26px;font-weight:800;margin:0 0 10px;line-height:1.2;
-                   letter-spacing:-0.6px;font-family:Arial,sans-serif;">Team Replied to You</h1>
-        <p style="color:rgba(255,255,255,0.72);font-size:14px;margin:0;line-height:1.6;
-                  font-family:Arial,sans-serif;">
-          The ZynHive team responded to your feedback
-        </p>
       </td>
     </tr>
 
     <!-- BODY -->
     <tr>
-      <td style="padding:38px 36px 32px;background:#ffffff;">
+      <td style="padding:40px 40px 36px;background:#ffffff;">
 
-        <p style="color:#1E293B;font-size:16px;font-weight:500;margin:0 0 28px;
-                  line-height:1.65;font-family:Arial,sans-serif;">
-          Hello <strong style="color:#0F172A;">${toName}</strong> 👋<br/>
-          <span style="color:#64748B;font-size:14px;">
-            The ZynHive team replied to your feedback${updateTitle ? ` on <strong style="color:#1E293B;">${updateTitle}</strong>` : ""}.
-          </span>
+        <!-- Greeting -->
+        <p style="color:#0F172A;font-size:17px;font-weight:600;margin:0 0 6px;
+                  line-height:1.5;font-family:Arial,sans-serif;">
+          Hello, ${toName} 👋
+        </p>
+        <p style="color:#64748B;font-size:14px;margin:0 0 28px;line-height:1.65;font-family:Arial,sans-serif;">
+          The ZynHive team replied to your feedback${updateTitle ? ` on <strong style="color:#1E293B;">${updateTitle}</strong>` : ""}.
         </p>
 
-        <!-- Context card -->
+        <!-- Context breadcrumb -->
         ${updateTitle ? `
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
           <tr>
             <td style="background:#F8FAFF;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;">
-              <p style="color:#94A3B8;font-size:10px;font-weight:700;text-transform:uppercase;
-                        letter-spacing:0.07em;margin:0 0 4px;font-family:Arial,sans-serif;">Regarding update</p>
-              <p style="color:#475569;font-size:13px;font-weight:600;margin:0;
-                        font-family:Arial,sans-serif;">${updateTitle}</p>
-              ${projectName ? `<p style="color:#94A3B8;font-size:12px;margin:4px 0 0;font-family:Arial,sans-serif;">📁 ${projectName}</p>` : ""}
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="color:#CBD5E1;font-size:11px;font-family:Arial,sans-serif;vertical-align:middle;">
+                    Regarding update &nbsp;›
+                  </td>
+                  <td style="padding-left:8px;vertical-align:middle;">
+                    <span style="color:#334155;font-size:13px;font-weight:600;
+                                 font-family:Arial,sans-serif;">${updateTitle}</span>
+                  </td>
+                  ${projectName ? `
+                  <td style="padding-left:12px;vertical-align:middle;">
+                    <span style="color:#94A3B8;font-size:11px;font-family:Arial,sans-serif;">· 📁 ${projectName}</span>
+                  </td>` : ""}
+                </tr>
+              </table>
             </td>
           </tr>
         </table>` : ""}
 
-        <!-- Reply message -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+        <!-- Reply bubble -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
           <tr>
-            <td style="background:#EFF6FF;border:1px solid #BFDBFE;border-left:4px solid #3B82F6;
-                       border-radius:14px;padding:22px 24px;">
-              <!-- Team avatar row -->
-              <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
+            <td style="background:#F0F9FF;border:1.5px solid #BAE6FD;border-left:4px solid #0EA5E9;
+                       border-radius:16px;padding:24px 26px;">
+              <!-- Sender row -->
+              <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
                 <tr>
-                  <td style="background:linear-gradient(135deg,#3B82F6,#6366F1);border-radius:8px;
-                             width:30px;height:30px;text-align:center;vertical-align:middle;line-height:30px;">
-                    <span style="color:#fff;font-size:9px;font-weight:800;font-family:Arial,sans-serif;">ZH</span>
+                  <td style="background:${REPLY_GRADIENT};border-radius:9px;
+                             width:34px;height:34px;text-align:center;vertical-align:middle;line-height:34px;">
+                    <span style="color:#fff;font-size:10px;font-weight:900;font-family:Arial,sans-serif;">ZH</span>
                   </td>
                   <td style="padding-left:10px;vertical-align:middle;">
-                    <span style="color:#1D4ED8;font-size:12px;font-weight:700;
+                    <span style="color:#0369A1;font-size:13px;font-weight:700;
                                  font-family:Arial,sans-serif;">ZynHive Team</span>
+                    <br/>
+                    <span style="color:#94A3B8;font-size:11px;font-family:Arial,sans-serif;">Project Team</span>
                   </td>
                 </tr>
               </table>
-              <p style="color:#1E293B;font-size:14px;line-height:1.75;margin:0;
-                        font-family:Arial,sans-serif;">${replyMessage}</p>
+              <!-- Message content -->
+              <p style="color:#1E293B;font-size:14px;line-height:1.8;margin:0;
+                        font-family:Arial,sans-serif;white-space:pre-line;">${replyMessage}</p>
             </td>
           </tr>
         </table>
 
         <!-- CTA Button -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
           <tr>
             <td align="center">
-              <a href="${portalUrl}"
-                style="display:inline-block;background:linear-gradient(135deg,#1D4ED8 0%,#3B82F6 100%);
-                       color:#ffffff;text-decoration:none;padding:16px 52px;border-radius:13px;
-                       font-size:15px;font-weight:800;letter-spacing:-0.2px;
-                       font-family:Arial,sans-serif;">
-                View Full Conversation &nbsp;→
-              </a>
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background:${REPLY_GRADIENT};border-radius:14px;
+                             box-shadow:0 8px 24px rgba(14,165,233,0.35);">
+                    <a href="${portalUrl}"
+                      style="display:block;color:#ffffff;text-decoration:none;
+                             padding:16px 56px;font-size:15px;font-weight:800;
+                             letter-spacing:-0.2px;font-family:Arial,sans-serif;
+                             white-space:nowrap;">
+                      View Full Conversation &nbsp;→
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
         </table>
 
-        <!-- Divider -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
-          <tr><td style="border-top:1px solid #E8EDF5;font-size:0;line-height:0;">&nbsp;</td></tr>
+        <!-- Bottom note -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="border-top:1px solid #F1F5F9;padding-top:22px;text-align:center;">
+              <p style="color:#94A3B8;font-size:12px;margin:0 0 6px;line-height:1.7;font-family:Arial,sans-serif;">
+                You can reply directly from your project portal anytime.
+              </p>
+              <a href="${portalUrl}" style="color:#0EA5E9;font-size:12px;font-weight:600;
+                                            text-decoration:none;font-family:Arial,sans-serif;">
+                Open my portal →
+              </a>
+            </td>
+          </tr>
         </table>
-
-        <p style="color:#94A3B8;font-size:12px;text-align:center;margin:0;line-height:1.7;
-                  font-family:Arial,sans-serif;">
-          You can reply directly from your project portal.<br/>
-          <a href="${portalUrl}" style="color:#6366F1;text-decoration:none;font-weight:600;">
-            Open my portal →
-          </a>
-        </p>
 
       </td>
     </tr>
