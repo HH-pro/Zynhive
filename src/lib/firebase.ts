@@ -186,6 +186,7 @@ export type FirestoreClientUpdate = {
   completionPercent: number;
   imageUrl?:         string;
   category?:         "seo" | "digital-marketing" | "general";
+  clientApproved?:   boolean;
   createdAt?:        Timestamp;
   updatedAt?:        Timestamp;
 };
