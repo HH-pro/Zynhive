@@ -1,7 +1,7 @@
 // ─── src/pages/ClientPage.tsx ─────────────────────────────────────────────────
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  fetchClientById, fetchClientUpdates,
+  fetchClientById, subscribeClientUpdates,
   fetchUpdateFeedback, createUpdateFeedback,
   type FirestoreClient, type FirestoreClientUpdate, type FirestoreUpdateFeedback,
 } from "../lib/firebase";
@@ -333,6 +333,32 @@ const PORTAL_CSS = `
   .cp-feedback-msg.from-client { align-self: flex-start; }
   .cp-feedback-msg.from-team   { align-self: flex-end; }
 
+  /* Notification popup */
+  .cp-notif-popup {
+    display: flex; align-items: flex-start; gap: 12;
+    padding: 14px 16px;
+    background: var(--cp-bg-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(99,102,241,0.28);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.38), 0 0 0 1px rgba(99,102,241,0.1);
+    max-width: 320px; width: 100%;
+    animation: cp-slide-right .35s cubic-bezier(.16,1,.3,1) both;
+  }
+  @keyframes cp-slide-right {
+    from { opacity: 0; transform: translateX(32px) scale(.96); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+  }
+  .cp-notif-dismiss {
+    background: transparent; border: none; cursor: pointer;
+    width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cp-text-dim); font-size: 16px; line-height: 1;
+    transition: background .15s, color .15s;
+  }
+  .cp-notif-dismiss:hover { background: rgba(239,68,68,.1); color: #EF4444; }
+
   /* Responsive */
   @media (max-width: 640px) {
     .cp-hide-mobile { display: none !important; }
@@ -344,6 +370,7 @@ const PORTAL_CSS = `
     .cp-ring-col  { display: none !important; }
     .cp-modal-backdrop { padding: 0; align-items: flex-end; }
     .cp-modal { border-radius: 20px 20px 0 0; max-height: 92vh; max-width: 100%; }
+    .cp-notif-popup { max-width: calc(100vw - 32px); }
   }
 `;
 
@@ -955,6 +982,34 @@ function SectionBlock({ sectionKey, items, latestId, onCardClick }: {
   );
 }
 
+// ─── Notification Popup ───────────────────────────────────────────────────────
+type ClientNotif = { id: string; title: string; message: string };
+
+function ClientNotifToast({ notif, onDismiss }: { notif: ClientNotif; onDismiss: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 6000);
+    return () => clearTimeout(t);
+  }, [onDismiss]);
+
+  return (
+    <div className="cp-notif-popup">
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+        🔔
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 3 }}>New Update</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cp-text-h)", marginBottom: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{notif.title}</div>
+        {notif.message && (
+          <div style={{ fontSize: 12, color: "var(--cp-text-muted)", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
+            {notif.message}
+          </div>
+        )}
+      </div>
+      <button className="cp-notif-dismiss" onClick={onDismiss}>×</button>
+    </div>
+  );
+}
+
 // ─── Updates View ─────────────────────────────────────────────────────────────
 function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }: {
   client: FirestoreClient; isDark: boolean; onToggleTheme: () => void; onLogout: () => void;
@@ -966,9 +1021,22 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [notifEmail,     setNotifEmail]     = useState(initialClient.notificationEmail ?? "");
   const [emailSaving,    setEmailSaving]    = useState(false);
+  const [notifications,  setNotifications]  = useState<ClientNotif[]>([]);
+
+  const dismissNotif = useCallback((id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  }, []);
 
   useEffect(() => {
-    fetchClientUpdates(client.id!).then(setUpdates).catch(() => {}).finally(() => setLoading(false));
+    const unsub = subscribeClientUpdates(
+      client.id!,
+      (data) => { setUpdates(data); setLoading(false); },
+      (newUpdate) => {
+        const id = newUpdate.id ?? Date.now().toString();
+        setNotifications((prev) => [...prev, { id, title: newUpdate.title, message: newUpdate.description }]);
+      }
+    );
+    return unsub;
   }, [client.id]);
 
   async function handleSaveEmailSettings() {
@@ -1005,6 +1073,15 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
     <div className="cp-fade-in" style={{ minHeight: "100vh" }}>
       {selectedUpdate && (
         <UpdateDetailModal u={selectedUpdate} client={client} onClose={() => setSelectedUpdate(null)} />
+      )}
+
+      {/* Real-time notification popups */}
+      {notifications.length > 0 && (
+        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999, display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
+          {notifications.map((n) => (
+            <ClientNotifToast key={n.id} notif={n} onDismiss={() => dismissNotif(n.id)} />
+          ))}
+        </div>
       )}
 
       {/* Email notification modal */}

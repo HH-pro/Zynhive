@@ -9,14 +9,16 @@ export default async function handler(req: IncomingMessage & { body?: unknown },
   }
 
   const body = req.body as {
+    type?: "update" | "reply";
     toEmail: string;
     toName: string;
     projectName: string;
     updateTitle: string;
     portalUrl: string;
+    replyMessage?: string;
   };
 
-  const { toEmail, toName, projectName, updateTitle, portalUrl } = body ?? {};
+  const { type = "update", toEmail, toName, projectName, updateTitle, portalUrl, replyMessage } = body ?? {};
 
   if (!toEmail || !toName) {
     res.writeHead(400, { "Content-Type": "application/json" });
@@ -38,7 +40,34 @@ export default async function handler(req: IncomingMessage & { body?: unknown },
     auth: { user, pass: password },
   });
 
-  const html = `
+  const html = type === "reply" ? `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;padding:32px 24px;border-radius:12px;">
+      <div style="background:linear-gradient(135deg,#6366F1,#818CF8);border-radius:10px;padding:24px;text-align:center;margin-bottom:24px;">
+        <div style="width:40px;height:40px;background:rgba(255,255,255,.2);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px;">
+          <span style="font-size:16px;font-weight:800;color:white;">ZH</span>
+        </div>
+        <h1 style="color:white;font-size:20px;font-weight:800;margin:0;">Team Replied to Your Feedback</h1>
+      </div>
+
+      <p style="color:#334155;font-size:15px;margin:0 0 8px;">Hello <strong>${toName}</strong>,</p>
+      <p style="color:#64748b;font-size:14px;line-height:1.7;margin:0 0 20px;">
+        The ZynHive team has replied to your feedback${updateTitle ? ` on <strong>${updateTitle}</strong>` : ""}.
+      </p>
+
+      <div style="background:white;border:1px solid #e2e8f0;border-left:3px solid #6366F1;border-radius:10px;padding:18px 20px;margin-bottom:20px;">
+        ${projectName ? `<div style="margin-bottom:12px;"><span style="font-size:11px;font-weight:700;color:#6366F1;text-transform:uppercase;letter-spacing:.06em;">Project</span><br/><span style="font-size:14px;font-weight:600;color:#0f172a;">${projectName}</span></div>` : ""}
+        ${replyMessage ? `<div><span style="font-size:11px;font-weight:700;color:#6366F1;text-transform:uppercase;letter-spacing:.06em;">Reply</span><br/><span style="font-size:14px;color:#334155;line-height:1.7;">${replyMessage}</span></div>` : ""}
+      </div>
+
+      <a href="${portalUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#6366F1,#818CF8);color:white;text-decoration:none;padding:13px 0;border-radius:9px;font-size:14px;font-weight:700;margin-bottom:20px;">
+        View Full Conversation →
+      </a>
+
+      <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">
+        — ZynHive Team &nbsp;·&nbsp; Your Digital Growth Partner
+      </p>
+    </div>
+  ` : `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;padding:32px 24px;border-radius:12px;">
       <div style="background:linear-gradient(135deg,#6366F1,#818CF8);border-radius:10px;padding:24px;text-align:center;margin-bottom:24px;">
         <div style="width:40px;height:40px;background:rgba(255,255,255,.2);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px;">
@@ -71,7 +100,9 @@ export default async function handler(req: IncomingMessage & { body?: unknown },
     await transporter.sendMail({
       from:    `"ZynHive" <${user}>`,
       to:      toEmail,
-      subject: `New Update: ${updateTitle || projectName || "Your Project"}`,
+      subject: type === "reply"
+        ? `ZynHive Team replied to your feedback${updateTitle ? ` on "${updateTitle}"` : ""}`
+        : `New Update: ${updateTitle || projectName || "Your Project"}`,
       html,
     });
 

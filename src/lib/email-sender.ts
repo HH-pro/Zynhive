@@ -11,6 +11,7 @@ export interface SendEmailPayload {
   to:       string;
   subject:  string;
   body:     string;
+  html?:    string;
   replyTo?: string;
 }
 
@@ -66,6 +67,7 @@ export async function sendEmailDirect(
         to:       [payload.to],
         subject:  payload.subject,
         text:     payload.body,
+        ...(payload.html ? { html: payload.html } : {}),
         reply_to: payload.replyTo || REPLY_TO || FROM_EMAIL,
       }),
     });

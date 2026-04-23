@@ -7,6 +7,7 @@ import {
 import {
   getFirestore, collection, addDoc, updateDoc, deleteDoc, setDoc,
   doc, getDocs, getDoc, query, orderBy, serverTimestamp, Timestamp,
+  onSnapshot,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -257,3 +258,53 @@ export async function fetchNotificationSettings(): Promise<NotificationSettings 
 }
 export const saveNotificationSettings = (data: NotificationSettings) =>
   setDoc(doc(db, SETTINGS_COL, "notifications"), data);
+
+// ─── Real-time Subscriptions ──────────────────────────────────────────────────
+
+// Subscribes to client_updates for a specific client.
+// onData fires with all updates on every change.
+// onNewUpdate fires only for updates added after the initial load.
+export function subscribeClientUpdates(
+  clientId: string,
+  onData: (updates: FirestoreClientUpdate[]) => void,
+  onNewUpdate?: (update: FirestoreClientUpdate) => void
+): () => void {
+  let initialized = false;
+  return onSnapshot(collection(db, CLIENT_UPDATES_COL), (snap) => {
+    const updates = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as FirestoreClientUpdate))
+      .filter((u) => u.clientId === clientId)
+      .sort((a, b) => {
+        const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+        const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+        return tb - ta;
+      });
+    if (initialized && onNewUpdate) {
+      snap.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          const u = { id: change.doc.id, ...change.doc.data() } as FirestoreClientUpdate;
+          if (u.clientId === clientId) onNewUpdate(u);
+        }
+      });
+    }
+    initialized = true;
+    onData(updates);
+  });
+}
+
+// Subscribes to update_feedback. onNewFeedback fires only for client-submitted
+// feedback added after the initial load.
+export function subscribeNewFeedbackFromClients(
+  onNewFeedback: (feedback: FirestoreUpdateFeedback) => void
+): () => void {
+  let initialized = false;
+  return onSnapshot(collection(db, UPDATE_FEEDBACK_COL), (snap) => {
+    if (!initialized) { initialized = true; return; }
+    snap.docChanges().forEach((change) => {
+      if (change.type === "added") {
+        const f = { id: change.doc.id, ...change.doc.data() } as FirestoreUpdateFeedback;
+        if (f.fromClient) onNewFeedback(f);
+      }
+    });
+  });
+}

@@ -3,10 +3,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   fetchClients, createClient, updateClient, deleteClient,
   fetchClientUpdates, createClientUpdate, updateClientUpdate, deleteClientUpdate,
-  fetchUpdateFeedback, createUpdateFeedback,
+  fetchUpdateFeedback, createUpdateFeedback, subscribeNewFeedbackFromClients,
   type FirestoreClient, type FirestoreClientUpdate, type FirestoreUpdateFeedback,
 } from "../../lib/firebase";
-import { sendUpdateNotificationEmail } from "../../lib/email";
+import { sendUpdateNotificationEmail, sendReplyNotificationEmail } from "../../lib/email";
 import { uploadToCloudinary } from "../../lib/cloudinary";
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -881,6 +881,19 @@ function UpdatesPanel({
       setFbReplyMap((prev) => ({ ...prev, [u.id!]: "" }));
       const updated = await fetchUpdateFeedback(u.id);
       setFeedbackMap((prev) => ({ ...prev, [u.id!]: updated }));
+
+      // Email client about the team reply
+      const toEmail = client.notificationEmail || client.email;
+      if (toEmail) {
+        sendReplyNotificationEmail({
+          toEmail,
+          toName:       client.name,
+          projectName:  client.projectName || "Your Project",
+          updateTitle:  u.title,
+          replyMessage: msg,
+          portalUrl:    `${window.location.origin}/client/${client.id}`,
+        });
+      }
     } catch { /* ignore */ }
     finally { setFbSendingId(null); }
   }
@@ -1287,6 +1300,55 @@ function ClientRow({
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// ─── Admin Feedback Notification ─────────────────────────────────────────────
+type AdminFbNotif = { id: string; clientName: string; message: string };
+
+const ADMIN_NOTIF_STYLE = `
+  @keyframes adminNotifSlide {
+    from { opacity: 0; transform: translateX(28px) scale(.96); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+  }
+  .admin-notif-popup {
+    display: flex; align-items: flex-start; gap: 12;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 0.5px solid var(--border2);
+    border-left: 3px solid var(--accent);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    max-width: 320px; width: 100%;
+    animation: adminNotifSlide .3s cubic-bezier(.16,1,.3,1) both;
+  }
+`;
+
+function AdminFbNotifToast({ notif, onDismiss }: { notif: AdminFbNotif; onDismiss: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 7000);
+    return () => clearTimeout(t);
+  }, [onDismiss]);
+
+  return (
+    <div className="admin-notif-popup">
+      <div style={{ width: 34, height: 34, borderRadius: 9, background: "var(--accent-pale)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>
+        💬
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 3 }}>Client Feedback</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", marginBottom: 3 }}>{notif.clientName}</div>
+        <div style={{ fontSize: 12, color: "var(--ink3)", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
+          {notif.message}
+        </div>
+      </div>
+      <button
+        onClick={onDismiss}
+        style={{ background: "transparent", border: "none", cursor: "pointer", width: 22, height: 22, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink4)", fontSize: 16, lineHeight: 1, flexShrink: 0 }}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
 // MAIN CLIENT TAB
 // ═════════════════════════════════════════════════════════════════════════════
 
@@ -1301,6 +1363,24 @@ export function ClientTab({ showToast, openAdd = false, onOpenAddDone }: {
   const [deleteTarget,  setDeleteTarget]  = useState<FirestoreClient | null>(null);
   const [viewClient,    setViewClient]    = useState<FirestoreClient | null>(null);
   const [search,        setSearch]        = useState("");
+  const [fbNotifs,      setFbNotifs]      = useState<AdminFbNotif[]>([]);
+
+  const clientsRef = useRef<FirestoreClient[]>([]);
+  clientsRef.current = clients;
+
+  const dismissFbNotif = useCallback((id: string) => {
+    setFbNotifs((prev) => prev.filter((n) => n.id !== id));
+  }, []);
+
+  useEffect(() => {
+    const unsub = subscribeNewFeedbackFromClients((fb) => {
+      const client = clientsRef.current.find((c) => c.id === fb.clientId);
+      const clientName = client?.name ?? fb.senderName ?? "A client";
+      const id = fb.id ?? Date.now().toString();
+      setFbNotifs((prev) => [...prev, { id, clientName, message: fb.message }]);
+    });
+    return unsub;
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1344,6 +1424,17 @@ export function ClientTab({ showToast, openAdd = false, onOpenAddDone }: {
 
   return (
     <>
+      <style>{ADMIN_NOTIF_STYLE}</style>
+
+      {/* Real-time feedback notifications */}
+      {fbNotifs.length > 0 && (
+        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999, display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
+          {fbNotifs.map((n) => (
+            <AdminFbNotifToast key={n.id} notif={n} onDismiss={() => dismissFbNotif(n.id)} />
+          ))}
+        </div>
+      )}
+
       <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
 
         {/* Stats */}
