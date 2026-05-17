@@ -58,15 +58,16 @@ function DeleteConfirm({
 
 // ─── Member card (grid view) ──────────────────────────────────────────────────
 function MemberCard({
-  member, onEdit, onDelete, onMoveUp, onMoveDown, isFirst, isLast,
+  member, onEdit, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onCopyLink,
 }: {
-  member:     FirestoreMember;
-  onEdit:     (m: FirestoreMember) => void;
-  onDelete:   (m: FirestoreMember) => void;
-  onMoveUp:   (m: FirestoreMember) => void;
-  onMoveDown: (m: FirestoreMember) => void;
-  isFirst:    boolean;
-  isLast:     boolean;
+  member:      FirestoreMember;
+  onEdit:      (m: FirestoreMember) => void;
+  onDelete:    (m: FirestoreMember) => void;
+  onMoveUp:    (m: FirestoreMember) => void;
+  onMoveDown:  (m: FirestoreMember) => void;
+  isFirst:     boolean;
+  isLast:      boolean;
+  onCopyLink:  (m: FirestoreMember) => void;
 }) {
   return (
     <div
@@ -131,6 +132,17 @@ function MemberCard({
               </svg>
             </button>
             <button
+              onClick={() => onCopyLink(member)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--ink4)]
+                hover:text-[var(--cyan)] hover:bg-[var(--cyan)]/10 transition-all"
+              title="Copy Portal Link"
+            >
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                <rect x="1" y="3.5" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1"/>
+                <path d="M4 1h6v6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button
               onClick={() => onDelete(member)}
               className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--ink4)]
                 hover:text-red-400 hover:bg-red-400/10 transition-all"
@@ -172,7 +184,7 @@ function MemberCard({
           )}
         </div>
 
-        {/* Order controls */}
+        {/* Order controls + portal link */}
         <div className="flex gap-1.5 mt-4 pt-4 border-t border-[var(--border)]">
           <button
             onClick={() => onMoveUp(member)}
@@ -181,7 +193,7 @@ function MemberCard({
               text-[var(--ink4)] hover:text-[var(--ink)] hover:border-[var(--ink3)]
               disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
-            ↑ Move Up
+            ↑ Up
           </button>
           <button
             onClick={() => onMoveDown(member)}
@@ -190,7 +202,16 @@ function MemberCard({
               text-[var(--ink4)] hover:text-[var(--ink)] hover:border-[var(--ink3)]
               disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
-            ↓ Move Down
+            ↓ Down
+          </button>
+          <button
+            onClick={() => onCopyLink(member)}
+            className="flex-1 py-1.5 rounded-lg text-[10px] font-mono border border-[var(--border2)]
+              text-[var(--cyan)] hover:bg-[var(--cyan)]/10 hover:border-[var(--cyan)]
+              transition-all"
+            title="Copy member portal link"
+          >
+            🔗 Portal
           </button>
         </div>
       </div>
@@ -244,6 +265,14 @@ export function TeamTab({ showToast }: Props) {
   function handleMoveDown(m: FirestoreMember) {
     const idx = members.findIndex((x) => x.id === m.id);
     if (idx < members.length - 1) swapOrder(members[idx], members[idx + 1]);
+  }
+
+  function handleCopyLink(m: FirestoreMember) {
+    if (!m.id) return;
+    const url = `${window.location.origin}/member/${m.id}`;
+    navigator.clipboard.writeText(url)
+      .then(() => showToast(`Portal link copied for ${m.name}`))
+      .catch(() => showToast("Failed to copy link", "error"));
   }
 
   async function handleDelete() {
@@ -362,6 +391,7 @@ export function TeamTab({ showToast }: Props) {
               onMoveDown={handleMoveDown}
               isFirst={i === 0}
               isLast={i === members.length - 1}
+              onCopyLink={handleCopyLink}
             />
           ))}
         </div>

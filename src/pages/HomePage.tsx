@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
-import { useReveal }    from "../hooks/index";
-import { HeroSection }  from "../sections/HeroSection";
+import { Helmet } from "react-helmet-async";
+import { useReveal } from "../hooks/index";
+import { HeroSection } from "../sections/HeroSection";
 import {
   MarqueeSection,
   IntroSection,
@@ -11,13 +12,60 @@ import {
   CTASection,
 } from "../sections/HomeSections";
 
-// ─── Ambient floating orbs (background atmosphere) ───────────────────────────
+// ─── SEO Meta Tags ────────────────────────────────────────────────────────────
+function HomePageSEO() {
+  const title       = "Your Agency Name – Web Design & Development";
+  const description = "We build fast, modern, and scalable web experiences. Explore our services, process, and tech stack.";
+  const canonical   = "https://www.zynhive.com/";
+  const ogImage     = "https://www.zynhive.com/og-home.jpg";
+
+  return (
+    <Helmet>
+      {/* ── Primary ── */}
+      <title>{title}</title>
+      <meta name="description"        content={description} />
+      <meta name="robots"             content="index, follow" />
+      <link rel="canonical"           href={canonical} />
+
+      {/* ── Open Graph ── */}
+      <meta property="og:type"        content="website" />
+      <meta property="og:url"         content={canonical} />
+      <meta property="og:title"       content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image"       content={ogImage} />
+
+      {/* ── Twitter Card ── */}
+      <meta name="twitter:card"        content="summary_large_image" />
+      <meta name="twitter:title"       content={title} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image"       content={ogImage} />
+
+      {/* ── JSON-LD Structured Data ── */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type":    "WebSite",
+          name:       "Your Agency Name",
+          url:        canonical,
+          description,
+          potentialAction: {
+            "@type":       "SearchAction",
+            target:        `${canonical}search?q={search_term_string}`,
+            "query-input": "required name=search_term_string",
+          },
+        })}
+      </script>
+    </Helmet>
+  );
+}
+
+// ─── Ambient floating orbs ────────────────────────────────────────────────────
 function FloatingOrbs() {
   const orbs = [
-    { w: 480, h: 480, top: "8%",  left: "-8%",  color: "rgba(74,108,247,0.06)",  dur: "28s", delay: "0s"   },
-    { w: 380, h: 380, top: "55%", right: "-6%", color: "rgba(0,212,255,0.05)",   dur: "34s", delay: "6s"   },
-    { w: 320, h: 320, top: "30%", left: "42%",  color: "rgba(107,143,255,0.04)", dur: "22s", delay: "11s"  },
-    { w: 260, h: 260, top: "75%", left: "15%",  color: "rgba(0,212,255,0.04)",   dur: "26s", delay: "3s"   },
+    { w: 480, h: 480, top: "8%",  left: "-8%",  color: "rgba(74,108,247,0.06)",  dur: "28s", delay: "0s"  },
+    { w: 380, h: 380, top: "55%", right: "-6%", color: "rgba(0,212,255,0.05)",   dur: "34s", delay: "6s"  },
+    { w: 320, h: 320, top: "30%", left: "42%",  color: "rgba(107,143,255,0.04)", dur: "22s", delay: "11s" },
+    { w: 260, h: 260, top: "75%", left: "15%",  color: "rgba(0,212,255,0.04)",   dur: "26s", delay: "3s"  },
   ];
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
@@ -41,7 +89,7 @@ function FloatingOrbs() {
   );
 }
 
-// ─── Gradient separator between sections ─────────────────────────────────────
+// ─── Gradient separator ───────────────────────────────────────────────────────
 function SectionDivider() {
   const ref  = useRef<HTMLDivElement>(null);
   const done = useRef(false);
@@ -84,31 +132,35 @@ export function HomePage() {
   useReveal();
 
   return (
-    <main className="relative">
-      <FloatingOrbs />
+    <>
+      <HomePageSEO />
 
-      <div className="relative" style={{ zIndex: 1 }}>
-        <HeroSection />
-        <MarqueeSection />
+      <main className="relative">
+        <FloatingOrbs />
 
-        <SectionDivider />
-        <IntroSection />
+        <div className="relative" style={{ zIndex: 1 }}>
+          <HeroSection />
+          <MarqueeSection />
 
-        <SectionDivider />
-        <ServicesPreviewSection />
+          <SectionDivider />
+          <IntroSection />
 
-        <SectionDivider />
-        <ProcessSection />
+          <SectionDivider />
+          <ServicesPreviewSection />
 
-        <SectionDivider />
-        <TechSection />
+          <SectionDivider />
+          <ProcessSection />
 
-        <SectionDivider />
-        <TestimonialsSection />
+          <SectionDivider />
+          <TechSection />
 
-        <SectionDivider />
-        <CTASection />
-      </div>
-    </main>
+          <SectionDivider />
+          <TestimonialsSection />
+
+          <SectionDivider />
+          <CTASection />
+        </div>
+      </main>
+    </>
   );
 }

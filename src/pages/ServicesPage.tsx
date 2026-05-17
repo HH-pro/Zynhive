@@ -35,13 +35,13 @@ export function ServicesPage() {
           content="web development, UI UX design, AI development, SaaS development, React agency"
         />
 
-        <link rel="canonical" href="https://yourdomain.com/services" />
+        <link rel="canonical" href="https://zynhive.com/services" />
 
         {/* Open Graph */}
         <meta property="og:title" content="ZynHive Services" />
         <meta property="og:description" content="Build & scale your business with ZynHive." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://yourdomain.com/services" />
+        <meta property="og:url" content="https://zynhive.com/services" />
 
         {/* Schema */}
         <script type="application/ld+json">

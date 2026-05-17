@@ -51,6 +51,10 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /tasks/{taskId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -15,6 +15,7 @@ const TeamPage      = lazy(() => import("./pages/TeamPage").then((m) => ({ defau
 const ContactPage   = lazy(() => import("./pages/ContactPage").then((m) => ({ default: m.ContactPage })));
 const AdminPage     = lazy(() => import("./pages/admin/AdminPage").then((m) => ({ default: m.AdminPage })));
 const ClientPage    = lazy(() => import("./pages/ClientPage").then((m) => ({ default: m.ClientPage })));
+const MemberPage    = lazy(() => import("./pages/MemberPage").then((m) => ({ default: m.MemberPage })));
 
 // ─── Scroll progress bar ──────────────────────────────────────────────────────
 function ScrollProgress() {
@@ -117,6 +118,7 @@ function useRouter() {
 // ─── Whether the current path is the admin section ────────────────────────────
 const isAdminPath  = (path: string) => path === "/admin" || path.startsWith("/admin/");
 const isClientPath = (path: string) => path.startsWith("/client");
+const isMemberPath = (path: string) => path.startsWith("/member");
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 function Router({ path }: { path: string }) {
@@ -159,7 +161,7 @@ export default function App() {
 
   // Show splash only once per session (skip for admin)
   const [splashDone, setSplashDone] = useState(
-    () => isAdminPath(window.location.pathname) || isClientPath(window.location.pathname) || sessionStorage.getItem("zyn-splash") === "1"
+    () => isAdminPath(window.location.pathname) || isClientPath(window.location.pathname) || isMemberPath(window.location.pathname) || sessionStorage.getItem("zyn-splash") === "1"
   );
 
   const handleSplashDone = () => {
@@ -179,6 +181,14 @@ export default function App() {
     return (
       <Suspense fallback={<PageLoader />}>
         <ClientPage />
+      </Suspense>
+    );
+  }
+
+  if (isMemberPath(path)) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <MemberPage />
       </Suspense>
     );
   }
