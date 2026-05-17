@@ -1,10 +1,12 @@
 // ─── src/pages/admin/AdminDashboard.tsx ─────────────────────────────────────
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   adminLogout, fetchProjects, deleteProject,
   subscribePendingReviews, updateReview, createClientUpdate,
   fetchClients, fetchAdminSettings, saveAdminSettings,
-  type FirestoreProject, type FirestoreReview, type FirestoreClient,
+  logActivity, subscribeActivityLog,
+  type FirestoreProject, type FirestoreReview, type FirestoreClient, type ActivityLog,
 } from "../../lib/firebase";
 import { ProjectForm }        from "../../components/admin/ProjectForm";
 import { TeamTab }            from "../../components/admin/TeamTab";
@@ -86,7 +88,10 @@ const ADMIN_KF = `
   @keyframes toastIn       { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
   @keyframes pulseLoad     { 0%,100% { opacity:.45; } 50% { opacity:.9; } }
   @keyframes slideInRight  { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+  @keyframes slideUpFade   { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
   @keyframes bellShake     { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-12deg)} 40%{transform:rotate(12deg)} 60%{transform:rotate(-8deg)} 80%{transform:rotate(8deg)} }
+  @keyframes glowPulse     { 0%,100%{box-shadow:0 0 6px rgba(124,58,237,.5)} 50%{box-shadow:0 0 18px rgba(124,58,237,.9),0 0 32px rgba(124,58,237,.4)} }
+  @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 `;
 function KFInjector() {
   useEffect(() => {
@@ -236,6 +241,19 @@ const Ic = {
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.1"/>
       <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.93 2.93l1.06 1.06M10.01 10.01l1.06 1.06M2.93 11.07l1.06-1.06M10.01 3.99l1.06-1.06" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  ),
+  History: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M1.5 7a5.5 5.5 0 101-3M1.5 1v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M7 4.5V7l2 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  ),
+  BarChart: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <rect x="1" y="8" width="3" height="5" rx="0.8" stroke="currentColor" strokeWidth="1.1"/>
+      <rect x="5.5" y="5" width="3" height="8" rx="0.8" stroke="currentColor" strokeWidth="1.1"/>
+      <rect x="10" y="2" width="3" height="11" rx="0.8" stroke="currentColor" strokeWidth="1.1"/>
     </svg>
   ),
 };
@@ -390,44 +408,68 @@ function Toast({ msg, type, onClose }: { msg: string; type: "success" | "error";
   );
 }
 
-// ─── Delete confirm ───────────────────────────────────────────────────────────
+// ─── Delete confirm (type-to-confirm) ────────────────────────────────────────
 function DeleteConfirm({ title, onConfirm, onCancel }: {
   title: string; onConfirm: () => void; onCancel: () => void;
 }) {
+  const [typed, setTyped] = useState("");
+  const confirmed = typed.trim().toLowerCase() === title.trim().toLowerCase();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}
       onClick={onCancel}>
-      <div className="w-full max-w-[360px] rounded-2xl p-7 text-center"
+      <div className="w-full max-w-[380px] rounded-2xl p-7"
         style={{
-          background: "var(--bg-card)",
-          border: "0.5px solid var(--border2)",
-          boxShadow: "var(--shadow-lg)",
+          background: "var(--bg-panel)",
+          border: "1px solid rgba(248,113,113,0.2)",
+          boxShadow: "var(--shadow-lg), 0 0 0 1px rgba(248,113,113,0.1)",
           animation: "fadeScaleIn .22s cubic-bezier(0.16,1,0.3,1) both",
         }}
         onClick={(e) => e.stopPropagation()}>
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4"
-          style={{ background: "var(--red-pale)", border: "0.5px solid rgba(239,68,68,0.25)" }}>
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-            <path d="M3 7h14M8 7V4.5h4V7M6 7l1 11h6l1-11" stroke="var(--red)" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(248,113,113,0.10)", border: "1px solid rgba(248,113,113,0.2)" }}>
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+              <path d="M3 7h14M8 7V4.5h4V7M6 7l1 11h6l1-11" stroke="var(--red)" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h3 className="font-semibold text-[15px]" style={{ color: "var(--ink)" }}>Confirm deletion</h3>
+            <p className="text-[12px]" style={{ color: "var(--ink4)" }}>This action cannot be undone</p>
+          </div>
         </div>
-        <h3 className="font-semibold text-[16px] mb-1.5" style={{ color: "var(--ink)" }}>Delete project?</h3>
-        <p className="text-[13px] mb-5" style={{ color: "var(--ink3)" }}>
-          "<strong style={{ color: "var(--ink2)" }}>{title}</strong>" will be permanently removed.
+        <p className="text-[13px] mb-4" style={{ color: "var(--ink3)" }}>
+          Type <strong style={{ color: "var(--red)", fontFamily: "monospace" }}>{title}</strong> to confirm:
         </p>
+        <input
+          value={typed} onChange={(e) => setTyped(e.target.value)}
+          placeholder={`Type "${title}"`}
+          autoFocus
+          className="w-full px-3 py-2.5 rounded-lg text-[13px] outline-none mb-5 transition-all"
+          style={{
+            background: "var(--bg-alt)",
+            border: `1px solid ${confirmed ? "var(--green)" : typed ? "var(--red)" : "var(--border2)"}`,
+            color: "var(--ink)",
+            fontFamily: "monospace",
+            boxShadow: confirmed ? "0 0 0 3px rgba(52,211,153,0.15)" : typed ? "0 0 0 3px rgba(248,113,113,0.10)" : "none",
+          }}
+        />
         <div className="flex gap-2.5">
           <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg text-[13px] font-medium"
-            style={{ border: "0.5px solid var(--border2)", color: "var(--ink3)", background: "transparent", cursor: "pointer" }}
+            style={{ border: "1px solid var(--border2)", color: "var(--ink3)", background: "transparent", cursor: "pointer" }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
             Cancel
           </button>
-          <button onClick={onConfirm} className="flex-1 py-2.5 rounded-lg text-[13px] font-medium text-white"
-            style={{ background: "var(--red)", border: "none", cursor: "pointer" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.88"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
-            Delete
+          <button onClick={confirmed ? onConfirm : undefined} disabled={!confirmed}
+            className="flex-1 py-2.5 rounded-lg text-[13px] font-medium text-white"
+            style={{
+              background: confirmed ? "var(--red)" : "var(--bg-alt)",
+              color: confirmed ? "white" : "var(--ink4)",
+              border: "none", cursor: confirmed ? "pointer" : "not-allowed",
+              transition: "background .2s, color .2s",
+            }}>
+            {confirmed ? "Delete permanently" : "Type to confirm"}
           </button>
         </div>
       </div>
@@ -895,11 +937,12 @@ function CmdKPalette({ onClose, onNavigate }: { onClose: () => void; onNavigate:
 // REVIEW SYSTEM
 // ═════════════════════════════════════════════════════════════════════════════
 
-function AcceptReviewModal({ review, clients, onClose, onAccepted }: {
-  review:     FirestoreReview;
-  clients:    FirestoreClient[];
-  onClose:    () => void;
-  onAccepted: () => void;
+function AcceptReviewModal({ review, clients, onClose, onAccepted, adminEmail }: {
+  review:      FirestoreReview;
+  clients:     FirestoreClient[];
+  onClose:     () => void;
+  onAccepted:  () => void;
+  adminEmail?: string;
 }) {
   const [clientId,    setClientId]    = useState(review.linkedClientId ?? "");
   const [title,       setTitle]       = useState(review.taskTitle);
@@ -932,6 +975,7 @@ function AcceptReviewModal({ review, clients, onClose, onAccepted }: {
         category,
       });
       await updateReview(review.id!, { status: "accepted" });
+      logActivity({ action: "Review accepted", detail: `${review.memberName} — ${review.taskTitle}`, adminEmail: adminEmail ?? "", icon: "✓", category: "review" }).catch(() => {});
       onAccepted();
       onClose();
     } catch { setErr("Failed to accept. Try again."); }
@@ -1220,18 +1264,20 @@ function AdminSettingsModal({ onClose }: { onClose: () => void }) {
 }
 
 // ─── Review Panel ─────────────────────────────────────────────────────────────
-function ReviewPanel({ reviews, clients, onClose, onReload, showToast }: {
-  reviews:   FirestoreReview[];
-  clients:   FirestoreClient[];
-  onClose:   () => void;
-  onReload:  () => void;
-  showToast: (msg: string, type?: "success" | "error") => void;
+function ReviewPanel({ reviews, clients, onClose, onReload, showToast, adminEmail }: {
+  reviews:    FirestoreReview[];
+  clients:    FirestoreClient[];
+  onClose:    () => void;
+  onReload:   () => void;
+  showToast:  (msg: string, type?: "success" | "error") => void;
+  adminEmail?: string;
 }) {
   const [acceptTarget, setAcceptTarget] = useState<FirestoreReview | null>(null);
 
   async function handleReject(review: FirestoreReview) {
     try {
       await updateReview(review.id!, { status: "rejected" });
+      logActivity({ action: "Review rejected", detail: `${review.memberName} — ${review.taskTitle}`, adminEmail: adminEmail ?? "", icon: "✕", category: "review" }).catch(() => {});
       onReload();
       showToast("Review rejected.");
     } catch { showToast("Failed to reject.", "error"); }
@@ -1252,7 +1298,7 @@ function ReviewPanel({ reviews, clients, onClose, onReload, showToast }: {
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-[60]" style={{ background: "rgba(0,0,0,0.4)" }} onClick={onClose}/>
+      <div className="fixed inset-0 z-[60]" style={{ background: "rgba(0,0,0,0.4)", transition: "none" }} onClick={onClose}/>
 
       {/* Panel */}
       <div className="fixed top-0 right-0 bottom-0 z-[70] flex flex-col"
@@ -1364,6 +1410,7 @@ function ReviewPanel({ reviews, clients, onClose, onReload, showToast }: {
         <AcceptReviewModal
           review={acceptTarget}
           clients={clients}
+          adminEmail={adminEmail}
           onClose={() => setAcceptTarget(null)}
           onAccepted={() => {
             setAcceptTarget(null);
@@ -1372,6 +1419,108 @@ function ReviewPanel({ reviews, clients, onClose, onReload, showToast }: {
           }}
         />
       )}
+    </>
+  );
+}
+
+// ─── Activity Log Panel ───────────────────────────────────────────────────────
+const CATEGORY_COLORS: Record<string, string> = {
+  auth:     "var(--accent)",
+  task:     "var(--gold)",
+  client:   "var(--cyan)",
+  review:   "var(--green)",
+  project:  "var(--purple)",
+  member:   "#60A5FA",
+  settings: "var(--ink3)",
+};
+
+function ActivityLogPanel({ logs, onClose }: { logs: ActivityLog[]; onClose: () => void }) {
+  function relativeTime(ts: ActivityLog["timestamp"]) {
+    if (!ts) return "";
+    const ms = (ts as any).toMillis?.() ?? 0;
+    const diff = Date.now() - ms;
+    const m = Math.floor(diff / 60000);
+    if (m < 1)  return "just now";
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-[60]" style={{ background: "rgba(0,0,0,0.4)", transition: "none" }} onClick={onClose}/>
+      <div className="fixed top-0 right-0 bottom-0 z-[70] flex flex-col"
+        style={{
+          width: "min(400px, 100vw)",
+          background: "var(--bg-panel)",
+          borderLeft: "0.5px solid var(--border2)",
+          boxShadow: "var(--shadow-lg)",
+          animation: "slideInRight .25s cubic-bezier(0.16,1,0.3,1) both",
+        }}>
+        <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+          style={{ borderBottom: "0.5px solid var(--border)" }}>
+          <div>
+            <h2 className="font-semibold text-[15px]" style={{ color: "var(--ink)" }}>Activity Log</h2>
+            <p className="text-[11px] mt-0.5" style={{ color: "var(--ink4)" }}>
+              Last {Math.min(logs.length, 50)} actions
+            </p>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border2)", cursor: "pointer", color: "var(--ink4)" }}>
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 9M10 1L1 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto" style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6 }}>
+          {logs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center flex-1 gap-3 py-16">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center"
+                style={{ background: "var(--accent-pale)", color: "var(--accent)", fontSize: 22 }}>
+                <Ic.History />
+              </div>
+              <p className="font-medium text-[14px]" style={{ color: "var(--ink2)" }}>No activity yet</p>
+              <p className="text-[12px] text-center" style={{ color: "var(--ink4)" }}>Actions you take in the dashboard will appear here.</p>
+            </div>
+          ) : (
+            logs.map((log, i) => {
+              const color = CATEGORY_COLORS[log.category ?? "settings"] ?? "var(--ink3)";
+              return (
+                <div key={log.id ?? i}
+                  className="flex items-start gap-3 px-3 py-3 rounded-xl"
+                  style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", animation: `slideUpFade .2s ${i * 0.03}s both` }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-[14px]"
+                    style={{ background: `${color}18`, border: `1px solid ${color}28`, fontSize: 14 }}>
+                    {log.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-semibold text-[12px]" style={{ color: "var(--ink)" }}>{log.action}</span>
+                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide flex-shrink-0"
+                        style={{ background: `${color}15`, color }}>
+                        {log.category}
+                      </span>
+                    </div>
+                    {log.detail && (
+                      <p className="text-[11px] truncate mb-1" style={{ color: "var(--ink3)" }}>{log.detail}</p>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px]" style={{ color: "var(--ink4)" }}>{relativeTime(log.timestamp)}</span>
+                      {log.adminEmail && (
+                        <>
+                          <span style={{ color: "var(--border2)" }}>·</span>
+                          <span className="text-[10px] truncate" style={{ color: "var(--ink4)" }}>{log.adminEmail.split("@")[0]}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
     </>
   );
 }
@@ -1391,10 +1540,12 @@ export function AdminDashboard({ user }: Props) {
   const [sidebarOpen,   setSidebarOpen]   = useState(true);
   const [toast,         setToast]         = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [dark,          setDark]          = useState<boolean>(() => getStoredTheme());
-  const [pendingReviews,  setPendingReviews]  = useState<FirestoreReview[]>([]);
-  const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
-  const [settingsOpen,    setSettingsOpen]    = useState(false);
-  const [allClients,      setAllClients]      = useState<FirestoreClient[]>([]);
+  const [pendingReviews,   setPendingReviews]   = useState<FirestoreReview[]>([]);
+  const [reviewPanelOpen,  setReviewPanelOpen]  = useState(false);
+  const [settingsOpen,     setSettingsOpen]     = useState(false);
+  const [allClients,       setAllClients]       = useState<FirestoreClient[]>([]);
+  const [activityLogs,     setActivityLogs]     = useState<ActivityLog[]>([]);
+  const [activityLogOpen,  setActivityLogOpen]  = useState(false);
 
   const w        = useWindowWidth();
   const isMobile = w < 640;
@@ -1434,13 +1585,21 @@ export function AdminDashboard({ user }: Props) {
   // Fetch clients list for the AcceptReviewModal
   useEffect(() => { fetchClients().then(setAllClients).catch(() => {}); }, []);
 
+  // Subscribe to activity log in real-time
+  useEffect(() => {
+    const unsub = subscribeActivityLog(setActivityLogs);
+    return unsub;
+  }, []);
+
   async function handleDelete() {
     if (!deleteTarget?.id) return;
+    const title = deleteTarget.title;
     try {
       await deleteProject(deleteTarget.id);
+      logActivity({ action: "Project deleted", detail: title, adminEmail: user.email ?? "", icon: "🗑", category: "project" }).catch(() => {});
       setDeleteTarget(null);
       await loadProjects();
-      showToast(`"${deleteTarget.title}" deleted`);
+      showToast(`"${title}" deleted`);
     } catch { showToast("Delete failed", "error"); }
   }
 
@@ -1520,7 +1679,7 @@ export function AdminDashboard({ user }: Props) {
                   gap: showFull ? 9 : 0,
                 }}>
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 cursor-pointer"
-                  style={{ background: "var(--accent)" }}
+                  style={{ background: "var(--grad-accent)", boxShadow: "var(--glow-accent)" }}
                   onClick={() => !isMobile && setSidebarOpen((o) => !o)}
                   title={showFull ? "ZynHive" : "Expand"}>
                   <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
@@ -1571,15 +1730,25 @@ export function AdminDashboard({ user }: Props) {
                         gap:            showLabels ? 10 : 0,
                         padding:        showLabels ? "10px 10px" : "10px 0",
                         justifyContent: showLabels ? "flex-start" : "center",
-                        background:     active ? "var(--accent-pale)" : "transparent",
-                        color:          active ? "var(--accent)"      : "var(--ink3)",
-                        border:         active ? "0.5px solid var(--accent-pale2)" : "0.5px solid transparent",
+                        background:     active ? "linear-gradient(90deg,rgba(124,58,237,0.13),rgba(124,58,237,0.04))" : "transparent",
+                        color:          active ? "var(--accent)" : "var(--ink3)",
+                        border:         active ? "0.5px solid rgba(124,58,237,0.2)" : "0.5px solid transparent",
                         cursor: "pointer", fontWeight: active ? 600 : 400,
                         transition: "all .15s", textAlign: "left", lineHeight: 1,
                         fontFamily: "inherit",
+                        overflow: "hidden",
                       }}
                       onMouseEnter={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "var(--bg-alt)"; el.style.color = "var(--ink2)"; } }}
                       onMouseLeave={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink3)"; } }}>
+                      {/* Active left glow bar */}
+                      {active && (
+                        <div style={{
+                          position: "absolute", left: 0, top: "18%", bottom: "18%",
+                          width: 3, borderRadius: 3,
+                          background: "var(--grad-accent)",
+                          boxShadow: "0 0 8px rgba(124,58,237,0.7)",
+                        }} />
+                      )}
                       <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>{item.icon}</span>
                       {showLabels && (
                         <>
@@ -1611,7 +1780,7 @@ export function AdminDashboard({ user }: Props) {
               <div className="flex-shrink-0 flex items-center gap-2.5 overflow-hidden"
                 style={{ padding: showFull ? "10px 14px" : "10px 0", justifyContent: showFull ? "flex-start" : "center" }}>
                 <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[11px]"
-                  style={{ background: "var(--accent-pale)", color: "var(--accent)", border: "0.5px solid var(--accent-pale2)" }}>
+                  style={{ background: "var(--grad-accent)", color: "white", boxShadow: "0 0 0 2px var(--bg-panel), 0 0 0 4px rgba(124,58,237,0.5)" }}>
                   {user.email?.[0]?.toUpperCase() ?? "A"}
                 </div>
                 {showFull && (
@@ -1635,6 +1804,11 @@ export function AdminDashboard({ user }: Props) {
               padding: "0 16px",
               background: "var(--bg-panel)",
               borderBottom: "0.5px solid var(--border)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              position: "sticky",
+              top: 0,
+              zIndex: 20,
             }}>
 
             {/* Hamburger on mobile + tablet */}
@@ -1712,11 +1886,16 @@ export function AdminDashboard({ user }: Props) {
                 </button>
                 {pendingReviews.length > 0 && (
                   <div className="absolute -top-1 -right-1 flex items-center justify-center rounded-full pointer-events-none"
-                    style={{ minWidth: 16, height: 16, padding: "0 4px", background: "var(--red)", border: "1.5px solid var(--bg-panel)", fontSize: 9, fontWeight: 700, color: "white" }}>
+                    style={{ minWidth: 16, height: 16, padding: "0 4px", background: "var(--red)", border: "1.5px solid var(--bg-panel)", fontSize: 9, fontWeight: 700, color: "white", animation: "glowPulse 2s ease-in-out infinite" }}>
                     {pendingReviews.length}
                   </div>
                 )}
               </div>
+
+              {/* Activity log */}
+              <IconBtn title="Activity Log" onClick={() => setActivityLogOpen(true)}>
+                <Ic.History />
+              </IconBtn>
 
               {/* Settings gear */}
               <IconBtn title="Admin Settings" onClick={() => setSettingsOpen(true)}>
@@ -1736,6 +1915,8 @@ export function AdminDashboard({ user }: Props) {
               <OverviewTab
                 showToast={showToast}
                 onNavigate={(t) => switchTab(t as Tab)}
+                pendingReviewsCount={pendingReviews.length}
+                onOpenReviews={() => setReviewPanelOpen(true)}
                 user={{ email: user.email ?? "" }}
               />
             )}
@@ -1779,14 +1960,20 @@ export function AdminDashboard({ user }: Props) {
         )}
         {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
         {cmdOpen && <CmdKPalette onClose={() => setCmdOpen(false)} onNavigate={(t) => { switchTab(t); setCmdOpen(false); }} />}
-        {reviewPanelOpen && (
+        {reviewPanelOpen && createPortal(
           <ReviewPanel
             reviews={pendingReviews}
             clients={allClients}
+            adminEmail={user.email ?? ""}
             onClose={() => setReviewPanelOpen(false)}
             onReload={() => { /* subscribePendingReviews auto-updates state */ }}
             showToast={showToast}
-          />
+          />,
+          document.body
+        )}
+        {activityLogOpen && createPortal(
+          <ActivityLogPanel logs={activityLogs} onClose={() => setActivityLogOpen(false)} />,
+          document.body
         )}
         {settingsOpen && <AdminSettingsModal onClose={() => setSettingsOpen(false)} />}
       </div>

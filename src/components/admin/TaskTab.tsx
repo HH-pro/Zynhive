@@ -48,17 +48,41 @@ const PRIORITY_COLOR: Record<FirestoreTask["priority"], string> = {
   medium: "var(--gold)",
   low:    "var(--green)",
 };
+const PRIORITY_GRAD: Record<FirestoreTask["priority"], string> = {
+  high:   "linear-gradient(180deg,#EF4444,#DC262650)",
+  medium: "linear-gradient(180deg,#F59E0B,#D9770650)",
+  low:    "linear-gradient(180deg,#10B981,#05966950)",
+};
 const PRIORITY_BG: Record<FirestoreTask["priority"], string> = {
   high:   "var(--red-pale)",
   medium: "var(--gold-pale)",
   low:    "var(--green-pale)",
 };
-const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-  pending:       { label: "Pending",     color: "var(--ink3)",  bg: "var(--bg-alt)" },
-  "in-progress": { label: "In Progress", color: "var(--gold)",  bg: "var(--gold-pale)" },
-  completed:     { label: "Completed",   color: "var(--green)", bg: "var(--green-pale)" },
-  overdue:       { label: "Overdue",     color: "var(--red)",   bg: "var(--red-pale)" },
+const STATUS_CFG: Record<string, { label: string; color: string; bg: string; glow: string }> = {
+  pending:       { label: "Pending",     color: "var(--ink3)",  bg: "var(--bg-alt)",      glow: "none" },
+  "in-progress": { label: "In Progress", color: "var(--gold)",  bg: "var(--gold-pale)",   glow: "0 0 8px rgba(245,158,11,0.35)" },
+  completed:     { label: "Completed",   color: "var(--green)", bg: "var(--green-pale)",  glow: "0 0 8px rgba(34,197,94,0.35)" },
+  overdue:       { label: "Overdue",     color: "var(--red)",   bg: "var(--red-pale)",    glow: "0 0 8px rgba(239,68,68,0.35)" },
 };
+
+function deadlinePct(task: FirestoreTask): number {
+  if (!task.dueDate || task.status === "completed") return 0;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const due = new Date(task.dueDate + "T00:00:00");
+  const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
+  if (diff < 0) return 100;
+  if (diff === 0) return 95;
+  if (diff <= 2) return 82;
+  if (diff <= 5) return 65;
+  if (diff <= 10) return 42;
+  if (diff <= 21) return 22;
+  return 8;
+}
+function deadlineBarColor(pct: number): string {
+  if (pct >= 90) return "var(--red)";
+  if (pct >= 55) return "var(--gold)";
+  return "var(--green)";
+}
 
 const inputBase: React.CSSProperties = {
   width: "100%", padding: "8px 12px", borderRadius: 8,
@@ -426,6 +450,7 @@ function AddTaskModal({ task, members, onClose, onSaved }: {
     completedAt:       task?.completedAt       ?? "",
     linkedClientId:    task?.linkedClientId    ?? "",
     linkedClientName:  task?.linkedClientName  ?? "",
+    estimatedHours:    task?.estimatedHours    ?? (undefined as number | undefined),
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
@@ -626,11 +651,25 @@ function AddTaskModal({ task, members, onClose, onSaved }: {
             )}
           </div>
 
-          {/* Due Date */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Due Date *</label>
-            <input type="date" value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)}
-              style={inputBase} onFocus={focusBorder} onBlur={blurBorder}/>
+          {/* Due Date + Estimated Hours */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Due Date *</label>
+              <input type="date" value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)}
+                style={inputBase} onFocus={focusBorder} onBlur={blurBorder}/>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>
+                Est. Hours <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+              </label>
+              <input
+                type="number" min={0} max={999} step={0.5}
+                value={form.estimatedHours ?? ""}
+                onChange={(e) => set("estimatedHours", e.target.value ? Number(e.target.value) : undefined)}
+                placeholder="e.g. 4"
+                style={inputBase} onFocus={focusBorder} onBlur={blurBorder}
+              />
+            </div>
           </div>
 
           {/* Error */}
@@ -835,12 +874,14 @@ function DeleteTaskConfirm({ title, onConfirm, onCancel }: {
 }
 
 // ─── Task Card ────────────────────────────────────────────────────────────────
-function TaskCard({ task, onEdit, onDelete, onReport, onReload }: {
+function TaskCard({ task, onEdit, onDelete, onReport, onReload, selected, onSelect }: {
   task: FirestoreTask;
   onEdit: (t: FirestoreTask) => void;
   onDelete: (t: FirestoreTask) => void;
   onReport: (t: FirestoreTask) => void;
   onReload: () => void;
+  selected?: boolean;
+  onSelect?: (id: string, checked: boolean) => void;
 }) {
   const [hov, setHov] = useState(false);
   const [toggling, setToggling] = useState(false);
@@ -879,15 +920,26 @@ function TaskCard({ task, onEdit, onDelete, onReport, onReload }: {
   return (
     <div className="relative rounded-xl overflow-hidden transition-all duration-200"
       style={{
-        background: "var(--bg-card)",
-        border: `0.5px solid ${hov ? "var(--border2)" : "var(--border)"}`,
+        background: selected ? "rgba(124,58,237,0.05)" : "var(--bg-card)",
+        border: `0.5px solid ${selected ? "rgba(124,58,237,0.3)" : hov ? "var(--border2)" : "var(--border)"}`,
         boxShadow: hov ? "0 2px 12px rgba(0,0,0,0.06)" : "none",
       }}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}>
 
-      {/* Priority left bar */}
-      <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: pc }}/>
+      {/* Bulk select checkbox */}
+      {onSelect && (hov || selected) && (
+        <div style={{ position: "absolute", top: 10, left: 8, zIndex: 2 }}>
+          <input type="checkbox" checked={selected ?? false}
+            onChange={(e) => task.id && onSelect(task.id, e.target.checked)}
+            style={{ width: 14, height: 14, accentColor: "var(--accent)", cursor: "pointer" }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {/* Priority left bar — gradient */}
+      <div className="absolute left-0 top-0 bottom-0 w-[4px]" style={{ background: PRIORITY_GRAD[task.priority], boxShadow: `2px 0 6px ${pc}40` }}/>
 
       <div style={{ paddingLeft: 16, paddingRight: 16, paddingTop: 14, paddingBottom: 14 }}>
 
@@ -913,6 +965,14 @@ function TaskCard({ task, onEdit, onDelete, onReport, onReload }: {
             </span>
           )}
 
+          {/* Estimated hours chip */}
+          {task.estimatedHours != null && (
+            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1"
+              style={{ background: "var(--bg-alt)", color: "var(--ink3)", border: "0.5px solid var(--border2)" }}>
+              ⏱ {task.estimatedHours}h
+            </span>
+          )}
+
           {/* Clickable status badge — cycles status; no cycle for overdue */}
           <button
             className="ml-auto text-[10px] font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 flex items-center gap-1"
@@ -920,6 +980,7 @@ function TaskCard({ task, onEdit, onDelete, onReport, onReload }: {
               background: sc.bg, color: sc.color,
               border: "none", cursor: eff === "overdue" ? "default" : "pointer",
               opacity: toggling ? 0.6 : 1, transition: "opacity .15s",
+              boxShadow: sc.glow,
             }}
             onClick={eff !== "overdue" ? cycleStatus : undefined}
             title={eff !== "overdue" ? `Click to advance status` : undefined}
@@ -944,6 +1005,18 @@ function TaskCard({ task, onEdit, onDelete, onReport, onReload }: {
           }}>
           {task.title}
         </h3>
+
+        {/* Deadline progress bar */}
+        {task.dueDate && eff !== "completed" && (() => {
+          const pct = deadlinePct(task);
+          const barColor = deadlineBarColor(pct);
+          return (
+            <div style={{ height: 3, borderRadius: 99, background: "var(--bg-alt)", overflow: "hidden", marginBottom: 8 }}
+              title={due}>
+              <div style={{ height: "100%", width: `${pct}%`, background: barColor, borderRadius: 99, transition: "width .6s var(--ease)", boxShadow: pct > 70 ? `0 0 4px ${barColor}80` : "none" }}/>
+            </div>
+          );
+        })()}
 
         {/* Description */}
         {task.description && (
@@ -1062,17 +1135,17 @@ function KanbanCard({ task, onEdit, onDelete, onReport }: {
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}>
 
-      {/* Priority left bar */}
+      {/* Priority left bar — gradient */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-[3px]"
-        style={{ background: pc }}
+        className="absolute left-0 top-0 bottom-0 w-[4px]"
+        style={{ background: PRIORITY_GRAD[task.priority], boxShadow: `2px 0 5px ${pc}38` }}
         title={task.priority}
       />
 
       <div style={{ paddingLeft: 14, paddingRight: 12, paddingTop: 11, paddingBottom: 11 }}>
 
         {/* Title */}
-        <h3 className="font-semibold leading-snug mb-1"
+        <h3 className="font-semibold leading-snug mb-1.5"
           style={{
             fontSize: 13,
             color: "var(--ink)",
@@ -1083,6 +1156,17 @@ function KanbanCard({ task, onEdit, onDelete, onReport }: {
           }}>
           {task.title}
         </h3>
+
+        {/* Deadline bar */}
+        {task.dueDate && eff !== "completed" && (() => {
+          const pct = deadlinePct(task);
+          const barColor = deadlineBarColor(pct);
+          return (
+            <div style={{ height: 3, borderRadius: 99, background: "var(--bg-alt)", overflow: "hidden", marginBottom: 6 }}>
+              <div style={{ height: "100%", width: `${pct}%`, background: barColor, borderRadius: 99, transition: "width .6s var(--ease)" }}/>
+            </div>
+          );
+        })()}
 
         {/* Description excerpt */}
         {task.description && (
@@ -1124,15 +1208,20 @@ function KanbanCard({ task, onEdit, onDelete, onReport }: {
             {task.assignedToName}
           </span>
 
-          {task.dueDate && (
-            <span className="ml-auto flex-shrink-0" style={{
-              fontSize: 10, color: "var(--ink4)",
-              background: "var(--bg-alt)", border: "0.5px solid var(--border)",
-              borderRadius: 6, padding: "2px 6px", whiteSpace: "nowrap",
-            }}>
-              {formatDate(task.dueDate)}
-            </span>
-          )}
+          <div className="ml-auto flex items-center gap-1.5">
+            {task.estimatedHours != null && (
+              <span style={{ fontSize: 9, color: "var(--ink4)", fontWeight: 600 }}>⏱{task.estimatedHours}h</span>
+            )}
+            {task.dueDate && (
+              <span style={{
+                fontSize: 10, color: "var(--ink4)",
+                background: "var(--bg-alt)", border: "0.5px solid var(--border)",
+                borderRadius: 6, padding: "2px 6px", whiteSpace: "nowrap", flexShrink: 0,
+              }}>
+                {formatDate(task.dueDate)}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* "View Report" button for completed tasks */}
@@ -1273,9 +1362,19 @@ export function TaskTab({ showToast, openAdd, onOpenAddDone }: Props) {
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "in-progress" | "completed" | "overdue">("all");
   const [filterMember, setFilterMember] = useState<"all" | string>("all");
   const [view,         setView]         = useState<"list" | "kanban">("list");
+  const [selected,     setSelected]     = useState<Set<string>>(new Set());
 
   // Search state
   const [search, setSearch] = useState("");
+
+  function toggleSelect(id: string, checked: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  }
+  function clearSelection() { setSelected(new Set()); }
 
   useEffect(() => {
     if (openAdd) { setEditTask(null); setAddOpen(true); onOpenAddDone?.(); }
@@ -1300,6 +1399,26 @@ export function TaskTab({ showToast, openAdd, onOpenAddDone }: Props) {
       await load();
       showToast(`"${deleteTarget.title}" deleted`);
     } catch { showToast("Delete failed", "error"); }
+  }
+
+  async function bulkDelete() {
+    if (selected.size === 0) return;
+    try {
+      await Promise.all([...selected].map((id) => deleteTask(id)));
+      clearSelection();
+      await load();
+      showToast(`${selected.size} task${selected.size !== 1 ? "s" : ""} deleted`);
+    } catch { showToast("Bulk delete failed", "error"); }
+  }
+
+  async function bulkComplete() {
+    if (selected.size === 0) return;
+    try {
+      await Promise.all([...selected].map((id) => updateTask(id, { status: "completed", completedAt: new Date().toISOString() })));
+      clearSelection();
+      await load();
+      showToast(`${selected.size} task${selected.size !== 1 ? "s" : ""} marked complete`);
+    } catch { showToast("Bulk update failed", "error"); }
   }
 
   const stats = useMemo(() => ({
@@ -1558,6 +1677,8 @@ export function TaskTab({ showToast, openAdd, onOpenAddDone }: Props) {
                 onDelete={setDeleteTarget}
                 onReport={setReportTask}
                 onReload={load}
+                selected={selected.has(t.id ?? "")}
+                onSelect={toggleSelect}
               />
             ))}
           </div>
@@ -1590,6 +1711,52 @@ export function TaskTab({ showToast, openAdd, onOpenAddDone }: Props) {
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
         />
+      )}
+
+      {/* Bulk actions toolbar */}
+      {selected.size > 0 && (
+        <div style={{
+          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+          zIndex: 50, display: "flex", alignItems: "center", gap: 10,
+          padding: "10px 16px",
+          background: "var(--bg-panel)",
+          border: "1px solid var(--border2)",
+          borderRadius: 14,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(124,58,237,0.2)",
+          animation: "slideUpFade .22s cubic-bezier(0.16,1,0.3,1) both",
+        }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)", paddingRight: 6, borderRight: "1px solid var(--border2)" }}>
+            {selected.size} selected
+          </span>
+          <button onClick={bulkComplete}
+            style={{
+              padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+              background: "var(--green-pale)", color: "var(--green)",
+              border: "0.5px solid rgba(34,197,94,0.3)", cursor: "pointer", transition: "all .15s",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--green)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--green-pale)"; (e.currentTarget as HTMLElement).style.color = "var(--green)"; }}>
+            ✓ Mark Complete
+          </button>
+          <button onClick={bulkDelete}
+            style={{
+              padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+              background: "var(--red-pale)", color: "var(--red)",
+              border: "0.5px solid rgba(239,68,68,0.3)", cursor: "pointer", transition: "all .15s",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--red)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--red-pale)"; (e.currentTarget as HTMLElement).style.color = "var(--red)"; }}>
+            🗑 Delete
+          </button>
+          <button onClick={clearSelection}
+            style={{
+              padding: "6px 10px", borderRadius: 8, fontSize: 11,
+              background: "transparent", color: "var(--ink4)",
+              border: "0.5px solid var(--border2)", cursor: "pointer",
+            }}>
+            ✕
+          </button>
+        </div>
       )}
     </div>
   );

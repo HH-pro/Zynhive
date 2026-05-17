@@ -9,9 +9,11 @@ import { Timestamp } from "firebase/firestore";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface Props {
-  showToast: (msg: string, type?: "success" | "error") => void;
-  onNavigate: (tab: string) => void;
-  user: { email: string };
+  showToast:           (msg: string, type?: "success" | "error") => void;
+  onNavigate:          (tab: string) => void;
+  onOpenReviews?:      () => void;
+  pendingReviewsCount?: number;
+  user:                { email: string };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -160,57 +162,76 @@ function KpiCard({
   subColor,
   icon,
   iconBg,
+  color,
+  onClick,
 }: {
-  label: string;
-  value: number | string;
-  sub: string;
+  label:     string;
+  value:     number | string;
+  sub:       string;
   subColor?: string;
-  icon: React.ReactNode;
-  iconBg: string;
+  icon:      React.ReactNode;
+  iconBg:    string;
+  color?:    string;
+  onClick?:  () => void;
 }) {
+  const accentColor = color ?? "#6366F1";
+  const Tag = onClick ? "button" : "div";
   return (
-    <div
+    <Tag
+      {...(onClick ? { onClick, type: "button" as const } : {})}
       style={{
         background: "var(--bg-card)",
         border: "0.5px solid var(--border)",
         borderRadius: 14,
-        padding: "18px 20px",
+        overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        gap: 10,
-        transition: "box-shadow .2s, transform .2s",
-        cursor: "default",
+        gap: 0,
+        transition: "box-shadow .25s, transform .2s",
+        cursor: onClick ? "pointer" : "default",
+        position: "relative",
+        width: "100%",
+        fontFamily: "'DM Sans', sans-serif",
+        textAlign: "left",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow = "var(--shadow-md)";
-        (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)";
+        const el = e.currentTarget as HTMLElement;
+        el.style.boxShadow = `0 0 0 1px ${accentColor}30, 0 8px 24px ${accentColor}18`;
+        el.style.transform = "translateY(-2px)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
-        (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+        const el = e.currentTarget as HTMLElement;
+        el.style.boxShadow = "none";
+        el.style.transform = "translateY(0)";
       }}
     >
-      <div className="flex items-center justify-between">
-        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--ink3)", letterSpacing: "0.02em" }}>
-          {label}
-        </span>
-        <div
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 9,
-            background: iconBg,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {icon}
+      {/* Gradient top bar */}
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${accentColor}, ${accentColor}80)` }} />
+      <div style={{ padding: "14px 18px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="flex items-center justify-between">
+          <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink4)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+            {label}
+          </span>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 9,
+              background: iconBg,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {icon}
+          </div>
+        </div>
+        <div style={{ fontSize: 26, fontWeight: 700, color: "var(--ink)", lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: 11, color: subColor ?? "var(--ink4)", fontWeight: 400 }}>
+          {sub}{onClick && (value as number) > 0 && <span style={{ marginLeft: 4, color: accentColor }}>→</span>}
         </div>
       </div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: "var(--ink)", lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 12, color: subColor ?? "var(--ink3)", fontWeight: 400 }}>{sub}</div>
-    </div>
+    </Tag>
   );
 }
 
@@ -353,6 +374,11 @@ const Icons = {
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
     </svg>
   ),
+  reviews: (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+  ),
 };
 
 // ─── Quick Action Button ───────────────────────────────────────────────────────
@@ -456,7 +482,7 @@ function LoadingSkeleton() {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export function OverviewTab({ showToast, onNavigate, user }: Props) {
+export function OverviewTab({ showToast, onNavigate, onOpenReviews, pendingReviewsCount = 0, user }: Props) {
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<FirestoreProject[]>([]);
   const [leads, setLeads] = useState<FirestoreLead[]>([]);
@@ -620,21 +646,23 @@ export function OverviewTab({ showToast, onNavigate, user }: Props) {
       {/* ── KPI Row ──────────────────────────────────────────────────────────── */}
       <div
         className="overview-kpi-grid"
-        style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}
       >
         <KpiCard
           label="Total Leads"
           value={leads.length}
           sub={`+${newThisWeek} new this week`}
           icon={<span style={{ color: "#6366F1" }}>{Icons.leads}</span>}
-          iconBg="#EEF2FF"
+          iconBg="rgba(99,102,241,0.12)"
+          color="#6366F1"
         />
         <KpiCard
           label="Active Projects"
           value={projects.length}
           sub={`${featuredCount} featured`}
           icon={<span style={{ color: "#378ADD" }}>{Icons.projects}</span>}
-          iconBg="#EFF6FF"
+          iconBg="rgba(55,138,221,0.12)"
+          color="#378ADD"
         />
         <KpiCard
           label="Open Tasks"
@@ -642,21 +670,24 @@ export function OverviewTab({ showToast, onNavigate, user }: Props) {
           sub={overdueTasks.length > 0 ? `${overdueTasks.length} overdue` : "All on track"}
           subColor={overdueTasks.length > 0 ? "var(--red)" : "var(--green)"}
           icon={<span style={{ color: "#10B981" }}>{Icons.tasks}</span>}
-          iconBg="#ECFDF5"
+          iconBg="rgba(16,185,129,0.12)"
+          color={overdueTasks.length > 0 ? "#EF4444" : "#10B981"}
         />
         <KpiCard
           label="Team Members"
           value={members.length}
           sub="Active contributors"
           icon={<span style={{ color: "#8B5CF6" }}>{Icons.team}</span>}
-          iconBg="#F5F3FF"
+          iconBg="rgba(139,92,246,0.12)"
+          color="#8B5CF6"
         />
         <KpiCard
           label="Active Clients"
           value={clients.length}
           sub="With portal access"
           icon={<span style={{ color: "#F59E0B" }}>{Icons.clients}</span>}
-          iconBg="#FFFBEB"
+          iconBg="rgba(245,158,11,0.12)"
+          color="#F59E0B"
         />
         <KpiCard
           label="Follow-ups Due"
@@ -664,7 +695,18 @@ export function OverviewTab({ showToast, onNavigate, user }: Props) {
           sub={followupsDue.length > 0 ? "Requires attention" : "All clear"}
           subColor={followupsDue.length > 0 ? "var(--red)" : "var(--green)"}
           icon={<span style={{ color: followupsDue.length > 0 ? "#EF4444" : "#F59E0B" }}>{Icons.followup}</span>}
-          iconBg={followupsDue.length > 0 ? "#FEF2F2" : "#FFFBEB"}
+          iconBg={followupsDue.length > 0 ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)"}
+          color={followupsDue.length > 0 ? "#EF4444" : "#F59E0B"}
+        />
+        <KpiCard
+          label="Pending Reviews"
+          value={pendingReviewsCount}
+          sub={pendingReviewsCount > 0 ? "Tap to review" : "All approved"}
+          subColor={pendingReviewsCount > 0 ? "var(--gold)" : "var(--green)"}
+          icon={<span style={{ color: pendingReviewsCount > 0 ? "#F59E0B" : "#10B981" }}>{Icons.reviews}</span>}
+          iconBg={pendingReviewsCount > 0 ? "rgba(245,158,11,0.12)" : "rgba(16,185,129,0.12)"}
+          color={pendingReviewsCount > 0 ? "#F59E0B" : "#10B981"}
+          onClick={onOpenReviews}
         />
       </div>
 
@@ -696,6 +738,7 @@ export function OverviewTab({ showToast, onNavigate, user }: Props) {
                         borderRadius: "50%",
                         background: color,
                         flexShrink: 0,
+                        boxShadow: `0 0 6px ${color}80`,
                       }}
                     />
                     <span
@@ -712,7 +755,7 @@ export function OverviewTab({ showToast, onNavigate, user }: Props) {
                     <div
                       style={{
                         flex: 1,
-                        height: 6,
+                        height: 8,
                         background: "var(--bg-alt)",
                         borderRadius: 99,
                         overflow: "hidden",
@@ -722,9 +765,10 @@ export function OverviewTab({ showToast, onNavigate, user }: Props) {
                         style={{
                           height: "100%",
                           width: `${pct}%`,
-                          background: color,
+                          background: `linear-gradient(90deg, ${color}, ${color}99)`,
                           borderRadius: 99,
-                          transition: "width .6s var(--ease)",
+                          transition: "width .7s var(--ease)",
+                          boxShadow: pct > 0 ? `0 0 6px ${color}60` : "none",
                         }}
                       />
                     </div>
@@ -732,8 +776,8 @@ export function OverviewTab({ showToast, onNavigate, user }: Props) {
                       style={{
                         fontSize: 12,
                         fontWeight: 700,
-                        color: "var(--ink)",
-                        width: 20,
+                        color,
+                        width: 22,
                         textAlign: "right",
                         flexShrink: 0,
                       }}

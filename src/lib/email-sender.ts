@@ -1,18 +1,12 @@
 // ─── src/lib/email-sender.ts ─────────────────────────────────────────────────
-// Sends email via Resend API directly from the browser.
-// VITE_RESEND_API_KEY must be set in .env
-
-const RESEND_KEY = import.meta.env.VITE_RESEND_API_KEY ?? "";
-const FROM_EMAIL = import.meta.env.VITE_EMAIL_FROM     ?? "onboarding@resend.dev";
-const FROM_NAME  = import.meta.env.VITE_APP_NAME       ?? "ZynHive";
-const REPLY_TO   = import.meta.env.VITE_REPLY_TO       ?? "";
+// All emails go through /api/send-email (Vercel serverless → Resend).
+// No direct browser → Resend calls (blocked by CORS).
 
 export interface SendEmailPayload {
-  to:       string;
-  subject:  string;
-  body:     string;
-  html?:    string;
-  replyTo?: string;
+  to:      string;
+  subject: string;
+  body:    string;
+  html?:   string;
 }
 
 export interface SendEmailResult {
@@ -22,39 +16,28 @@ export interface SendEmailResult {
 }
 
 export async function sendEmail(payload: SendEmailPayload): Promise<SendEmailResult> {
-  if (!RESEND_KEY) {
-    console.warn("[Email] VITE_RESEND_API_KEY not set — email not sent.");
-    return { success: false, error: "API key not configured" };
-  }
-
   try {
-    const res = await fetch("https://api.resend.com/emails", {
+    const res = await fetch("/api/send-email", {
       method:  "POST",
-      headers: {
-        "Content-Type":  "application/json",
-        "Authorization": `Bearer ${RESEND_KEY}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        from:     `${FROM_NAME} <${FROM_EMAIL}>`,
-        to:       [payload.to],
-        subject:  payload.subject,
-        text:     payload.body,
-        ...(payload.html ? { html: payload.html } : {}),
-        reply_to: payload.replyTo || REPLY_TO || FROM_EMAIL,
+        type:    "direct",
+        toEmail: payload.to,
+        subject: payload.subject,
+        html:    payload.html ?? "",
+        text:    payload.body,
       }),
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: `Resend ${res.status}` }));
-      throw new Error((err as { message?: string }).message ?? `Resend ${res.status}`);
+      const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+      return { success: false, error: (err as { error?: string }).error ?? `HTTP ${res.status}` };
     }
 
-    const data = await res.json() as { id?: string };
-    return { success: true, messageId: data.id };
-
+    return { success: true };
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Send failed";
-    console.error("[Email] Resend error:", msg);
+    const msg = err instanceof Error ? err.message : "Network error";
+    console.error("[Email] /api/send-email unreachable:", msg);
     return { success: false, error: msg };
   }
 }

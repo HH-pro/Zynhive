@@ -39,7 +39,7 @@ function emailWrapper(bodyHtml: string): string {
           </tr>
         </table>
         <p style="color:#94A3B8;font-size:11px;margin:0 0 8px;font-family:Arial,sans-serif;">
-          Your Digital Growth Partner &nbsp;·&nbsp; © 2025
+          Your Digital Growth Partner &nbsp;·&nbsp; © 2026
         </p>
         <p style="color:#CBD5E1;font-size:10px;margin:0;line-height:1.7;font-family:Arial,sans-serif;">
           You're receiving this because you enabled email alerts on your client portal.
@@ -379,6 +379,16 @@ function buildAdminReviewHtml(
 }
 
 export default async function handler(req: IncomingMessage & { body?: unknown }, res: ServerResponse) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   if (req.method !== "POST") {
     res.writeHead(405, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Method not allowed" }));
@@ -386,8 +396,11 @@ export default async function handler(req: IncomingMessage & { body?: unknown },
   }
 
   const body = req.body as {
-    type?: "update" | "reply" | "admin-review" | "task";
+    type?: "update" | "reply" | "admin-review" | "task" | "direct";
     toEmail: string;
+    subject?: string;
+    html?: string;
+    text?: string;
     toName: string;
     projectName: string;
     updateTitle: string;
@@ -403,7 +416,8 @@ export default async function handler(req: IncomingMessage & { body?: unknown },
     dashboardUrl?: string;
   };
 
-  const { type = "update", toEmail, toName, projectName, updateTitle, portalUrl, replyMessage,
+  const { type = "update", toEmail, subject: directSubject, html: directHtml, text: directText,
+          toName, projectName, updateTitle, portalUrl, replyMessage,
           memberName, taskTitle, taskDescription, priority, dueDate, report, linkedClientName, dashboardUrl } = body ?? {};
 
   if (!toEmail) {
@@ -425,7 +439,15 @@ export default async function handler(req: IncomingMessage & { body?: unknown },
   let html: string;
   let subject: string;
 
-  if (type === "admin-review") {
+  if (type === "direct") {
+    if (!directSubject || !directHtml) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Missing subject or html for direct type" }));
+      return;
+    }
+    html    = directHtml;
+    subject = directSubject;
+  } else if (type === "admin-review") {
     html    = buildAdminReviewHtml(memberName ?? "", taskTitle ?? "", taskDescription ?? "", report ?? "", linkedClientName ?? "", dashboardUrl ?? "");
     subject = `✅ Review Needed: ${memberName ?? "A team member"} completed "${taskTitle ?? "a task"}"`;
   } else if (type === "reply") {

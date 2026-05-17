@@ -60,6 +60,10 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    match /activity_log/{logId} {
+      allow read, write: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

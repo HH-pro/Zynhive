@@ -369,17 +369,36 @@ const PORTAL_CSS = `
   }
 
   /* ── Timeline ── */
-  .cp-timeline-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .cp-timeline-wrap { display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 28px; }
+  .cp-timeline-wrap::before {
+    content: ""; position: absolute; left: 9px; top: 5px; bottom: 5px; width: 2px;
+    background: linear-gradient(180deg, rgba(99,102,241,.5), rgba(139,92,246,.2), transparent);
+    border-radius: 99px;
+  }
   .cp-timeline-item {
     display: flex; gap: 14px; cursor: pointer;
     padding: 14px 16px; border-radius: 14px;
     border: 1px solid var(--cp-border-md);
     background: var(--cp-bg-card);
+    margin-bottom: 10px;
     transition: background .2s, transform .18s, box-shadow .18s;
+    position: relative;
   }
   .cp-timeline-item:hover {
-    background: var(--cp-bg-hover); transform: translateX(3px);
+    background: var(--cp-bg-hover); transform: translateX(4px);
     box-shadow: var(--cp-shadow-card);
+  }
+  .cp-timeline-dot {
+    position: absolute; left: -32px; top: 18px;
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid var(--cp-bg); box-shadow: 0 0 0 2px currentColor;
+  }
+  .cp-section-grad-label {
+    background: linear-gradient(135deg, currentColor, color-mix(in srgb, currentColor 70%, transparent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
   }
 
   /* ── Section collapse ── */
@@ -1357,11 +1376,11 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
                   const cfg = STATUS_CONFIG[u.status];
                   return (
                     <div key={u.id} className="cp-timeline-item" onClick={() => setSelected(u)}>
-                      <div style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:4,paddingTop:2,flexShrink:0 }}>
-                        <div style={{ width:10,height:10,borderRadius:"50%",background:u.clientApproved?"#10B981":cfg.color,
-                          ...(u.status==="in-progress"?{animation:"cp-pulse 1.8s ease infinite"}:{}) }}/>
-                        <div style={{ flex:1,width:1,background:"var(--cp-border)",minHeight:24 }}/>
-                      </div>
+                      <div className="cp-timeline-dot" style={{
+                        color: u.clientApproved ? "#10B981" : cfg.color,
+                        background: u.clientApproved ? "#10B981" : cfg.color,
+                        ...(u.status==="in-progress"?{animation:"cp-pulse 1.8s ease infinite"}:{})
+                      }}/>
                       <div style={{ flex:1,minWidth:0 }}>
                         <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:10,marginBottom:6 }}>
                           <div style={{ flex:1,minWidth:0 }}>

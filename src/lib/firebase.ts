@@ -295,6 +295,7 @@ export type FirestoreTask = {
   report?:           string;
   reportedBy?:       string;
   completedAt?:      string;
+  estimatedHours?:   number;
   linkedClientId?:   string;
   linkedClientName?: string;
   createdAt?:        Timestamp;
@@ -432,5 +433,30 @@ export function subscribePendingReviews(
         return tb - ta;
       });
     onData(reviews);
+  });
+}
+
+// ─── Activity Log ─────────────────────────────────────────────────────────────
+export type ActivityLog = {
+  id?:        string;
+  action:     string;
+  detail:     string;
+  adminEmail: string;
+  icon:       string;
+  category:   "auth" | "task" | "client" | "review" | "project" | "member" | "settings";
+  timestamp?: Timestamp;
+};
+
+const ACTIVITY_COL = "activity_log";
+
+export const logActivity = (data: Omit<ActivityLog, "id" | "timestamp">) =>
+  addDoc(collection(db, ACTIVITY_COL), { ...data, timestamp: serverTimestamp() });
+
+export function subscribeActivityLog(
+  onData: (logs: ActivityLog[]) => void
+): () => void {
+  const q = query(collection(db, ACTIVITY_COL), orderBy("timestamp", "desc"));
+  return onSnapshot(q, (snap) => {
+    onData(snap.docs.slice(0, 50).map((d) => ({ id: d.id, ...d.data() } as ActivityLog)));
   });
 }

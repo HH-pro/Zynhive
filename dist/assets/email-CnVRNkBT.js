@@ -1,4 +1,4 @@
-const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynHive",u="zynhive@gmail.com";async function c(r){try{const t=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${h}`},body:JSON.stringify({from:`${m} <${b}>`,to:[r.to],subject:r.subject,text:r.body,...r.html?{html:r.html}:{},reply_to:r.replyTo||u||b})});if(!t.ok){const i=await t.json().catch(()=>({message:`Resend ${t.status}`}));throw new Error(i.message??`Resend ${t.status}`)}return{success:!0,messageId:(await t.json()).id}}catch(t){const e=t instanceof Error?t.message:"Send failed";return console.error("[Email] Resend error:",e),{success:!1,error:e}}}const g="linear-gradient(135deg,#3730A3 0%,#6366F1 50%,#818CF8 100%)",w="linear-gradient(135deg,#EEF2FF 0%,#F5F3FF 100%)";function f(r){return`<!DOCTYPE html>
+async function g(r){try{const e=await fetch("/api/send-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"direct",toEmail:r.to,subject:r.subject,html:r.html??"",text:r.body})});return e.ok?{success:!0}:{success:!1,error:(await e.json().catch(()=>({error:`HTTP ${e.status}`}))).error??`HTTP ${e.status}`}}catch(e){const t=e instanceof Error?e.message:"Network error";return console.error("[Email] /api/send-email unreachable:",t),{success:!1,error:t}}}const p="linear-gradient(135deg,#3730A3 0%,#6366F1 50%,#818CF8 100%)",x="linear-gradient(135deg,#EEF2FF 0%,#F5F3FF 100%)";function c(r){return`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
@@ -29,7 +29,7 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
         <!-- Logo row -->
         <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:14px;">
           <tr>
-            <td style="background:${g};border-radius:10px;width:32px;height:32px;
+            <td style="background:${p};border-radius:10px;width:32px;height:32px;
                        text-align:center;vertical-align:middle;line-height:32px;">
               <span style="color:#fff;font-size:10px;font-weight:900;font-family:Arial,sans-serif;
                            letter-spacing:-0.5px;">ZH</span>
@@ -61,10 +61,10 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
 </table>
 
 </body>
-</html>`}function A(r,t,e,i){const a=`
+</html>`}function b(r,e,t,i){const a=`
     <!-- HEADER -->
     <tr>
-      <td style="background:${g};padding:0;text-align:center;position:relative;">
+      <td style="background:${p};padding:0;text-align:center;position:relative;">
         <!-- Top accent bar -->
         <div style="height:4px;background:linear-gradient(90deg,#818CF8,#C7D2FE,#818CF8);"></div>
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -139,7 +139,7 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
         <!-- Update highlight card -->
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
           <tr>
-            <td style="background:${w};border:1.5px solid #C7D2FE;
+            <td style="background:${x};border:1.5px solid #C7D2FE;
                        border-radius:16px;padding:24px 26px;">
               <!-- Card header -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
@@ -147,7 +147,7 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
                   <td>
                     <table cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td style="background:${g};border-radius:8px;
+                        <td style="background:${p};border-radius:8px;
                                    width:28px;height:28px;text-align:center;vertical-align:middle;line-height:28px;">
                           <span style="font-size:13px;line-height:28px;">📋</span>
                         </td>
@@ -158,17 +158,17 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
                       </tr>
                     </table>
                   </td>
-                  ${t?`
+                  ${e?`
                   <td align="right">
                     <span style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:100px;
                                  color:#4338CA;font-size:11px;font-weight:600;padding:4px 12px;
-                                 font-family:Arial,sans-serif;">📁 ${t}</span>
+                                 font-family:Arial,sans-serif;">📁 ${e}</span>
                   </td>`:""}
                 </tr>
               </table>
               <!-- Update title -->
               <p style="color:#1E1B4B;font-size:20px;font-weight:700;margin:0;
-                        line-height:1.3;font-family:Arial,sans-serif;">${e}</p>
+                        line-height:1.3;font-family:Arial,sans-serif;">${t}</p>
             </td>
           </tr>
         </table>
@@ -233,7 +233,7 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
             <td align="center">
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background:${g};border-radius:14px;
+                  <td style="background:${p};border-radius:14px;
                              box-shadow:0 8px 24px rgba(99,102,241,0.4);">
                     <a href="${i}"
                       style="display:block;color:#ffffff;text-decoration:none;
@@ -266,10 +266,10 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
 
       </td>
     </tr>
-  `;return f(a)}function F(r,t,e,i,a){const n="linear-gradient(135deg,#0C4A6E 0%,#0369A1 45%,#0EA5E9 100%)",l=`
+  `;return c(a)}function y(r,e,t,i,a){const l="linear-gradient(135deg,#0C4A6E 0%,#0369A1 45%,#0EA5E9 100%)",n=`
     <!-- HEADER -->
     <tr>
-      <td style="background:${n};padding:0;text-align:center;">
+      <td style="background:${l};padding:0;text-align:center;">
         <!-- Top accent bar -->
         <div style="height:4px;background:linear-gradient(90deg,#38BDF8,#BAE6FD,#38BDF8);"></div>
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -337,11 +337,11 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
           Hello, ${r} 👋
         </p>
         <p style="color:#64748B;font-size:14px;margin:0 0 28px;line-height:1.65;font-family:Arial,sans-serif;">
-          The ZynHive team replied to your feedback${e?` on <strong style="color:#1E293B;">${e}</strong>`:""}.
+          The ZynHive team replied to your feedback${t?` on <strong style="color:#1E293B;">${t}</strong>`:""}.
         </p>
 
         <!-- Context breadcrumb -->
-        ${e?`
+        ${t?`
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
           <tr>
             <td style="background:#F8FAFF;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;">
@@ -352,11 +352,11 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
                   </td>
                   <td style="padding-left:8px;vertical-align:middle;">
                     <span style="color:#334155;font-size:13px;font-weight:600;
-                                 font-family:Arial,sans-serif;">${e}</span>
+                                 font-family:Arial,sans-serif;">${t}</span>
                   </td>
-                  ${t?`
+                  ${e?`
                   <td style="padding-left:12px;vertical-align:middle;">
-                    <span style="color:#94A3B8;font-size:11px;font-family:Arial,sans-serif;">· 📁 ${t}</span>
+                    <span style="color:#94A3B8;font-size:11px;font-family:Arial,sans-serif;">· 📁 ${e}</span>
                   </td>`:""}
                 </tr>
               </table>
@@ -372,7 +372,7 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
               <!-- Sender row -->
               <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
                 <tr>
-                  <td style="background:${n};border-radius:9px;
+                  <td style="background:${l};border-radius:9px;
                              width:34px;height:34px;text-align:center;vertical-align:middle;line-height:34px;">
                     <span style="color:#fff;font-size:10px;font-weight:900;font-family:Arial,sans-serif;">ZH</span>
                   </td>
@@ -397,7 +397,7 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
             <td align="center">
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background:${n};border-radius:14px;
+                  <td style="background:${l};border-radius:14px;
                              box-shadow:0 8px 24px rgba(14,165,233,0.35);">
                     <a href="${a}"
                       style="display:block;color:#ffffff;text-decoration:none;
@@ -430,10 +430,10 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
 
       </td>
     </tr>
-  `;return f(l)}function v(r,t,e,i,a,n){const l="linear-gradient(135deg,#1E1B4B 0%,#3730A3 50%,#4F46E5 100%)",o={high:{color:"#EF4444",bg:"#FEF2F2"},medium:{color:"#F59E0B",bg:"#FFFBEB"},low:{color:"#10B981",bg:"#F0FDF4"}},s=o[i]??o.medium,d=`
+  `;return c(n)}function h(r,e,t,i,a,l){const n="linear-gradient(135deg,#1E1B4B 0%,#3730A3 50%,#4F46E5 100%)",o={high:{color:"#EF4444",bg:"#FEF2F2"},medium:{color:"#F59E0B",bg:"#FFFBEB"},low:{color:"#10B981",bg:"#F0FDF4"}},s=o[i]??o.medium,d=`
     <!-- HEADER -->
     <tr>
-      <td style="background:${l};padding:0;text-align:center;">
+      <td style="background:${n};padding:0;text-align:center;">
         <div style="height:4px;background:linear-gradient(90deg,#818CF8,#C7D2FE,#818CF8);"></div>
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
@@ -515,11 +515,11 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
               </table>
               <!-- Title -->
               <p style="color:#1E1B4B;font-size:19px;font-weight:700;margin:0 0 10px;
-                        line-height:1.3;font-family:Arial,sans-serif;">${t}</p>
+                        line-height:1.3;font-family:Arial,sans-serif;">${e}</p>
               <!-- Description -->
-              ${e?`
+              ${t?`
               <p style="color:#475569;font-size:13px;line-height:1.7;margin:0;
-                        font-family:Arial,sans-serif;">${e}</p>`:""}
+                        font-family:Arial,sans-serif;">${t}</p>`:""}
             </td>
           </tr>
         </table>
@@ -530,9 +530,9 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
             <td align="center">
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background:${l};border-radius:14px;
+                  <td style="background:${n};border-radius:14px;
                              box-shadow:0 8px 24px rgba(99,102,241,0.4);">
-                    <a href="${n}"
+                    <a href="${l}"
                       style="display:block;color:#ffffff;text-decoration:none;
                              padding:16px 52px;font-size:15px;font-weight:800;
                              letter-spacing:-0.2px;font-family:Arial,sans-serif;white-space:nowrap;">
@@ -556,33 +556,33 @@ const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynH
         </table>
       </td>
     </tr>
-  `;return f(d)}async function x(r){try{const t=await fetch("/api/send-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(r)});return t.ok?!0:(console.error("[email] /api/send-email:",t.status,await t.text()),!1)}catch(t){return console.error("[email] /api/send-email unreachable:",t),!1}}async function k(r){const{toEmail:t,toName:e,projectName:i,updateTitle:a,portalUrl:n}=r,l=`New Update on Your Project — ${a||i||"ZynHive"}`,o=A(e,i,a,n),s=`Hi ${e},
+  `;return c(d)}async function u(r){const{toEmail:e,toName:t,projectName:i,updateTitle:a,portalUrl:l}=r,n=`New Update on Your Project — ${a||i||"ZynHive"}`,o=b(t,i,a,l),s=`Hi ${t},
 
 Your project "${i}" has a new update: ${a}.
 
-View it here: ${n}
+View it here: ${l}
 
-— ZynHive Team`;(await c({to:t,subject:l,body:s,html:o})).success||await x({type:"update",toEmail:t,toName:e,projectName:i,updateTitle:a,portalUrl:n})}async function z(r){const{toEmail:t,toName:e,taskTitle:i,taskDescription:a,priority:n,dueDate:l,portalUrl:o}=r,s=`New Task Assigned: ${i}`,d=v(e,i,a,n,l,o),p=`Hi ${e},
+— ZynHive Team`;await g({to:e,subject:n,body:s,html:o})}async function w(r){const{toEmail:e,toName:t,taskTitle:i,taskDescription:a,priority:l,dueDate:n,portalUrl:o}=r,s=`New Task Assigned: ${i}`,d=h(t,i,a,l,n,o),f=`Hi ${t},
 
 A new task has been assigned to you: "${i}"
 
-Priority: ${n}
-Due: ${l}
+Priority: ${l}
+Due: ${n}
 
 View your portal: ${o}
 
-— ZynHive Team`;(await c({to:t,subject:s,body:p,html:d})).success||await x({type:"task",toEmail:t,toName:e,taskTitle:i,taskDescription:a,priority:n,dueDate:l,portalUrl:o})}async function $(r){const{toEmail:t,toName:e,projectName:i,updateTitle:a,replyMessage:n,portalUrl:l}=r,o=`ZynHive replied to your feedback${a?` on "${a}"`:""}`,s=F(e,i,a,n,l),d=`Hi ${e},
+— ZynHive Team`;await g({to:e,subject:s,body:f,html:d})}async function A(r){const{toEmail:e,toName:t,projectName:i,updateTitle:a,replyMessage:l,portalUrl:n}=r,o=`ZynHive replied to your feedback${a?` on "${a}"`:""}`,s=y(t,i,a,l,n),d=`Hi ${t},
 
 ZynHive Team replied to your feedback on "${a}":
 
-"${n}"
+"${l}"
 
-View conversation: ${l}
+View conversation: ${n}
 
-— ZynHive Team`;(await c({to:t,subject:o,body:d,html:s})).success||await x({type:"reply",toEmail:t,toName:e,projectName:i,updateTitle:a,replyMessage:n,portalUrl:l})}function E(r,t,e,i,a,n){const l="linear-gradient(135deg,#064E3B 0%,#047857 50%,#10B981 100%)",o=`
+— ZynHive Team`;await g({to:e,subject:o,body:d,html:s})}function m(r,e,t,i,a,l){const n="linear-gradient(135deg,#064E3B 0%,#047857 50%,#10B981 100%)",o=`
     <!-- HEADER -->
     <tr>
-      <td style="background:${l};padding:0;text-align:center;">
+      <td style="background:${n};padding:0;text-align:center;">
         <div style="height:4px;background:linear-gradient(90deg,#6EE7B7,#A7F3D0,#6EE7B7);"></div>
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
@@ -663,10 +663,10 @@ View conversation: ${l}
                 </tr>
               </table>
               <p style="color:#14532D;font-size:18px;font-weight:700;margin:0 0 8px;
-                        line-height:1.3;font-family:Arial,sans-serif;">${t}</p>
-              ${e?`
+                        line-height:1.3;font-family:Arial,sans-serif;">${e}</p>
+              ${t?`
               <p style="color:#166534;font-size:13px;line-height:1.65;margin:0;
-                        font-family:Arial,sans-serif;">${e}</p>`:""}
+                        font-family:Arial,sans-serif;">${t}</p>`:""}
             </td>
           </tr>
         </table>
@@ -693,9 +693,9 @@ View conversation: ${l}
             <td align="center">
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background:${l};border-radius:14px;
+                  <td style="background:${n};border-radius:14px;
                              box-shadow:0 8px 24px rgba(16,185,129,0.35);">
-                    <a href="${n}"
+                    <a href="${l}"
                       style="display:block;color:#ffffff;text-decoration:none;
                              padding:16px 52px;font-size:15px;font-weight:800;
                              letter-spacing:-0.2px;font-family:Arial,sans-serif;white-space:nowrap;">
@@ -719,9 +719,9 @@ View conversation: ${l}
         </table>
       </td>
     </tr>
-  `;return f(o)}async function B(r){const{toEmail:t,memberName:e,taskTitle:i,taskDescription:a,report:n,linkedClientName:l,dashboardUrl:o}=r,s=`✅ Review Needed: ${e} completed "${i}"`,d=E(e,i,a,n,l,o),p=`${e} completed a task: "${i}"
+  `;return c(o)}async function F(r){const{toEmail:e,memberName:t,taskTitle:i,taskDescription:a,report:l,linkedClientName:n,dashboardUrl:o}=r,s=`✅ Review Needed: ${t} completed "${i}"`,d=m(t,i,a,l,n,o),f=`${t} completed a task: "${i}"
 
 Report:
-${n}
+${l}
 
-Review it: ${o}`;(await c({to:t,subject:s,body:p,html:d})).success||await x({type:"admin-review",toEmail:t,memberName:e,taskTitle:i,taskDescription:a,report:n,linkedClientName:l,dashboardUrl:o})}export{k as a,$ as b,z as c,B as d,c as s};
+Review it: ${o}`;await g({to:e,subject:s,body:f,html:d})}export{u as a,A as b,w as c,F as d,g as s};

@@ -1292,7 +1292,7 @@ function UpdatesPanel({
 }
 
 // ─── Client Row ───────────────────────────────────────────────────────────────
-function ClientRow({
+function ClientCard({
   client, onEdit, onDelete, onViewUpdates,
 }: {
   client: FirestoreClient;
@@ -1301,75 +1301,125 @@ function ClientRow({
   onViewUpdates: () => void;
 }) {
   const [hov, setHov] = useState(false);
+  const [copied, setCopied] = useState(false);
   const colors = ["#378ADD", "#7F77DD", "#22C55E", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"];
   const color = colors[(client.name.charCodeAt(0) ?? 0) % colors.length];
+
+  const portalUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/client/${client.id}`;
+
+  function copyPortal(e: React.MouseEvent) {
+    e.stopPropagation();
+    navigator.clipboard.writeText(portalUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <div
       style={{
-        display: "flex", alignItems: "center", gap: 12, padding: "10px 16px",
-        borderBottom: "0.5px solid var(--border)",
-        background: hov ? "var(--bg-alt)" : "transparent",
-        transition: "background .15s", cursor: "default",
+        borderRadius: 14,
+        background: "var(--bg-card)",
+        border: `0.5px solid ${hov ? "rgba(124,58,237,0.25)" : "var(--border)"}`,
+        boxShadow: hov ? `0 4px 20px ${color}14` : "none",
+        transition: "all .2s", cursor: "default",
+        overflow: "hidden",
+        position: "relative",
       }}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
     >
-      {/* Avatar */}
-      <div style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, background: `${color}18`, border: `1px solid ${color}28`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color }}>
-        {initials(client.name)}
+      {/* Gradient accent top bar */}
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${color}, ${color}60)` }}/>
+
+      <div style={{ padding: "16px 16px 14px" }}>
+        {/* Top row: avatar + name */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+          <div style={{
+            width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+            background: `linear-gradient(135deg, ${color}30, ${color}10)`,
+            border: `1.5px solid ${color}35`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 14, fontWeight: 800, color,
+            boxShadow: `0 0 12px ${color}25`,
+          }}>
+            {initials(client.name)}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{client.name}</div>
+            {client.company && (
+              <div style={{ fontSize: 11, color: "var(--ink4)", marginTop: 1 }}>{client.company}</div>
+            )}
+          </div>
+        </div>
+
+        {/* Email */}
+        {client.email && (
+          <div style={{ fontSize: 11, color: "var(--ink4)", marginBottom: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {client.email}
+          </div>
+        )}
+
+        {/* Project name badge */}
+        {client.projectName && (
+          <div style={{ marginBottom: 10 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color, background: `${color}12`, border: `1px solid ${color}22`, borderRadius: 6, padding: "2px 8px" }}>
+              {client.projectName}
+            </span>
+          </div>
+        )}
+
+        {/* Portal link copy */}
+        <button
+          onClick={copyPortal}
+          style={{
+            width: "100%", padding: "6px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+            background: copied ? "var(--green-pale)" : "var(--bg-alt)",
+            border: `0.5px solid ${copied ? "rgba(34,197,94,0.3)" : "var(--border2)"}`,
+            color: copied ? "var(--green)" : "var(--ink3)",
+            cursor: "pointer", transition: "all .15s",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+          }}
+          onMouseEnter={(e) => { if (!copied) { const el = e.currentTarget as HTMLElement; el.style.background = "var(--accent-pale)"; el.style.color = "var(--accent)"; } }}
+          onMouseLeave={(e) => { if (!copied) { const el = e.currentTarget as HTMLElement; el.style.background = "var(--bg-alt)"; el.style.color = "var(--ink3)"; } }}
+        >
+          {copied ? (
+            <><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 5l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg> Copied!</>
+          ) : (
+            <><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1"/><path d="M2 7V2h5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/></svg> Copy Portal Link</>
+          )}
+        </button>
       </div>
 
-      {/* Info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{client.name}</span>
-          {client.company && (
-            <span style={{ fontSize: 10, color: "var(--ink4)", background: "var(--bg-alt)", border: "0.5px solid var(--border)", borderRadius: 5, padding: "1px 6px", flexShrink: 0 }}>{client.company}</span>
-          )}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 11, color: "var(--ink4)" }}>{client.email}</span>
-          {client.projectName && (
-            <span style={{ fontSize: 10, color, background: `${color}10`, border: `1px solid ${color}20`, borderRadius: 5, padding: "1px 6px" }}>{client.projectName}</span>
-          )}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+      {/* Bottom actions */}
+      <div style={{ display: "flex", gap: 0, borderTop: "0.5px solid var(--border)" }}>
         <button
           onClick={onViewUpdates}
           style={{
-            display: "flex", alignItems: "center", gap: 5,
-            padding: "5px 10px", borderRadius: 7, fontSize: 11, fontWeight: 600,
-            border: "0.5px solid var(--border2)", background: "transparent",
-            color: "var(--ink3)", cursor: "pointer", transition: "all .15s",
-            opacity: hov ? 1 : 0,
+            flex: 2, padding: "9px 0", fontSize: 11, fontWeight: 600,
+            background: "transparent", border: "none", cursor: "pointer",
+            color: "var(--accent)", transition: "background .15s", borderRight: "0.5px solid var(--border)",
           }}
-          onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--accent-pale)"; el.style.color = "var(--accent)"; el.style.borderColor = "var(--accent-pale2)"; }}
-          onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink3)"; el.style.borderColor = "var(--border2)"; }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--accent-pale)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
         >
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 2C3 2 1 6 1 6s2 4 5 4 5-4 5-4-2-4-5-4z" stroke="currentColor" strokeWidth="1.1"/><circle cx="6" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.1"/></svg>
-          Updates
+          ◉ Updates
         </button>
         <button
           onClick={onEdit}
-          title="Edit"
-          style={{ width: 28, height: 28, borderRadius: 7, border: "none", background: "transparent", cursor: "pointer", color: "var(--ink4)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .15s", opacity: hov ? 1 : 0 }}
-          onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--accent-pale)"; el.style.color = "var(--accent)"; }}
-          onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink4)"; }}
+          style={{ flex: 1, padding: "9px 0", fontSize: 11, background: "transparent", border: "none", cursor: "pointer", color: "var(--ink3)", transition: "background .15s", borderRight: "0.5px solid var(--border)" }}
+          onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--bg-alt)"; el.style.color = "var(--ink)"; }}
+          onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink3)"; }}
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8.5 1.5l2 2L4 10H2V8L8.5 1.5z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/></svg>
+          Edit
         </button>
         <button
           onClick={onDelete}
-          title="Delete"
-          style={{ width: 28, height: 28, borderRadius: 7, border: "none", background: "transparent", cursor: "pointer", color: "var(--ink4)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .15s", opacity: hov ? 1 : 0 }}
+          style={{ flex: 1, padding: "9px 0", fontSize: 11, background: "transparent", border: "none", cursor: "pointer", color: "var(--ink4)", transition: "background .15s" }}
           onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--red-pale)"; el.style.color = "var(--red)"; }}
           onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink4)"; }}
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 3h9M4 3V2h4v1M3.5 3l.5 7.5M8.5 3l-.5 7.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/></svg>
+          Delete
         </button>
       </div>
     </div>
@@ -1591,15 +1641,17 @@ export function ClientTab({ showToast, openAdd = false, onOpenAddDone }: {
               )}
             </div>
           ) : (
-            filtered.map((c) => (
-              <ClientRow
-                key={c.id}
-                client={c}
-                onEdit={() => setClientForm(c)}
-                onDelete={() => setDeleteTarget(c)}
-                onViewUpdates={() => setViewClient(c)}
-              />
-            ))
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14, padding: "16px" }}>
+              {filtered.map((c) => (
+                <ClientCard
+                  key={c.id}
+                  client={c}
+                  onEdit={() => setClientForm(c)}
+                  onDelete={() => setDeleteTarget(c)}
+                  onViewUpdates={() => setViewClient(c)}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>

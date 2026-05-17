@@ -604,21 +604,6 @@ function buildTaskAssignedHtml(
   return emailWrapper(body);
 }
 
-// ─── Vercel fallback ──────────────────────────────────────────────────────────
-async function sendViaVercel(body: object): Promise<boolean> {
-  try {
-    const res = await fetch("/api/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) { console.error("[email] /api/send-email:", res.status, await res.text()); return false; }
-    return true;
-  } catch (err) {
-    console.error("[email] /api/send-email unreachable:", err);
-    return false;
-  }
-}
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 export async function sendUpdateNotificationEmail(params: {
@@ -628,9 +613,7 @@ export async function sendUpdateNotificationEmail(params: {
   const subject = `New Update on Your Project — ${updateTitle || projectName || "ZynHive"}`;
   const html    = buildUpdateHtml(toName, projectName, updateTitle, portalUrl);
   const body    = `Hi ${toName},\n\nYour project "${projectName}" has a new update: ${updateTitle}.\n\nView it here: ${portalUrl}\n\n— ZynHive Team`;
-
-  const result = await sendEmail({ to: toEmail, subject, body, html });
-  if (!result.success) await sendViaVercel({ type: "update", toEmail, toName, projectName, updateTitle, portalUrl });
+  await sendEmail({ to: toEmail, subject, body, html });
 }
 
 export async function sendTaskAssignedEmail(params: {
@@ -641,9 +624,7 @@ export async function sendTaskAssignedEmail(params: {
   const subject = `New Task Assigned: ${taskTitle}`;
   const html    = buildTaskAssignedHtml(toName, taskTitle, taskDescription, priority, dueDate, portalUrl);
   const body    = `Hi ${toName},\n\nA new task has been assigned to you: "${taskTitle}"\n\nPriority: ${priority}\nDue: ${dueDate}\n\nView your portal: ${portalUrl}\n\n— ZynHive Team`;
-
-  const result = await sendEmail({ to: toEmail, subject, body, html });
-  if (!result.success) await sendViaVercel({ type: "task", toEmail, toName, taskTitle, taskDescription, priority, dueDate, portalUrl });
+  await sendEmail({ to: toEmail, subject, body, html });
 }
 
 export async function sendReplyNotificationEmail(params: {
@@ -654,9 +635,7 @@ export async function sendReplyNotificationEmail(params: {
   const subject = `ZynHive replied to your feedback${updateTitle ? ` on "${updateTitle}"` : ""}`;
   const html    = buildReplyHtml(toName, projectName, updateTitle, replyMessage, portalUrl);
   const body    = `Hi ${toName},\n\nZynHive Team replied to your feedback on "${updateTitle}":\n\n"${replyMessage}"\n\nView conversation: ${portalUrl}\n\n— ZynHive Team`;
-
-  const result = await sendEmail({ to: toEmail, subject, body, html });
-  if (!result.success) await sendViaVercel({ type: "reply", toEmail, toName, projectName, updateTitle, replyMessage, portalUrl });
+  await sendEmail({ to: toEmail, subject, body, html });
 }
 
 // ─── Admin review notification template ──────────────────────────────────────
@@ -823,11 +802,5 @@ export async function sendAdminReviewEmail(params: {
   const html    = buildAdminReviewHtml(memberName, taskTitle, taskDescription, report, linkedClientName, dashboardUrl);
   const body    = `${memberName} completed a task: "${taskTitle}"\n\nReport:\n${report}\n\nReview it: ${dashboardUrl}`;
 
-  const result = await sendEmail({ to: toEmail, subject, body, html });
-  if (!result.success) {
-    await sendViaVercel({
-      type: "admin-review", toEmail, memberName, taskTitle,
-      taskDescription, report, linkedClientName, dashboardUrl,
-    });
-  }
+  await sendEmail({ to: toEmail, subject, body, html });
 }
