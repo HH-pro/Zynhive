@@ -7,12 +7,14 @@ import { ProjectForm }        from "../../components/admin/ProjectForm";
 import { TeamTab }            from "../../components/admin/TeamTab";
 import { LeadTab }            from "../../components/admin/Leadtab";
 import { ClientTab }          from "../../components/admin/ClientTab";
+import { TaskTab }            from "../../components/admin/TaskTab";
+import { OverviewTab }        from "../../components/admin/OverviewTab";
 import { getCloudinaryThumb } from "../../lib/cloudinary";
 import type { User }          from "firebase/auth";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Props { user: User; }
-type Tab = "projects" | "leads" | "team" | "analytics" | "clients";
+type Tab = "overview" | "projects" | "leads" | "team" | "analytics" | "clients" | "tasks";
 
 // ─── Theme helpers ────────────────────────────────────────────────────────────
 // Persists choice and writes data-theme to <html> so index.css vars swap.
@@ -76,7 +78,10 @@ export function ThemeToggle({ dark, onToggle }: { dark: boolean; onToggle: () =>
 // ─── Keyframe injector ────────────────────────────────────────────────────────
 // Only admin-specific keyframes. All token variables live in index.css.
 const ADMIN_KF = `
-  @keyframes spinLoader { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+  @keyframes spinLoader  { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+  @keyframes fadeScaleIn { from { opacity:0; transform:scale(0.95) translateY(4px); } to { opacity:1; transform:scale(1) translateY(0); } }
+  @keyframes toastIn     { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulseLoad   { 0%,100% { opacity:.45; } 50% { opacity:.9; } }
 `;
 function KFInjector() {
   useEffect(() => {
@@ -90,6 +95,15 @@ function KFInjector() {
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const Ic = {
+  Overview: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+      <rect x="1" y="1" width="6" height="4" rx="1.2" stroke="currentColor" strokeWidth="1.1"/>
+      <rect x="9" y="1" width="5" height="4" rx="1.2" stroke="currentColor" strokeWidth="1.1"/>
+      <rect x="1" y="7" width="5" height="7" rx="1.2" stroke="currentColor" strokeWidth="1.1"/>
+      <rect x="8" y="7" width="6" height="3" rx="1.2" stroke="currentColor" strokeWidth="1.1"/>
+      <rect x="8" y="11" width="6" height="3" rx="1.2" stroke="currentColor" strokeWidth="1.1"/>
+    </svg>
+  ),
   Projects: () => (
     <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
       <rect x="1" y="1" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.1"/>
@@ -124,6 +138,13 @@ const Ic = {
       <circle cx="5.5" cy="4" r="2.2" stroke="currentColor" strokeWidth="1.1"/>
       <path d="M1 13c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
       <path d="M10.5 1.5v4M12.5 3.5h-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  ),
+  Tasks: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+      <rect x="2" y="4" width="11" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.1"/>
+      <path d="M5 4V3a2.5 2.5 0 015 0v1" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+      <path d="M5 8.5l1.5 1.5 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
   Search: () => (
@@ -210,17 +231,21 @@ const Ic = {
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode; badge?: string }[] = [
+  { id: "overview",  label: "Overview",  icon: <Ic.Overview /> },
   { id: "projects",  label: "Projects",  icon: <Ic.Projects /> },
-  { id: "leads",     label: "Leads",     icon: <Ic.Leads />,    badge: "3" },
+  { id: "leads",     label: "Leads",     icon: <Ic.Leads /> },
   { id: "team",      label: "Team",      icon: <Ic.Team /> },
+  { id: "tasks",     label: "Tasks",     icon: <Ic.Tasks /> },
   { id: "analytics", label: "Analytics", icon: <Ic.Analytics /> },
   { id: "clients",   label: "Clients",   icon: <Ic.Clients /> },
 ];
 
 const CTA_LABELS: Record<Tab, string> = {
+  overview:  "",
   projects:  "New Project",
   leads:     "Add Lead",
   team:      "Add Member",
+  tasks:     "New Task",
   analytics: "",
   clients:   "Add Client",
 };
@@ -760,13 +785,109 @@ function AnalyticsTab({ projects }: { projects: FirestoreProject[] }) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// COMMAND PALETTE  (⌘K / Ctrl+K)
+// ═════════════════════════════════════════════════════════════════════════════
+
+const CMD_ACTIONS: { label: string; sub: string; tab: Tab; icon: React.ReactNode; color: string }[] = [
+  { label: "Overview",  sub: "Dashboard home",    tab: "overview",  icon: <Ic.Overview />,  color: "var(--accent)"  },
+  { label: "Projects",  sub: "Manage portfolio",  tab: "projects",  icon: <Ic.Projects />,  color: "var(--purple)"  },
+  { label: "Leads",     sub: "CRM pipeline",      tab: "leads",     icon: <Ic.Leads />,     color: "var(--gold)"    },
+  { label: "Team",      sub: "Team members",      tab: "team",      icon: <Ic.Team />,      color: "var(--green)"   },
+  { label: "Tasks",     sub: "Task management",   tab: "tasks",     icon: <Ic.Tasks />,     color: "var(--cyan)"    },
+  { label: "Analytics", sub: "Reports & charts",  tab: "analytics", icon: <Ic.Analytics />, color: "var(--red)"     },
+  { label: "Clients",   sub: "Client portal",     tab: "clients",   icon: <Ic.Clients />,   color: "var(--accent)"  },
+];
+
+function CmdKPalette({ onClose, onNavigate }: { onClose: () => void; onNavigate: (tab: Tab) => void }) {
+  const [q, setQ] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [cursor, setCursor] = useState(0);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const filtered = CMD_ACTIONS.filter(
+    (a) => !q || a.label.toLowerCase().includes(q.toLowerCase()) || a.sub.toLowerCase().includes(q.toLowerCase()),
+  );
+
+  useEffect(() => { setCursor(0); }, [q]);
+
+  function pick(tab: Tab) { onNavigate(tab); onClose(); }
+
+  function onKey(e: React.KeyboardEvent) {
+    if (e.key === "ArrowDown") { e.preventDefault(); setCursor((c) => Math.min(c + 1, filtered.length - 1)); }
+    if (e.key === "ArrowUp")   { e.preventDefault(); setCursor((c) => Math.max(c - 1, 0)); }
+    if (e.key === "Enter" && filtered[cursor]) pick(filtered[cursor].tab);
+  }
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-start justify-center pt-[12vh] px-4"
+      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)" }}
+      onClick={onClose}>
+      <div className="w-full max-w-[520px] rounded-2xl overflow-hidden"
+        style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", boxShadow: "var(--shadow-lg)", animation: "fadeScaleIn .18s cubic-bezier(0.16,1,0.3,1) both" }}
+        onClick={(e) => e.stopPropagation()}>
+
+        {/* Search input */}
+        <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: "0.5px solid var(--border)" }}>
+          <svg width="15" height="15" viewBox="0 0 13 13" fill="none" style={{ color: "var(--ink4)", flexShrink: 0 }}>
+            <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" strokeWidth="1.3"/>
+            <path d="M8.5 8.5l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onKey}
+            placeholder="Search pages, actions…"
+            style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--ink)", fontFamily: "inherit" }}/>
+          <kbd style={{ fontSize: 10, padding: "2px 6px", borderRadius: 5, background: "var(--bg-alt)", border: "0.5px solid var(--border2)", color: "var(--ink4)", fontFamily: "monospace" }}>
+            ESC
+          </kbd>
+        </div>
+
+        {/* Results */}
+        <div style={{ maxHeight: 360, overflowY: "auto", padding: "6px 0" }}>
+          {filtered.length === 0 ? (
+            <p className="text-center py-8 text-[13px]" style={{ color: "var(--ink4)" }}>No results for "{q}"</p>
+          ) : (
+            filtered.map((a, i) => (
+              <button key={a.tab} onClick={() => pick(a.tab)}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all"
+                style={{ background: i === cursor ? "var(--accent-pale)" : "transparent", border: "none", cursor: "pointer", outline: "none" }}
+                onMouseEnter={() => setCursor(i)}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${a.color}18`, color: a.color }}>
+                  {a.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium" style={{ color: i === cursor ? "var(--accent)" : "var(--ink)" }}>{a.label}</p>
+                  <p className="text-[11px]" style={{ color: "var(--ink4)" }}>{a.sub}</p>
+                </div>
+                {i === cursor && (
+                  <kbd style={{ fontSize: 10, padding: "2px 6px", borderRadius: 5, background: "var(--bg-alt)", border: "0.5px solid var(--border2)", color: "var(--accent)", fontFamily: "monospace", flexShrink: 0 }}>↵</kbd>
+                )}
+              </button>
+            ))
+          )}
+        </div>
+
+        <div className="px-4 py-2.5 flex items-center gap-4" style={{ borderTop: "0.5px solid var(--border)" }}>
+          {[["↑↓", "Navigate"], ["↵", "Open"], ["ESC", "Close"]].map(([key, label]) => (
+            <span key={key} className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--ink4)" }}>
+              <kbd style={{ fontSize: 10, padding: "1px 5px", borderRadius: 4, background: "var(--bg-alt)", border: "0.5px solid var(--border2)", fontFamily: "monospace" }}>{key}</kbd>
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // MAIN ADMIN DASHBOARD
 // ═════════════════════════════════════════════════════════════════════════════
 
 export function AdminDashboard({ user }: Props) {
   const [projects,     setProjects]     = useState<FirestoreProject[]>([]);
   const [loading,      setLoading]      = useState(true);
-  const [tab,          setTab]          = useState<Tab>("projects");
+  const [tab,          setTab]          = useState<Tab>("overview");
   const [search,       setSearch]       = useState("");
   const [formOpen,     setFormOpen]     = useState(false);
   const [editProject,  setEditProject]  = useState<FirestoreProject | null>(null);
@@ -775,11 +896,14 @@ export function AdminDashboard({ user }: Props) {
   const [toast,        setToast]        = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [dark,         setDark]         = useState<boolean>(() => getStoredTheme());
 
-  const w       = useWindowWidth();
-  const isMobile = w < 768;
+  const w        = useWindowWidth();
+  const isMobile = w < 640;
+  const isTablet = w >= 640 && w < 1024;
 
-  // On mobile, auto-collapse sidebar
-  const effectiveSidebarOpen = isMobile ? false : sidebarOpen;
+  // Mobile: sidebar is a slide-over overlay (never inline)
+  // Tablet: always icon-only strip
+  // Desktop: full or collapsed based on state
+  const effectiveSidebarOpen = isMobile ? false : (isTablet ? false : sidebarOpen);
 
   // Apply theme on mount + change
   useEffect(() => { applyTheme(dark); }, [dark]);
@@ -817,13 +941,25 @@ export function AdminDashboard({ user }: Props) {
   const activeNavItem = NAV_ITEMS.find((n) => n.id === tab);
 
   const [clientAddOpen, setClientAddOpen] = useState(false);
+  const [taskAddOpen,   setTaskAddOpen]   = useState(false);
+  const [cmdOpen,       setCmdOpen]       = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); setCmdOpen((o) => !o); }
+      if (e.key === "Escape") setCmdOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   function handleCta() {
     if (tab === "projects") { setEditProject(null); setFormOpen(true); }
     if (tab === "clients")  { setClientAddOpen(true); }
+    if (tab === "tasks")    { setTaskAddOpen(true); }
   }
 
-  const sidebarW = effectiveSidebarOpen ? 210 : 52;
+  const sidebarW = isMobile ? 0 : (effectiveSidebarOpen ? 210 : 52);
 
   return (
     <>
@@ -836,133 +972,149 @@ export function AdminDashboard({ user }: Props) {
       <div className="min-h-screen flex"
         style={{ background: "var(--bg)", fontFamily: "'DM Sans',sans-serif" }}>
 
+        {/* Mobile backdrop */}
+        {isMobile && sidebarOpen && (
+          <div
+            onClick={() => setSidebarOpen(false)}
+            style={{ position: "fixed", inset: 0, zIndex: 39, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(2px)" }}
+          />
+        )}
+
         {/* ══════════ SIDEBAR ══════════ */}
         <aside className="flex flex-col flex-shrink-0"
           style={{
-            width:       sidebarW,
+            width:       isMobile ? 210 : sidebarW,
             background:  "var(--bg-panel)",
             borderRight: "0.5px solid var(--border)",
             overflow:    "hidden",
-            transition:  "width .3s var(--ease), background .3s",
-            // On mobile: absolute overlay
+            transition:  "transform .3s var(--ease), width .3s var(--ease)",
+            flexShrink:  0,
+            // Mobile: slide in/out as overlay
             ...(isMobile ? {
-              position: "absolute",
+              position:  "fixed",
               top: 0, left: 0, bottom: 0,
-              zIndex: 40,
+              zIndex:    40,
+              transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
             } : {}),
           }}>
 
           {/* Logo row */}
-          <div className="flex items-center flex-shrink-0"
-            style={{
-              height: 52,
-              borderBottom: "0.5px solid var(--border)",
-              padding: effectiveSidebarOpen ? "0 12px" : "0",
-              justifyContent: effectiveSidebarOpen ? "flex-start" : "center",
-              gap: effectiveSidebarOpen ? 9 : 0,
-            }}>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 cursor-pointer"
-              style={{ background: "var(--accent)" }}
-              onClick={() => setSidebarOpen((o) => !o)}
-              title={effectiveSidebarOpen ? "Collapse" : "Expand"}>
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <path d="M2 7l4 4 6-6" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-
-            {effectiveSidebarOpen && (
-              <div className="min-w-0 flex-1 overflow-hidden">
-                <div className="font-semibold text-[14px] leading-tight whitespace-nowrap" style={{ color: "var(--ink)" }}>ZynHive</div>
-                <div className="text-[10px]" style={{ color: "var(--ink4)" }}>Admin panel</div>
+          {(() => {
+            const showFull = effectiveSidebarOpen || isMobile;
+            return (
+              <div className="flex items-center flex-shrink-0"
+                style={{
+                  height: 52,
+                  borderBottom: "0.5px solid var(--border)",
+                  padding: showFull ? "0 12px" : "0",
+                  justifyContent: showFull ? "flex-start" : "center",
+                  gap: showFull ? 9 : 0,
+                }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 cursor-pointer"
+                  style={{ background: "var(--accent)" }}
+                  onClick={() => !isMobile && setSidebarOpen((o) => !o)}
+                  title={showFull ? "ZynHive" : "Expand"}>
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 7l4 4 6-6" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                {showFull && (
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="font-semibold text-[14px] leading-tight whitespace-nowrap" style={{ color: "var(--ink)" }}>ZynHive</div>
+                    <div className="text-[10px]" style={{ color: "var(--ink4)" }}>Admin panel</div>
+                  </div>
+                )}
+                {showFull && (
+                  <button onClick={() => setSidebarOpen(false)}
+                    className="flex items-center justify-center rounded-lg flex-shrink-0"
+                    style={{ width: 24, height: 24, background: "transparent", border: "0.5px solid var(--border2)", color: "var(--ink4)", cursor: "pointer", transition: "all .15s" }}
+                    onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--accent-pale)"; el.style.color = "var(--accent)"; }}
+                    onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink4)"; }}>
+                    <Ic.ChevronLeft />
+                  </button>
+                )}
               </div>
-            )}
-
-            {effectiveSidebarOpen && (
-              <button onClick={() => setSidebarOpen(false)}
-                className="flex items-center justify-center rounded-lg flex-shrink-0"
-                style={{ width: 24, height: 24, background: "transparent", border: "0.5px solid var(--border2)", color: "var(--ink4)", cursor: "pointer", transition: "all .15s" }}
-                onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--accent-pale)"; el.style.color = "var(--accent)"; }}
-                onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink4)"; }}>
-                <Ic.ChevronLeft />
-              </button>
-            )}
-          </div>
+            );
+          })()}
 
           {/* Section label */}
-          {effectiveSidebarOpen && (
+          {(effectiveSidebarOpen || isMobile) && (
             <div className="px-4 pt-3 pb-1">
               <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "var(--ink4)" }}>Menu</span>
             </div>
           )}
 
           {/* Nav */}
-          <nav className="flex flex-col flex-1 overflow-hidden"
-            style={{ gap: 2, padding: effectiveSidebarOpen ? "4px 8px" : "8px 6px" }}>
-            {NAV_ITEMS.map((item) => {
-              const active = tab === item.id;
-              return (
-                <button key={item.id} onClick={() => switchTab(item.id)} title={item.label}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    width: "100%",
-                    position: "relative",
-                    borderRadius: 9,
-                    gap:            effectiveSidebarOpen ? 10 : 0,
-                    padding:        effectiveSidebarOpen ? "9px 10px" : "10px 0",
-                    justifyContent: effectiveSidebarOpen ? "flex-start" : "center",
-                    background:     active ? "var(--accent-pale)" : "transparent",
-                    color:          active ? "var(--accent)"      : "var(--ink3)",
-                    border:         active ? "0.5px solid var(--accent-pale2)" : "0.5px solid transparent",
-                    cursor: "pointer", fontWeight: active ? 600 : 400,
-                    transition: "all .15s",
-                    textAlign: "left",
-                    lineHeight: 1,
-                  }}
-                  onMouseEnter={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "var(--bg-alt)"; el.style.color = "var(--ink2)"; } }}
-                  onMouseLeave={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink3)"; } }}>
-                  <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>{item.icon}</span>
-                  {effectiveSidebarOpen && (
-                    <>
-                      <span style={{ fontSize: 13, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1, paddingTop: 1 }}>{item.label}</span>
-                      {item.badge && (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                          style={{ background: "var(--accent)", color: "white" }}>
-                          {item.badge}
-                        </span>
+          {(() => {
+            const showLabels = effectiveSidebarOpen || isMobile;
+            return (
+              <nav className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden"
+                style={{ gap: 2, padding: showLabels ? "4px 8px" : "8px 6px" }}>
+                {NAV_ITEMS.map((item) => {
+                  const active = tab === item.id;
+                  return (
+                    <button key={item.id}
+                      onClick={() => { switchTab(item.id); if (isMobile) setSidebarOpen(false); }}
+                      title={item.label}
+                      style={{
+                        display: "flex", alignItems: "center", width: "100%", position: "relative",
+                        borderRadius: 9,
+                        gap:            showLabels ? 10 : 0,
+                        padding:        showLabels ? "10px 10px" : "10px 0",
+                        justifyContent: showLabels ? "flex-start" : "center",
+                        background:     active ? "var(--accent-pale)" : "transparent",
+                        color:          active ? "var(--accent)"      : "var(--ink3)",
+                        border:         active ? "0.5px solid var(--accent-pale2)" : "0.5px solid transparent",
+                        cursor: "pointer", fontWeight: active ? 600 : 400,
+                        transition: "all .15s", textAlign: "left", lineHeight: 1,
+                        fontFamily: "inherit",
+                      }}
+                      onMouseEnter={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "var(--bg-alt)"; el.style.color = "var(--ink2)"; } }}
+                      onMouseLeave={(e) => { if (!active) { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink3)"; } }}>
+                      <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>{item.icon}</span>
+                      {showLabels && (
+                        <>
+                          <span style={{ fontSize: 13, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1, paddingTop: 1 }}>{item.label}</span>
+                          {item.badge && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                              style={{ background: "var(--accent)", color: "white" }}>
+                              {item.badge}
+                            </span>
+                          )}
+                        </>
                       )}
-                    </>
-                  )}
-                  {!effectiveSidebarOpen && item.badge && (
-                    <span className="absolute top-1.5 right-1 w-1.5 h-1.5 rounded-full" style={{ background: "var(--accent)" }}/>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+                      {!showLabels && item.badge && (
+                        <span className="absolute top-1.5 right-1 w-1.5 h-1.5 rounded-full" style={{ background: "var(--accent)" }}/>
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            );
+          })()}
 
           <div style={{ height: "0.5px", background: "var(--border)", margin: "6px 10px" }}/>
 
           {/* User row */}
-          <div className="flex-shrink-0 flex items-center gap-2.5 overflow-hidden"
-            style={{ padding: effectiveSidebarOpen ? "10px 14px" : "10px 0", justifyContent: effectiveSidebarOpen ? "flex-start" : "center" }}>
-            <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[11px]"
-              style={{ background: "var(--accent-pale)", color: "var(--accent)", border: "0.5px solid var(--accent-pale2)" }}>
-              {user.email?.[0]?.toUpperCase() ?? "A"}
-            </div>
-            {effectiveSidebarOpen && (
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-medium truncate" style={{ color: "var(--ink2)" }}>{user.email}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: "var(--ink4)" }}>Administrator</p>
+          {(() => {
+            const showFull = effectiveSidebarOpen || isMobile;
+            return (
+              <div className="flex-shrink-0 flex items-center gap-2.5 overflow-hidden"
+                style={{ padding: showFull ? "10px 14px" : "10px 0", justifyContent: showFull ? "flex-start" : "center" }}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[11px]"
+                  style={{ background: "var(--accent-pale)", color: "var(--accent)", border: "0.5px solid var(--accent-pale2)" }}>
+                  {user.email?.[0]?.toUpperCase() ?? "A"}
+                </div>
+                {showFull && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium truncate" style={{ color: "var(--ink2)" }}>{user.email}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--ink4)" }}>Administrator</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
         </aside>
-
-        {/* Mobile sidebar backdrop */}
-        {isMobile && (
-          <div style={{ width: 52, flexShrink: 0 }} />
-        )}
 
         {/* ══════════ MAIN ══════════ */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -976,8 +1128,8 @@ export function AdminDashboard({ user }: Props) {
               borderBottom: "0.5px solid var(--border)",
             }}>
 
-            {/* Hamburger on mobile */}
-            {isMobile && (
+            {/* Hamburger on mobile + tablet */}
+            {(isMobile || isTablet) && (
               <IconBtn title="Menu" onClick={() => setSidebarOpen((o) => !o)} size={32}>
                 <Ic.Menu />
               </IconBtn>
@@ -985,13 +1137,13 @@ export function AdminDashboard({ user }: Props) {
 
             {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              {!isMobile && <span className="text-[11px]" style={{ color: "var(--ink4)" }}>ZynHive</span>}
-              {!isMobile && <span style={{ color: "var(--ink4)" }}><Ic.Breadcrumb /></span>}
-              <span className="font-semibold text-[14px]" style={{ color: "var(--ink)" }}>{activeNavItem?.label}</span>
+              {!isMobile && !isTablet && <span className="text-[11px]" style={{ color: "var(--ink4)" }}>ZynHive</span>}
+              {!isMobile && !isTablet && <span style={{ color: "var(--ink4)" }}><Ic.Breadcrumb /></span>}
+              <span className="font-semibold text-[13px]" style={{ color: "var(--ink)" }}>{activeNavItem?.label}</span>
             </div>
 
-            {/* Inline search — projects, medium+ */}
-            {tab === "projects" && !isMobile && (
+            {/* Inline search — projects, desktop only */}
+            {tab === "projects" && !isMobile && !isTablet && (
               <div className="admin-hdr-search relative flex-1 max-w-[220px] mx-3">
                 <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--ink4)" }}>
                   <Ic.Search />
@@ -1008,29 +1160,34 @@ export function AdminDashboard({ user }: Props) {
 
             {/* Right actions */}
             <div className="flex items-center gap-2 ml-auto">
-              {/* Project count pill — hidden on mobile */}
-              {!isMobile && (
-                <div className="admin-status-pill flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
-                  style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border)" }}>
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--green)" }}/>
-                  <span className="text-[11px]" style={{ color: "var(--ink4)" }}>
-                    <span style={{ color: "var(--accent)", fontWeight: 600 }}>{projects.length}</span> projects
+
+              {/* ⌘K search trigger */}
+              {!isMobile && !isTablet && (
+                <button onClick={() => setCmdOpen(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px]"
+                  style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border2)", color: "var(--ink4)", cursor: "pointer", transition: "all .15s", fontFamily: "inherit" }}
+                  onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "var(--accent)"; el.style.color = "var(--ink2)"; }}
+                  onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "var(--border2)"; el.style.color = "var(--ink4)"; }}>
+                  <Ic.Search />
+                  <span>Search…</span>
+                  <span className="ml-1 px-1.5 py-0.5 rounded text-[10px]"
+                    style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", fontFamily: "monospace" }}>
+                    ⌘K
                   </span>
-                </div>
+                </button>
+              )}
+
+              {/* CTA Button */}
+              {ctaLabel && (
+                <PrimaryBtn small onClick={handleCta}>
+                  <Ic.Plus />
+                  {!isMobile && ctaLabel}
+                </PrimaryBtn>
               )}
 
               {/* Bell */}
-       {/* CTA Button */}
-{ctaLabel && (
-  <PrimaryBtn small onClick={handleCta}>
-    <Ic.Plus />
-    {!isMobile && ctaLabel}
-  </PrimaryBtn>
-)}
-
-{/* Bell */}
-<div className="relative">
-  <IconBtn title="Notifications" size={30}><Ic.Bell /></IconBtn>
+              <div className="relative">
+                <IconBtn title="Notifications" size={30}><Ic.Bell /></IconBtn>
                 <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full pointer-events-none"
                   style={{ background: "var(--red)", border: "1.5px solid var(--bg-panel)" }}/>
               </div>
@@ -1039,13 +1196,18 @@ export function AdminDashboard({ user }: Props) {
               <ThemeToggle dark={dark} onToggle={handleThemeToggle} />
 
               <ProfileDropdown email={user.email ?? ""} onLogout={() => adminLogout()} />
-
-
             </div>
           </header>
 
           {/* Page content */}
           <main className="flex-1 overflow-y-auto" style={{ background: "var(--bg)" }}>
+            {tab === "overview" && (
+              <OverviewTab
+                showToast={showToast}
+                onNavigate={(t) => switchTab(t as Tab)}
+                user={{ email: user.email ?? "" }}
+              />
+            )}
             {tab === "projects" && (
               <ProjectsTab
                 projects={projects} loading={loading}
@@ -1057,6 +1219,13 @@ export function AdminDashboard({ user }: Props) {
             )}
             {tab === "leads"     && <LeadTab showToast={showToast} />}
             {tab === "team"      && <TeamTab showToast={showToast} />}
+            {tab === "tasks"     && (
+              <TaskTab
+                showToast={showToast}
+                openAdd={taskAddOpen}
+                onOpenAddDone={() => setTaskAddOpen(false)}
+              />
+            )}
             {tab === "analytics" && <AnalyticsTab projects={projects} />}
             {tab === "clients"   && (
               <ClientTab
@@ -1078,6 +1247,7 @@ export function AdminDashboard({ user }: Props) {
           <DeleteConfirm title={deleteTarget.title} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
         )}
         {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+        {cmdOpen && <CmdKPalette onClose={() => setCmdOpen(false)} onNavigate={(t) => { switchTab(t); setCmdOpen(false); }} />}
       </div>
     </>
   );

@@ -69,6 +69,7 @@ export type FirestoreMember = {
   imageUrl:      string;
   imagePublicId: string;
   order:         number;
+  email?:        string;
   socials: {
     linkedin:  string;
     twitter:   string;
@@ -80,6 +81,11 @@ export type FirestoreMember = {
 };
 
 const TEAM_COL = "team";
+export async function fetchMemberById(id: string): Promise<FirestoreMember | null> {
+  const snap = await getDoc(doc(db, TEAM_COL, id));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as FirestoreMember;
+}
 export async function fetchMembers(): Promise<FirestoreMember[]> {
   // No orderBy — avoids requiring a Firestore composite index.
   // Sort client-side by order field instead.
@@ -259,6 +265,53 @@ export async function fetchNotificationSettings(): Promise<NotificationSettings 
 }
 export const saveNotificationSettings = (data: NotificationSettings) =>
   setDoc(doc(db, SETTINGS_COL, "notifications"), data);
+
+// ─── Tasks ────────────────────────────────────────────────────────────────────
+export type FirestoreTask = {
+  id?:              string;
+  title:            string;
+  description:      string;
+  type:             "daily" | "weekly";
+  priority:         "high" | "medium" | "low";
+  assignedToId:     string;
+  assignedToName:   string;
+  assignedToColor:  string;
+  dueDate:          string;
+  status:           "pending" | "in-progress" | "completed" | "overdue";
+  report?:          string;
+  reportedBy?:      string;
+  completedAt?:     string;
+  createdAt?:       Timestamp;
+  updatedAt?:       Timestamp;
+};
+
+const TASKS_COL = "tasks";
+export async function fetchTasksByMemberId(memberId: string): Promise<FirestoreTask[]> {
+  const snap = await getDocs(collection(db, TASKS_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreTask))
+    .filter((t) => t.assignedToId === memberId)
+    .sort((a, b) => {
+      const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+}
+export async function fetchTasks(): Promise<FirestoreTask[]> {
+  const snap = await getDocs(collection(db, TASKS_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreTask))
+    .sort((a, b) => {
+      const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+}
+export const createTask = (data: Omit<FirestoreTask, "id" | "createdAt" | "updatedAt">) =>
+  addDoc(collection(db, TASKS_COL), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+export const updateTask = (id: string, data: Partial<FirestoreTask>) =>
+  updateDoc(doc(db, TASKS_COL, id), { ...data, updatedAt: serverTimestamp() });
+export const deleteTask = (id: string) => deleteDoc(doc(db, TASKS_COL, id));
 
 // ─── Real-time Subscriptions ──────────────────────────────────────────────────
 

@@ -461,6 +461,149 @@ function buildReplyHtml(
   return emailWrapper(body);
 }
 
+// ─── Task assigned template ───────────────────────────────────────────────────
+function buildTaskAssignedHtml(
+  toName: string, taskTitle: string, taskDescription: string,
+  priority: string, dueDate: string, portalUrl: string
+): string {
+  const TASK_GRADIENT = "linear-gradient(135deg,#1E1B4B 0%,#3730A3 50%,#4F46E5 100%)";
+  const PRIORITY_COLORS: Record<string, { color: string; bg: string }> = {
+    high:   { color: "#EF4444", bg: "#FEF2F2" },
+    medium: { color: "#F59E0B", bg: "#FFFBEB" },
+    low:    { color: "#10B981", bg: "#F0FDF4" },
+  };
+  const pc = PRIORITY_COLORS[priority] ?? PRIORITY_COLORS.medium;
+
+  const body = `
+    <!-- HEADER -->
+    <tr>
+      <td style="background:${TASK_GRADIENT};padding:0;text-align:center;">
+        <div style="height:4px;background:linear-gradient(90deg,#818CF8,#C7D2FE,#818CF8);"></div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:40px 40px 44px;text-align:center;">
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.22);
+                             border-radius:100px;padding:8px 20px;">
+                    <table cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td style="background:rgba(255,255,255,0.2);border-radius:6px;width:20px;height:20px;
+                                 text-align:center;vertical-align:middle;line-height:20px;">
+                        <span style="color:#fff;font-size:7px;font-weight:900;font-family:Arial,sans-serif;">ZH</span>
+                      </td>
+                      <td style="padding-left:8px;vertical-align:middle;">
+                        <span style="color:#fff;font-size:13px;font-weight:800;letter-spacing:-0.2px;
+                                     font-family:Arial,sans-serif;">ZynHive</span>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:20px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.18);border-radius:100px;padding:6px 16px;">
+                    <span style="color:rgba(255,255,255,0.95);font-size:11px;font-weight:700;
+                                 letter-spacing:0.08em;text-transform:uppercase;font-family:Arial,sans-serif;">
+                      ● &nbsp;New Task Assigned
+                    </span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="color:#ffffff;font-size:26px;font-weight:800;margin:0 0 10px;line-height:1.2;
+                         letter-spacing:-0.6px;font-family:Arial,sans-serif;">
+                You Have a New Task
+              </h1>
+              <p style="color:rgba(255,255,255,0.72);font-size:14px;margin:0;line-height:1.6;
+                        font-family:Arial,sans-serif;max-width:360px;margin-left:auto;margin-right:auto;">
+                A task has been assigned to you. View your portal to get started.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- BODY -->
+    <tr>
+      <td style="padding:36px 40px 32px;background:#ffffff;">
+        <p style="color:#0F172A;font-size:17px;font-weight:600;margin:0 0 6px;
+                  line-height:1.5;font-family:Arial,sans-serif;">
+          Hello, ${toName} 👋
+        </p>
+        <p style="color:#64748B;font-size:14px;margin:0 0 28px;line-height:1.65;font-family:Arial,sans-serif;">
+          Your manager has assigned a new task to you. Check the details below.
+        </p>
+
+        <!-- Task card -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+          <tr>
+            <td style="background:#F8F9FF;border:1.5px solid #C7D2FE;border-radius:16px;padding:22px 24px;">
+              <!-- Priority + Due row -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
+                <tr>
+                  <td>
+                    <span style="display:inline-block;background:${pc.bg};border:1px solid ${pc.color}40;
+                                 color:${pc.color};font-size:10px;font-weight:700;text-transform:uppercase;
+                                 letter-spacing:0.08em;padding:3px 10px;border-radius:99px;
+                                 font-family:Arial,sans-serif;">
+                      ${priority} priority
+                    </span>
+                  </td>
+                  ${dueDate ? `
+                  <td align="right">
+                    <span style="color:#64748B;font-size:12px;font-family:Arial,sans-serif;">
+                      📅 Due: <strong style="color:#1E293B;">${dueDate}</strong>
+                    </span>
+                  </td>` : ""}
+                </tr>
+              </table>
+              <!-- Title -->
+              <p style="color:#1E1B4B;font-size:19px;font-weight:700;margin:0 0 10px;
+                        line-height:1.3;font-family:Arial,sans-serif;">${taskTitle}</p>
+              <!-- Description -->
+              ${taskDescription ? `
+              <p style="color:#475569;font-size:13px;line-height:1.7;margin:0;
+                        font-family:Arial,sans-serif;">${taskDescription}</p>` : ""}
+            </td>
+          </tr>
+        </table>
+
+        <!-- CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+          <tr>
+            <td align="center">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background:${TASK_GRADIENT};border-radius:14px;
+                             box-shadow:0 8px 24px rgba(99,102,241,0.4);">
+                    <a href="${portalUrl}"
+                      style="display:block;color:#ffffff;text-decoration:none;
+                             padding:16px 52px;font-size:15px;font-weight:800;
+                             letter-spacing:-0.2px;font-family:Arial,sans-serif;white-space:nowrap;">
+                      Open Task Portal &nbsp;→
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="border-top:1px solid #F1F5F9;padding-top:20px;text-align:center;">
+              <p style="color:#94A3B8;font-size:12px;margin:0;line-height:1.7;font-family:Arial,sans-serif;">
+                Log in to your portal to start the task, submit reports, and track progress.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;
+  return emailWrapper(body);
+}
+
 // ─── Vercel fallback ──────────────────────────────────────────────────────────
 async function sendViaVercel(body: object): Promise<boolean> {
   try {
@@ -488,6 +631,19 @@ export async function sendUpdateNotificationEmail(params: {
 
   const result = await sendEmail({ to: toEmail, subject, body, html });
   if (!result.success) await sendViaVercel({ type: "update", toEmail, toName, projectName, updateTitle, portalUrl });
+}
+
+export async function sendTaskAssignedEmail(params: {
+  toEmail: string; toName: string; taskTitle: string;
+  taskDescription: string; priority: string; dueDate: string; portalUrl: string;
+}): Promise<void> {
+  const { toEmail, toName, taskTitle, taskDescription, priority, dueDate, portalUrl } = params;
+  const subject = `New Task Assigned: ${taskTitle}`;
+  const html    = buildTaskAssignedHtml(toName, taskTitle, taskDescription, priority, dueDate, portalUrl);
+  const body    = `Hi ${toName},\n\nA new task has been assigned to you: "${taskTitle}"\n\nPriority: ${priority}\nDue: ${dueDate}\n\nView your portal: ${portalUrl}\n\n— ZynHive Team`;
+
+  const result = await sendEmail({ to: toEmail, subject, body, html });
+  if (!result.success) await sendViaVercel({ type: "task", toEmail, toName, taskTitle, taskDescription, priority, dueDate, portalUrl });
 }
 
 export async function sendReplyNotificationEmail(params: {
