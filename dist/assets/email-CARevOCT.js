@@ -1,15 +1,4 @@
-// ─── src/lib/email.ts ─────────────────────────────────────────────────────────
-// Primary: VITE_EMAIL_API_URL (Render/Resend) — works locally & on Vercel.
-// Fallback: /api/send-email (Vercel serverless, Gmail).
-
-import { sendEmail } from "./email-sender";
-
-// ─── Shared brand helpers ─────────────────────────────────────────────────────
-const BRAND_GRADIENT = "linear-gradient(135deg,#3730A3 0%,#6366F1 50%,#818CF8 100%)";
-const BRAND_GRADIENT_SUBTLE = "linear-gradient(135deg,#EEF2FF 0%,#F5F3FF 100%)";
-
-function emailWrapper(bodyHtml: string): string {
-  return `<!DOCTYPE html>
+const h="re_PtprcVNk_M9fiyYAaBjzxVaTxGvUiDbAw",b="onboarding@resend.dev",m="ZynHive",u="zynhive@gmail.com";async function c(r){try{const t=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${h}`},body:JSON.stringify({from:`${m} <${b}>`,to:[r.to],subject:r.subject,text:r.body,...r.html?{html:r.html}:{},reply_to:r.replyTo||u||b})});if(!t.ok){const i=await t.json().catch(()=>({message:`Resend ${t.status}`}));throw new Error(i.message??`Resend ${t.status}`)}return{success:!0,messageId:(await t.json()).id}}catch(t){const e=t instanceof Error?t.message:"Send failed";return console.error("[Email] Resend error:",e),{success:!1,error:e}}}const g="linear-gradient(135deg,#3730A3 0%,#6366F1 50%,#818CF8 100%)",w="linear-gradient(135deg,#EEF2FF 0%,#F5F3FF 100%)";function f(r){return`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
@@ -32,7 +21,7 @@ function emailWrapper(bodyHtml: string): string {
     style="max-width:600px;background:#ffffff;border-radius:24px;overflow:hidden;
            box-shadow:0 32px 80px rgba(0,0,0,0.55),0 0 0 1px rgba(99,102,241,0.12);">
 
-    ${bodyHtml}
+    ${r}
 
     <!-- FOOTER -->
     <tr>
@@ -40,7 +29,7 @@ function emailWrapper(bodyHtml: string): string {
         <!-- Logo row -->
         <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:14px;">
           <tr>
-            <td style="background:${BRAND_GRADIENT};border-radius:10px;width:32px;height:32px;
+            <td style="background:${g};border-radius:10px;width:32px;height:32px;
                        text-align:center;vertical-align:middle;line-height:32px;">
               <span style="color:#fff;font-size:10px;font-weight:900;font-family:Arial,sans-serif;
                            letter-spacing:-0.5px;">ZH</span>
@@ -72,17 +61,10 @@ function emailWrapper(bodyHtml: string): string {
 </table>
 
 </body>
-</html>`;
-}
-
-// ─── Update notification template ─────────────────────────────────────────────
-function buildUpdateHtml(
-  toName: string, projectName: string, updateTitle: string, portalUrl: string
-): string {
-  const body = `
+</html>`}function A(r,t,e,i){const a=`
     <!-- HEADER -->
     <tr>
-      <td style="background:${BRAND_GRADIENT};padding:0;text-align:center;position:relative;">
+      <td style="background:${g};padding:0;text-align:center;position:relative;">
         <!-- Top accent bar -->
         <div style="height:4px;background:linear-gradient(90deg,#818CF8,#C7D2FE,#818CF8);"></div>
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -148,7 +130,7 @@ function buildUpdateHtml(
         <!-- Greeting -->
         <p style="color:#0F172A;font-size:17px;font-weight:600;margin:0 0 6px;
                   line-height:1.5;font-family:Arial,sans-serif;">
-          Hello, ${toName} 👋
+          Hello, ${r} 👋
         </p>
         <p style="color:#64748B;font-size:14px;margin:0 0 32px;line-height:1.65;font-family:Arial,sans-serif;">
           There's a new update ready for you to review on your project portal.
@@ -157,7 +139,7 @@ function buildUpdateHtml(
         <!-- Update highlight card -->
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
           <tr>
-            <td style="background:${BRAND_GRADIENT_SUBTLE};border:1.5px solid #C7D2FE;
+            <td style="background:${w};border:1.5px solid #C7D2FE;
                        border-radius:16px;padding:24px 26px;">
               <!-- Card header -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
@@ -165,7 +147,7 @@ function buildUpdateHtml(
                   <td>
                     <table cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td style="background:${BRAND_GRADIENT};border-radius:8px;
+                        <td style="background:${g};border-radius:8px;
                                    width:28px;height:28px;text-align:center;vertical-align:middle;line-height:28px;">
                           <span style="font-size:13px;line-height:28px;">📋</span>
                         </td>
@@ -176,17 +158,17 @@ function buildUpdateHtml(
                       </tr>
                     </table>
                   </td>
-                  ${projectName ? `
+                  ${t?`
                   <td align="right">
                     <span style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:100px;
                                  color:#4338CA;font-size:11px;font-weight:600;padding:4px 12px;
-                                 font-family:Arial,sans-serif;">📁 ${projectName}</span>
-                  </td>` : ""}
+                                 font-family:Arial,sans-serif;">📁 ${t}</span>
+                  </td>`:""}
                 </tr>
               </table>
               <!-- Update title -->
               <p style="color:#1E1B4B;font-size:20px;font-weight:700;margin:0;
-                        line-height:1.3;font-family:Arial,sans-serif;">${updateTitle}</p>
+                        line-height:1.3;font-family:Arial,sans-serif;">${e}</p>
             </td>
           </tr>
         </table>
@@ -251,9 +233,9 @@ function buildUpdateHtml(
             <td align="center">
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background:${BRAND_GRADIENT};border-radius:14px;
+                  <td style="background:${g};border-radius:14px;
                              box-shadow:0 8px 24px rgba(99,102,241,0.4);">
-                    <a href="${portalUrl}"
+                    <a href="${i}"
                       style="display:block;color:#ffffff;text-decoration:none;
                              padding:16px 56px;font-size:15px;font-weight:800;
                              letter-spacing:-0.2px;font-family:Arial,sans-serif;
@@ -274,7 +256,7 @@ function buildUpdateHtml(
               <p style="color:#94A3B8;font-size:12px;margin:0 0 6px;line-height:1.7;font-family:Arial,sans-serif;">
                 Have questions? Reply to your project manager directly.
               </p>
-              <a href="${portalUrl}" style="color:#6366F1;font-size:12px;font-weight:600;
+              <a href="${i}" style="color:#6366F1;font-size:12px;font-weight:600;
                                             text-decoration:none;font-family:Arial,sans-serif;">
                 Manage notification settings →
               </a>
@@ -284,19 +266,10 @@ function buildUpdateHtml(
 
       </td>
     </tr>
-  `;
-  return emailWrapper(body);
-}
-
-// ─── Reply notification template ──────────────────────────────────────────────
-function buildReplyHtml(
-  toName: string, projectName: string, updateTitle: string, replyMessage: string, portalUrl: string
-): string {
-  const REPLY_GRADIENT = "linear-gradient(135deg,#0C4A6E 0%,#0369A1 45%,#0EA5E9 100%)";
-  const body = `
+  `;return f(a)}function F(r,t,e,i,a){const n="linear-gradient(135deg,#0C4A6E 0%,#0369A1 45%,#0EA5E9 100%)",l=`
     <!-- HEADER -->
     <tr>
-      <td style="background:${REPLY_GRADIENT};padding:0;text-align:center;">
+      <td style="background:${n};padding:0;text-align:center;">
         <!-- Top accent bar -->
         <div style="height:4px;background:linear-gradient(90deg,#38BDF8,#BAE6FD,#38BDF8);"></div>
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -361,14 +334,14 @@ function buildReplyHtml(
         <!-- Greeting -->
         <p style="color:#0F172A;font-size:17px;font-weight:600;margin:0 0 6px;
                   line-height:1.5;font-family:Arial,sans-serif;">
-          Hello, ${toName} 👋
+          Hello, ${r} 👋
         </p>
         <p style="color:#64748B;font-size:14px;margin:0 0 28px;line-height:1.65;font-family:Arial,sans-serif;">
-          The ZynHive team replied to your feedback${updateTitle ? ` on <strong style="color:#1E293B;">${updateTitle}</strong>` : ""}.
+          The ZynHive team replied to your feedback${e?` on <strong style="color:#1E293B;">${e}</strong>`:""}.
         </p>
 
         <!-- Context breadcrumb -->
-        ${updateTitle ? `
+        ${e?`
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
           <tr>
             <td style="background:#F8FAFF;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;">
@@ -379,17 +352,17 @@ function buildReplyHtml(
                   </td>
                   <td style="padding-left:8px;vertical-align:middle;">
                     <span style="color:#334155;font-size:13px;font-weight:600;
-                                 font-family:Arial,sans-serif;">${updateTitle}</span>
+                                 font-family:Arial,sans-serif;">${e}</span>
                   </td>
-                  ${projectName ? `
+                  ${t?`
                   <td style="padding-left:12px;vertical-align:middle;">
-                    <span style="color:#94A3B8;font-size:11px;font-family:Arial,sans-serif;">· 📁 ${projectName}</span>
-                  </td>` : ""}
+                    <span style="color:#94A3B8;font-size:11px;font-family:Arial,sans-serif;">· 📁 ${t}</span>
+                  </td>`:""}
                 </tr>
               </table>
             </td>
           </tr>
-        </table>` : ""}
+        </table>`:""}
 
         <!-- Reply bubble -->
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
@@ -399,7 +372,7 @@ function buildReplyHtml(
               <!-- Sender row -->
               <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
                 <tr>
-                  <td style="background:${REPLY_GRADIENT};border-radius:9px;
+                  <td style="background:${n};border-radius:9px;
                              width:34px;height:34px;text-align:center;vertical-align:middle;line-height:34px;">
                     <span style="color:#fff;font-size:10px;font-weight:900;font-family:Arial,sans-serif;">ZH</span>
                   </td>
@@ -413,7 +386,7 @@ function buildReplyHtml(
               </table>
               <!-- Message content -->
               <p style="color:#1E293B;font-size:14px;line-height:1.8;margin:0;
-                        font-family:Arial,sans-serif;white-space:pre-line;">${replyMessage}</p>
+                        font-family:Arial,sans-serif;white-space:pre-line;">${i}</p>
             </td>
           </tr>
         </table>
@@ -424,9 +397,9 @@ function buildReplyHtml(
             <td align="center">
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background:${REPLY_GRADIENT};border-radius:14px;
+                  <td style="background:${n};border-radius:14px;
                              box-shadow:0 8px 24px rgba(14,165,233,0.35);">
-                    <a href="${portalUrl}"
+                    <a href="${a}"
                       style="display:block;color:#ffffff;text-decoration:none;
                              padding:16px 56px;font-size:15px;font-weight:800;
                              letter-spacing:-0.2px;font-family:Arial,sans-serif;
@@ -447,7 +420,7 @@ function buildReplyHtml(
               <p style="color:#94A3B8;font-size:12px;margin:0 0 6px;line-height:1.7;font-family:Arial,sans-serif;">
                 You can reply directly from your project portal anytime.
               </p>
-              <a href="${portalUrl}" style="color:#0EA5E9;font-size:12px;font-weight:600;
+              <a href="${a}" style="color:#0EA5E9;font-size:12px;font-weight:600;
                                             text-decoration:none;font-family:Arial,sans-serif;">
                 Open my portal →
               </a>
@@ -457,27 +430,10 @@ function buildReplyHtml(
 
       </td>
     </tr>
-  `;
-  return emailWrapper(body);
-}
-
-// ─── Task assigned template ───────────────────────────────────────────────────
-function buildTaskAssignedHtml(
-  toName: string, taskTitle: string, taskDescription: string,
-  priority: string, dueDate: string, portalUrl: string
-): string {
-  const TASK_GRADIENT = "linear-gradient(135deg,#1E1B4B 0%,#3730A3 50%,#4F46E5 100%)";
-  const PRIORITY_COLORS: Record<string, { color: string; bg: string }> = {
-    high:   { color: "#EF4444", bg: "#FEF2F2" },
-    medium: { color: "#F59E0B", bg: "#FFFBEB" },
-    low:    { color: "#10B981", bg: "#F0FDF4" },
-  };
-  const pc = PRIORITY_COLORS[priority] ?? PRIORITY_COLORS.medium;
-
-  const body = `
+  `;return f(l)}function v(r,t,e,i,a,n){const l="linear-gradient(135deg,#1E1B4B 0%,#3730A3 50%,#4F46E5 100%)",o={high:{color:"#EF4444",bg:"#FEF2F2"},medium:{color:"#F59E0B",bg:"#FFFBEB"},low:{color:"#10B981",bg:"#F0FDF4"}},s=o[i]??o.medium,d=`
     <!-- HEADER -->
     <tr>
-      <td style="background:${TASK_GRADIENT};padding:0;text-align:center;">
+      <td style="background:${l};padding:0;text-align:center;">
         <div style="height:4px;background:linear-gradient(90deg,#818CF8,#C7D2FE,#818CF8);"></div>
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
@@ -528,7 +484,7 @@ function buildTaskAssignedHtml(
       <td style="padding:36px 40px 32px;background:#ffffff;">
         <p style="color:#0F172A;font-size:17px;font-weight:600;margin:0 0 6px;
                   line-height:1.5;font-family:Arial,sans-serif;">
-          Hello, ${toName} 👋
+          Hello, ${r} 👋
         </p>
         <p style="color:#64748B;font-size:14px;margin:0 0 28px;line-height:1.65;font-family:Arial,sans-serif;">
           Your manager has assigned a new task to you. Check the details below.
@@ -542,28 +498,28 @@ function buildTaskAssignedHtml(
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
                 <tr>
                   <td>
-                    <span style="display:inline-block;background:${pc.bg};border:1px solid ${pc.color}40;
-                                 color:${pc.color};font-size:10px;font-weight:700;text-transform:uppercase;
+                    <span style="display:inline-block;background:${s.bg};border:1px solid ${s.color}40;
+                                 color:${s.color};font-size:10px;font-weight:700;text-transform:uppercase;
                                  letter-spacing:0.08em;padding:3px 10px;border-radius:99px;
                                  font-family:Arial,sans-serif;">
-                      ${priority} priority
+                      ${i} priority
                     </span>
                   </td>
-                  ${dueDate ? `
+                  ${a?`
                   <td align="right">
                     <span style="color:#64748B;font-size:12px;font-family:Arial,sans-serif;">
-                      📅 Due: <strong style="color:#1E293B;">${dueDate}</strong>
+                      📅 Due: <strong style="color:#1E293B;">${a}</strong>
                     </span>
-                  </td>` : ""}
+                  </td>`:""}
                 </tr>
               </table>
               <!-- Title -->
               <p style="color:#1E1B4B;font-size:19px;font-weight:700;margin:0 0 10px;
-                        line-height:1.3;font-family:Arial,sans-serif;">${taskTitle}</p>
+                        line-height:1.3;font-family:Arial,sans-serif;">${t}</p>
               <!-- Description -->
-              ${taskDescription ? `
+              ${e?`
               <p style="color:#475569;font-size:13px;line-height:1.7;margin:0;
-                        font-family:Arial,sans-serif;">${taskDescription}</p>` : ""}
+                        font-family:Arial,sans-serif;">${e}</p>`:""}
             </td>
           </tr>
         </table>
@@ -574,9 +530,9 @@ function buildTaskAssignedHtml(
             <td align="center">
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background:${TASK_GRADIENT};border-radius:14px;
+                  <td style="background:${l};border-radius:14px;
                              box-shadow:0 8px 24px rgba(99,102,241,0.4);">
-                    <a href="${portalUrl}"
+                    <a href="${n}"
                       style="display:block;color:#ffffff;text-decoration:none;
                              padding:16px 52px;font-size:15px;font-weight:800;
                              letter-spacing:-0.2px;font-family:Arial,sans-serif;white-space:nowrap;">
@@ -600,75 +556,33 @@ function buildTaskAssignedHtml(
         </table>
       </td>
     </tr>
-  `;
-  return emailWrapper(body);
-}
+  `;return f(d)}async function x(r){try{const t=await fetch("/api/send-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(r)});return t.ok?!0:(console.error("[email] /api/send-email:",t.status,await t.text()),!1)}catch(t){return console.error("[email] /api/send-email unreachable:",t),!1}}async function k(r){const{toEmail:t,toName:e,projectName:i,updateTitle:a,portalUrl:n}=r,l=`New Update on Your Project — ${a||i||"ZynHive"}`,o=A(e,i,a,n),s=`Hi ${e},
 
-// ─── Vercel fallback ──────────────────────────────────────────────────────────
-async function sendViaVercel(body: object): Promise<boolean> {
-  try {
-    const res = await fetch("/api/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) { console.error("[email] /api/send-email:", res.status, await res.text()); return false; }
-    return true;
-  } catch (err) {
-    console.error("[email] /api/send-email unreachable:", err);
-    return false;
-  }
-}
+Your project "${i}" has a new update: ${a}.
 
-// ─── Public API ───────────────────────────────────────────────────────────────
-export async function sendUpdateNotificationEmail(params: {
-  toEmail: string; toName: string; projectName: string; updateTitle: string; portalUrl: string;
-}): Promise<void> {
-  const { toEmail, toName, projectName, updateTitle, portalUrl } = params;
-  const subject = `New Update on Your Project — ${updateTitle || projectName || "ZynHive"}`;
-  const html    = buildUpdateHtml(toName, projectName, updateTitle, portalUrl);
-  const body    = `Hi ${toName},\n\nYour project "${projectName}" has a new update: ${updateTitle}.\n\nView it here: ${portalUrl}\n\n— ZynHive Team`;
+View it here: ${n}
 
-  const result = await sendEmail({ to: toEmail, subject, body, html });
-  if (!result.success) await sendViaVercel({ type: "update", toEmail, toName, projectName, updateTitle, portalUrl });
-}
+— ZynHive Team`;(await c({to:t,subject:l,body:s,html:o})).success||await x({type:"update",toEmail:t,toName:e,projectName:i,updateTitle:a,portalUrl:n})}async function z(r){const{toEmail:t,toName:e,taskTitle:i,taskDescription:a,priority:n,dueDate:l,portalUrl:o}=r,s=`New Task Assigned: ${i}`,d=v(e,i,a,n,l,o),p=`Hi ${e},
 
-export async function sendTaskAssignedEmail(params: {
-  toEmail: string; toName: string; taskTitle: string;
-  taskDescription: string; priority: string; dueDate: string; portalUrl: string;
-}): Promise<void> {
-  const { toEmail, toName, taskTitle, taskDescription, priority, dueDate, portalUrl } = params;
-  const subject = `New Task Assigned: ${taskTitle}`;
-  const html    = buildTaskAssignedHtml(toName, taskTitle, taskDescription, priority, dueDate, portalUrl);
-  const body    = `Hi ${toName},\n\nA new task has been assigned to you: "${taskTitle}"\n\nPriority: ${priority}\nDue: ${dueDate}\n\nView your portal: ${portalUrl}\n\n— ZynHive Team`;
+A new task has been assigned to you: "${i}"
 
-  const result = await sendEmail({ to: toEmail, subject, body, html });
-  if (!result.success) await sendViaVercel({ type: "task", toEmail, toName, taskTitle, taskDescription, priority, dueDate, portalUrl });
-}
+Priority: ${n}
+Due: ${l}
 
-export async function sendReplyNotificationEmail(params: {
-  toEmail: string; toName: string; projectName: string;
-  updateTitle: string; replyMessage: string; portalUrl: string;
-}): Promise<void> {
-  const { toEmail, toName, projectName, updateTitle, replyMessage, portalUrl } = params;
-  const subject = `ZynHive replied to your feedback${updateTitle ? ` on "${updateTitle}"` : ""}`;
-  const html    = buildReplyHtml(toName, projectName, updateTitle, replyMessage, portalUrl);
-  const body    = `Hi ${toName},\n\nZynHive Team replied to your feedback on "${updateTitle}":\n\n"${replyMessage}"\n\nView conversation: ${portalUrl}\n\n— ZynHive Team`;
+View your portal: ${o}
 
-  const result = await sendEmail({ to: toEmail, subject, body, html });
-  if (!result.success) await sendViaVercel({ type: "reply", toEmail, toName, projectName, updateTitle, replyMessage, portalUrl });
-}
+— ZynHive Team`;(await c({to:t,subject:s,body:p,html:d})).success||await x({type:"task",toEmail:t,toName:e,taskTitle:i,taskDescription:a,priority:n,dueDate:l,portalUrl:o})}async function $(r){const{toEmail:t,toName:e,projectName:i,updateTitle:a,replyMessage:n,portalUrl:l}=r,o=`ZynHive replied to your feedback${a?` on "${a}"`:""}`,s=F(e,i,a,n,l),d=`Hi ${e},
 
-// ─── Admin review notification template ──────────────────────────────────────
-function buildAdminReviewHtml(
-  memberName: string, taskTitle: string, taskDescription: string,
-  report: string, linkedClientName: string, dashboardUrl: string
-): string {
-  const ADMIN_GRADIENT = "linear-gradient(135deg,#064E3B 0%,#047857 50%,#10B981 100%)";
-  const body = `
+ZynHive Team replied to your feedback on "${a}":
+
+"${n}"
+
+View conversation: ${l}
+
+— ZynHive Team`;(await c({to:t,subject:o,body:d,html:s})).success||await x({type:"reply",toEmail:t,toName:e,projectName:i,updateTitle:a,replyMessage:n,portalUrl:l})}function E(r,t,e,i,a,n){const l="linear-gradient(135deg,#064E3B 0%,#047857 50%,#10B981 100%)",o=`
     <!-- HEADER -->
     <tr>
-      <td style="background:${ADMIN_GRADIENT};padding:0;text-align:center;">
+      <td style="background:${l};padding:0;text-align:center;">
         <div style="height:4px;background:linear-gradient(90deg,#6EE7B7,#A7F3D0,#6EE7B7);"></div>
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
@@ -722,7 +636,7 @@ function buildAdminReviewHtml(
           Action Required 👆
         </p>
         <p style="color:#64748B;font-size:14px;margin:0 0 28px;line-height:1.65;font-family:Arial,sans-serif;">
-          <strong style="color:#1E293B;">${memberName}</strong> has completed a task and submitted a report.
+          <strong style="color:#1E293B;">${r}</strong> has completed a task and submitted a report.
           Please review it in your admin dashboard and accept or reject it.
         </p>
 
@@ -740,25 +654,25 @@ function buildAdminReviewHtml(
                     <span style="color:#15803D;font-size:11px;font-weight:700;text-transform:uppercase;
                                  letter-spacing:0.08em;font-family:Arial,sans-serif;">Completed Task</span>
                   </td>
-                  ${linkedClientName ? `
+                  ${a?`
                   <td align="right">
                     <span style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:100px;
                                  color:#4338CA;font-size:11px;font-weight:600;padding:3px 10px;
-                                 font-family:Arial,sans-serif;">👤 ${linkedClientName}</span>
-                  </td>` : ""}
+                                 font-family:Arial,sans-serif;">👤 ${a}</span>
+                  </td>`:""}
                 </tr>
               </table>
               <p style="color:#14532D;font-size:18px;font-weight:700;margin:0 0 8px;
-                        line-height:1.3;font-family:Arial,sans-serif;">${taskTitle}</p>
-              ${taskDescription ? `
+                        line-height:1.3;font-family:Arial,sans-serif;">${t}</p>
+              ${e?`
               <p style="color:#166534;font-size:13px;line-height:1.65;margin:0;
-                        font-family:Arial,sans-serif;">${taskDescription}</p>` : ""}
+                        font-family:Arial,sans-serif;">${e}</p>`:""}
             </td>
           </tr>
         </table>
 
         <!-- Report bubble -->
-        ${report ? `
+        ${i?`
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
           <tr>
             <td style="background:#F8FAFF;border:1.5px solid #C7D2FE;border-left:4px solid #6366F1;
@@ -768,10 +682,10 @@ function buildAdminReviewHtml(
                 Member's Report
               </p>
               <p style="color:#1E293B;font-size:14px;line-height:1.75;margin:0;
-                        font-family:Arial,sans-serif;white-space:pre-line;">${report}</p>
+                        font-family:Arial,sans-serif;white-space:pre-line;">${i}</p>
             </td>
           </tr>
-        </table>` : "<div style='height:28px'></div>"}
+        </table>`:"<div style='height:28px'></div>"}
 
         <!-- CTA -->
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
@@ -779,9 +693,9 @@ function buildAdminReviewHtml(
             <td align="center">
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background:${ADMIN_GRADIENT};border-radius:14px;
+                  <td style="background:${l};border-radius:14px;
                              box-shadow:0 8px 24px rgba(16,185,129,0.35);">
-                    <a href="${dashboardUrl}"
+                    <a href="${n}"
                       style="display:block;color:#ffffff;text-decoration:none;
                              padding:16px 52px;font-size:15px;font-weight:800;
                              letter-spacing:-0.2px;font-family:Arial,sans-serif;white-space:nowrap;">
@@ -805,29 +719,9 @@ function buildAdminReviewHtml(
         </table>
       </td>
     </tr>
-  `;
-  return emailWrapper(body);
-}
+  `;return f(o)}async function B(r){const{toEmail:t,memberName:e,taskTitle:i,taskDescription:a,report:n,linkedClientName:l,dashboardUrl:o}=r,s=`✅ Review Needed: ${e} completed "${i}"`,d=E(e,i,a,n,l,o),p=`${e} completed a task: "${i}"
 
-export async function sendAdminReviewEmail(params: {
-  toEmail:          string;
-  memberName:       string;
-  taskTitle:        string;
-  taskDescription:  string;
-  report:           string;
-  linkedClientName: string;
-  dashboardUrl:     string;
-}): Promise<void> {
-  const { toEmail, memberName, taskTitle, taskDescription, report, linkedClientName, dashboardUrl } = params;
-  const subject = `✅ Review Needed: ${memberName} completed "${taskTitle}"`;
-  const html    = buildAdminReviewHtml(memberName, taskTitle, taskDescription, report, linkedClientName, dashboardUrl);
-  const body    = `${memberName} completed a task: "${taskTitle}"\n\nReport:\n${report}\n\nReview it: ${dashboardUrl}`;
+Report:
+${n}
 
-  const result = await sendEmail({ to: toEmail, subject, body, html });
-  if (!result.success) {
-    await sendViaVercel({
-      type: "admin-review", toEmail, memberName, taskTitle,
-      taskDescription, report, linkedClientName, dashboardUrl,
-    });
-  }
-}
+Review it: ${o}`;(await c({to:t,subject:s,body:p,html:d})).success||await x({type:"admin-review",toEmail:t,memberName:e,taskTitle:i,taskDescription:a,report:n,linkedClientName:l,dashboardUrl:o})}export{k as a,$ as b,z as c,B as d,c as s};

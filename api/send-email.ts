@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 import type { IncomingMessage, ServerResponse } from "http";
 
 const BRAND_GRADIENT = "linear-gradient(135deg,#4338CA 0%,#6366F1 48%,#818CF8 100%)";
@@ -315,6 +314,70 @@ function buildReplyHtml(toName: string, projectName: string, updateTitle: string
   return emailWrapper(body);
 }
 
+function buildAdminReviewHtml(
+  memberName: string, taskTitle: string, taskDescription: string,
+  report: string, linkedClientName: string, dashboardUrl: string,
+): string {
+  const ADMIN_GRADIENT = "linear-gradient(135deg,#059669 0%,#10B981 50%,#34D399 100%)";
+  const body = `
+    <tr>
+      <td style="background:${ADMIN_GRADIENT};padding:44px 36px 38px;text-align:center;">
+        <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:26px;">
+          <tr>
+            <td style="background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.26);
+                       border-radius:12px;padding:10px 22px;">
+              <span style="color:#fff;font-size:15px;font-weight:800;letter-spacing:-0.3px;
+                           font-family:Arial,sans-serif;">&#10022; ZynHive</span>
+            </td>
+          </tr>
+        </table>
+        <h1 style="color:#fff;font-size:26px;font-weight:800;margin:0 0 10px;line-height:1.2;
+                   letter-spacing:-0.6px;font-family:Arial,sans-serif;">Review Required</h1>
+        <p style="color:rgba(255,255,255,0.8);font-size:14px;margin:0;line-height:1.6;
+                  font-family:Arial,sans-serif;">
+          ${memberName} completed a task and needs your review
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:38px 36px 32px;background:#ffffff;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;border-radius:14px;overflow:hidden;border:1px solid #DDE3F5;background:#F5F7FF;">
+          <tr>
+            <td style="border-left:4px solid #10B981;padding:22px 24px;">
+              <p style="color:#059669;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.09em;margin:0 0 6px;font-family:Arial,sans-serif;">Task Completed</p>
+              <p style="color:#0F172A;font-size:17px;font-weight:700;margin:0 0 8px;line-height:1.3;font-family:Arial,sans-serif;">${taskTitle}</p>
+              ${taskDescription ? `<p style="color:#64748B;font-size:13px;margin:0 0 8px;line-height:1.6;font-family:Arial,sans-serif;">${taskDescription}</p>` : ""}
+              ${linkedClientName ? `<span style="background:#ECFDF5;border-radius:7px;padding:4px 10px;color:#059669;font-size:11px;font-weight:600;font-family:Arial,sans-serif;">&#128100; ${linkedClientName}</span>` : ""}
+            </td>
+          </tr>
+        </table>
+        ${report ? `
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+          <tr>
+            <td style="background:#F8FAFF;border:1.5px solid #C7D2FE;border-left:4px solid #6366F1;border-radius:14px;padding:18px 20px;">
+              <p style="color:#6366F1;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px;font-family:Arial,sans-serif;">Member's Report</p>
+              <p style="color:#1E293B;font-size:14px;line-height:1.75;margin:0;font-family:Arial,sans-serif;white-space:pre-line;">${report}</p>
+            </td>
+          </tr>
+        </table>` : ""}
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+          <tr>
+            <td align="center">
+              <a href="${dashboardUrl}" style="display:inline-block;background:${ADMIN_GRADIENT};color:#fff;text-decoration:none;padding:16px 52px;border-radius:13px;font-size:15px;font-weight:800;letter-spacing:-0.2px;font-family:Arial,sans-serif;">
+                Review in Dashboard &nbsp;&rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+        <p style="color:#94A3B8;font-size:12px;text-align:center;margin:0;line-height:1.7;font-family:Arial,sans-serif;">
+          Accept to post it to the client portal, or reject it from your dashboard.
+        </p>
+      </td>
+    </tr>
+  `;
+  return emailWrapper(body);
+}
+
 export default async function handler(req: IncomingMessage & { body?: unknown }, res: ServerResponse) {
   if (req.method !== "POST") {
     res.writeHead(405, { "Content-Type": "application/json" });
@@ -323,51 +386,85 @@ export default async function handler(req: IncomingMessage & { body?: unknown },
   }
 
   const body = req.body as {
-    type?: "update" | "reply";
+    type?: "update" | "reply" | "admin-review" | "task";
     toEmail: string;
     toName: string;
     projectName: string;
     updateTitle: string;
     portalUrl: string;
     replyMessage?: string;
+    memberName?: string;
+    taskTitle?: string;
+    taskDescription?: string;
+    priority?: string;
+    dueDate?: string;
+    report?: string;
+    linkedClientName?: string;
+    dashboardUrl?: string;
   };
 
-  const { type = "update", toEmail, toName, projectName, updateTitle, portalUrl, replyMessage } = body ?? {};
+  const { type = "update", toEmail, toName, projectName, updateTitle, portalUrl, replyMessage,
+          memberName, taskTitle, taskDescription, priority, dueDate, report, linkedClientName, dashboardUrl } = body ?? {};
 
-  if (!toEmail || !toName) {
+  if (!toEmail) {
     res.writeHead(400, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Missing required fields" }));
     return;
   }
 
-  const user     = process.env.GMAIL_USER;
-  const password = process.env.GMAIL_APP_PASSWORD;
+  const resendKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.FROM_EMAIL ?? "onboarding@resend.dev";
+  const fromName  = process.env.FROM_NAME  ?? "ZynHive";
 
-  if (!user || !password) {
+  if (!resendKey) {
     res.writeHead(500, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Email service not configured" }));
     return;
   }
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user, pass: password },
-  });
+  let html: string;
+  let subject: string;
 
-  const html = type === "reply"
-    ? buildReplyHtml(toName, projectName, updateTitle, replyMessage ?? "", portalUrl)
-    : buildUpdateHtml(toName, projectName, updateTitle, portalUrl);
-
-  const subject = type === "reply"
-    ? `ZynHive Team replied to your feedback${updateTitle ? ` on "${updateTitle}"` : ""}`
-    : `New Update: ${updateTitle || projectName || "Your Project"}`;
+  if (type === "admin-review") {
+    html    = buildAdminReviewHtml(memberName ?? "", taskTitle ?? "", taskDescription ?? "", report ?? "", linkedClientName ?? "", dashboardUrl ?? "");
+    subject = `✅ Review Needed: ${memberName ?? "A team member"} completed "${taskTitle ?? "a task"}"`;
+  } else if (type === "reply") {
+    html    = buildReplyHtml(toName, projectName, updateTitle, replyMessage ?? "", portalUrl);
+    subject = `ZynHive Team replied to your feedback${updateTitle ? ` on "${updateTitle}"` : ""}`;
+  } else if (type === "task") {
+    subject = `New Task Assigned: ${taskTitle ?? ""}`;
+    html    = buildUpdateHtml(toName, taskTitle ?? "", taskDescription ?? "", portalUrl);
+  } else {
+    html    = buildUpdateHtml(toName, projectName, updateTitle, portalUrl);
+    subject = `New Update: ${updateTitle || projectName || "Your Project"}`;
+  }
 
   try {
-    await transporter.sendMail({ from: `"ZynHive" <${user}>`, to: toEmail, subject, html });
+    const sendRes = await fetch("https://api.resend.com/emails", {
+      method:  "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${resendKey}`,
+      },
+      body: JSON.stringify({
+        from:     `${fromName} <${fromEmail}>`,
+        to:       [toEmail],
+        subject,
+        html,
+        text:     subject,
+        reply_to: fromEmail,
+      }),
+    });
+
+    if (!sendRes.ok) {
+      const errBody = await sendRes.json().catch(() => ({ message: `Resend ${sendRes.status}` }));
+      throw new Error((errBody as { message?: string }).message ?? `Resend ${sendRes.status}`);
+    }
+
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ok: true }));
   } catch (err) {
-    console.error("[send-email] nodemailer error:", err);
+    console.error("[send-email] Resend error:", err);
     res.writeHead(500, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Failed to send email" }));
   }

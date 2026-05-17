@@ -1,9 +1,10 @@
 // ─── src/pages/MemberPage.tsx ─────────────────────────────────────────────────
 import { useState, useEffect, useCallback } from "react";
 import {
-  fetchMemberById, fetchTasksByMemberId, updateTask, updateMember, createReview,
+  fetchMemberById, fetchTasksByMemberId, updateTask, updateMember, createReview, fetchAdminSettings,
   type FirestoreMember, type FirestoreTask,
 } from "../lib/firebase";
+import { sendAdminReviewEmail } from "../lib/email";
 import { Timestamp } from "firebase/firestore";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -177,6 +178,20 @@ function ReportModal({
         linkedClientName: task.linkedClientName ?? "",
         status:           "pending",
       });
+
+      const settings = await fetchAdminSettings();
+      if (settings.notificationEmail) {
+        sendAdminReviewEmail({
+          toEmail:          settings.notificationEmail,
+          memberName:       task.assignedToName,
+          taskTitle:        task.title,
+          taskDescription:  task.description ?? "",
+          report,
+          linkedClientName: task.linkedClientName ?? "",
+          dashboardUrl:     `${window.location.origin}/admin`,
+        }).catch(() => {});
+      }
+
       onDone(); onClose();
     } finally { setSaving(false); }
   }

@@ -55,11 +55,13 @@ service cloud.firestore {
       allow read, create, update, delete: if isAdmin();
     }
 
+    match /pending_reviews/{reviewId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
- 
-
-

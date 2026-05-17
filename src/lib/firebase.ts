@@ -268,6 +268,18 @@ export async function fetchNotificationSettings(): Promise<NotificationSettings 
 export const saveNotificationSettings = (data: NotificationSettings) =>
   setDoc(doc(db, SETTINGS_COL, "notifications"), data);
 
+// ─── Admin Settings ───────────────────────────────────────────────────────────
+export type AdminSettings = {
+  notificationEmail?: string;
+};
+export async function fetchAdminSettings(): Promise<AdminSettings> {
+  const snap = await getDoc(doc(db, SETTINGS_COL, "admin"));
+  if (!snap.exists()) return {};
+  return snap.data() as AdminSettings;
+}
+export const saveAdminSettings = (data: AdminSettings) =>
+  setDoc(doc(db, SETTINGS_COL, "admin"), data, { merge: true });
+
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 export type FirestoreTask = {
   id?:               string;

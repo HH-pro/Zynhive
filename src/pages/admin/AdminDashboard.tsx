@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   adminLogout, fetchProjects, deleteProject,
   subscribePendingReviews, updateReview, createClientUpdate,
-  fetchClients,
+  fetchClients, fetchAdminSettings, saveAdminSettings,
   type FirestoreProject, type FirestoreReview, type FirestoreClient,
 } from "../../lib/firebase";
 import { ProjectForm }        from "../../components/admin/ProjectForm";
@@ -230,6 +230,12 @@ const Ic = {
   Menu: () => (
     <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
       <path d="M2 4h11M2 7.5h11M2 11h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  ),
+  Gear: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.1"/>
+      <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.93 2.93l1.06 1.06M10.01 10.01l1.06 1.06M2.93 11.07l1.06-1.06M10.01 3.99l1.06-1.06" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   ),
 };
@@ -1101,6 +1107,118 @@ function AcceptReviewModal({ review, clients, onClose, onAccepted }: {
   );
 }
 
+// ─── Admin Settings Modal ────────────────────────────────────────────────────
+function AdminSettingsModal({ onClose }: { onClose: () => void }) {
+  const [email,   setEmail]   = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving,  setSaving]  = useState(false);
+  const [saved,   setSaved]   = useState(false);
+
+  useEffect(() => {
+    fetchAdminSettings().then((s) => {
+      setEmail(s.notificationEmail ?? "");
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  async function handleSave() {
+    const trimmed = email.trim();
+    if (trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return;
+    setSaving(true);
+    try {
+      await saveAdminSettings({ notificationEmail: trimmed });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally { setSaving(false); }
+  }
+
+  return (
+    <div onClick={onClose} style={{
+      position: "fixed", inset: 0, zIndex: 200,
+      background: "rgba(0,0,0,.55)", backdropFilter: "blur(6px)",
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+    }}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        width: "100%", maxWidth: 420, borderRadius: 20,
+        background: "var(--bg-panel)", border: "1px solid var(--border2)",
+        boxShadow: "0 24px 80px rgba(0,0,0,.45)",
+        animation: "fadeScaleIn .2s cubic-bezier(0.16,1,0.3,1) both",
+        overflow: "hidden",
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: "20px 24px 16px",
+          borderBottom: "1px solid var(--border)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 9,
+              background: "var(--accent-pale)", display: "flex",
+              alignItems: "center", justifyContent: "center", color: "var(--accent)",
+            }}>
+              <Ic.Gear />
+            </div>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink1)", margin: 0 }}>Admin Settings</p>
+              <p style={{ fontSize: 11, color: "var(--ink4)", margin: 0, marginTop: 1 }}>Notification preferences</p>
+            </div>
+          </div>
+          <IconBtn title="Close" onClick={onClose}>✕</IconBtn>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "24px" }}>
+          <label style={{
+            fontSize: 11, fontWeight: 600, textTransform: "uppercase",
+            letterSpacing: "0.07em", color: "var(--ink4)", display: "block", marginBottom: 8,
+          }}>
+            Notification Email
+          </label>
+          <p style={{ fontSize: 12, color: "var(--ink4)", marginBottom: 12, lineHeight: 1.6 }}>
+            When a team member submits a report, an email will be sent to this address for review.
+          </p>
+          {loading ? (
+            <div style={{ height: 40, background: "var(--bg-alt)", borderRadius: 10, animation: "pulseLoad 1.5s ease infinite" }}/>
+          ) : (
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
+                placeholder="admin@example.com"
+                style={{
+                  flex: 1, padding: "9px 13px", borderRadius: 10, fontSize: 13,
+                  background: "var(--bg-alt)", border: "1px solid var(--border2)",
+                  color: "var(--ink1)", outline: "none", fontFamily: "inherit",
+                  transition: "border-color .2s",
+                }}
+                onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; }}
+                onBlur={(e)  => { (e.target as HTMLInputElement).style.borderColor = "var(--border2)"; }}
+              />
+              <button onClick={handleSave} disabled={saving} style={{
+                padding: "9px 18px", borderRadius: 10, fontSize: 13, fontWeight: 700,
+                background: saved ? "#10B981" : "var(--accent)",
+                border: "none", color: "white", cursor: saving ? "default" : "pointer",
+                transition: "background .2s, opacity .15s", flexShrink: 0,
+                opacity: saving ? 0.7 : 1,
+              }}>
+                {saved ? "✓ Saved" : saving ? "Saving…" : "Save"}
+              </button>
+            </div>
+          )}
+          {email && (
+            <p style={{ fontSize: 11, color: "var(--ink4)", marginTop: 8 }}>
+              Reviews will be sent to <strong style={{ color: "var(--accent)" }}>{email}</strong>
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Review Panel ─────────────────────────────────────────────────────────────
 function ReviewPanel({ reviews, clients, onClose, onReload, showToast }: {
   reviews:   FirestoreReview[];
@@ -1273,9 +1391,10 @@ export function AdminDashboard({ user }: Props) {
   const [sidebarOpen,   setSidebarOpen]   = useState(true);
   const [toast,         setToast]         = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [dark,          setDark]          = useState<boolean>(() => getStoredTheme());
-  const [pendingReviews, setPendingReviews] = useState<FirestoreReview[]>([]);
+  const [pendingReviews,  setPendingReviews]  = useState<FirestoreReview[]>([]);
   const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
-  const [allClients,    setAllClients]    = useState<FirestoreClient[]>([]);
+  const [settingsOpen,    setSettingsOpen]    = useState(false);
+  const [allClients,      setAllClients]      = useState<FirestoreClient[]>([]);
 
   const w        = useWindowWidth();
   const isMobile = w < 640;
@@ -1599,6 +1718,11 @@ export function AdminDashboard({ user }: Props) {
                 )}
               </div>
 
+              {/* Settings gear */}
+              <IconBtn title="Admin Settings" onClick={() => setSettingsOpen(true)}>
+                <Ic.Gear />
+              </IconBtn>
+
               {/* Theme toggle */}
               <ThemeToggle dark={dark} onToggle={handleThemeToggle} />
 
@@ -1664,6 +1788,7 @@ export function AdminDashboard({ user }: Props) {
             showToast={showToast}
           />
         )}
+        {settingsOpen && <AdminSettingsModal onClose={() => setSettingsOpen(false)} />}
       </div>
     </>
   );
