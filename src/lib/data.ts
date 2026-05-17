@@ -1,7 +1,7 @@
 import type {
   Service, Project, TeamMember, Testimonial, ProcessStep, NavLink, StatItem,
 } from "./types";
-
+//hamza
 // ─── Config ───────────────────────────────────────────────────────────────────
 export const SITE_CONFIG = {
   name:        "ZynHive",
