@@ -1,7 +1,7 @@
 // ─── src/pages/MemberPage.tsx ─────────────────────────────────────────────────
 import { useState, useEffect, useCallback } from "react";
 import {
-  fetchMemberById, fetchTasksByMemberId, updateTask, updateMember,
+  fetchMemberById, fetchTasksByMemberId, updateTask, updateMember, createReview,
   type FirestoreMember, type FirestoreTask,
 } from "../lib/firebase";
 import { Timestamp } from "firebase/firestore";
@@ -164,6 +164,18 @@ function ReportModal({
         report, status: "completed",
         completedAt: new Date().toISOString(),
         reportedBy: task.assignedToName,
+      });
+      await createReview({
+        taskId:           task.id,
+        taskTitle:        task.title,
+        taskDescription:  task.description,
+        report,
+        memberId:         task.assignedToId,
+        memberName:       task.assignedToName,
+        memberColor:      task.assignedToColor || "#6366F1",
+        linkedClientId:   task.linkedClientId  ?? "",
+        linkedClientName: task.linkedClientName ?? "",
+        status:           "pending",
       });
       onDone(); onClose();
     } finally { setSaving(false); }
