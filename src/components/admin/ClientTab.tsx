@@ -4,7 +4,8 @@ import {
   fetchClients, createClient, updateClient, deleteClient,
   fetchClientUpdates, createClientUpdate, updateClientUpdate, deleteClientUpdate,
   fetchUpdateFeedback, createUpdateFeedback, subscribeNewFeedbackFromClients,
-  type FirestoreClient, type FirestoreClientUpdate, type FirestoreUpdateFeedback,
+  fetchMembers,
+  type FirestoreClient, type FirestoreClientUpdate, type FirestoreUpdateFeedback, type FirestoreMember,
 } from "../../lib/firebase";
 import { sendUpdateNotificationEmail, sendReplyNotificationEmail } from "../../lib/email";
 import { uploadToCloudinary } from "../../lib/cloudinary";
@@ -90,12 +91,22 @@ function ClientFormModal({
   onClose: () => void;
   onSaved: (msg: string) => void;
 }) {
-  const [name,        setName]        = useState(client?.name        ?? "");
-  const [company,     setCompany]     = useState(client?.company     ?? "");
-  const [email,       setEmail]       = useState(client?.email       ?? "");
-  const [password,    setPassword]    = useState(client?.password    ?? "");
-  const [projectName, setProjectName] = useState(client?.projectName ?? "");
-  const [saving,      setSaving]      = useState(false);
+  const [name,              setName]              = useState(client?.name              ?? "");
+  const [company,           setCompany]           = useState(client?.company           ?? "");
+  const [email,             setEmail]             = useState(client?.email             ?? "");
+  const [password,          setPassword]          = useState(client?.password          ?? "");
+  const [projectName,       setProjectName]       = useState(client?.projectName       ?? "");
+  const [assignedMemberIds, setAssignedMemberIds] = useState<string[]>(client?.assignedMemberIds ?? []);
+  const [members,           setMembers]           = useState<FirestoreMember[]>([]);
+  const [saving,            setSaving]            = useState(false);
+
+  useEffect(() => { fetchMembers().then(setMembers).catch(() => {}); }, []);
+
+  function toggleMember(id: string) {
+    setAssignedMemberIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }
 
   async function handleSave() {
     if (!name.trim() || !email.trim() || !password.trim()) return;
@@ -104,6 +115,7 @@ function ClientFormModal({
       const data = {
         name: name.trim(), company: company.trim(), email: email.trim(),
         password: password.trim(), projectName: projectName.trim(),
+        assignedMemberIds,
       };
       if (client?.id) {
         await updateClient(client.id, data);
@@ -130,7 +142,8 @@ function ClientFormModal({
       <div
         style={{
           background: "var(--bg-card)", border: "0.5px solid var(--border2)",
-          borderRadius: 16, padding: 28, width: "100%", maxWidth: 460,
+          borderRadius: 16, padding: 28, width: "100%", maxWidth: 480,
+          maxHeight: "88vh", overflowY: "auto",
           boxShadow: "var(--shadow-lg)",
           animation: "fadeScaleIn .22s cubic-bezier(0.16,1,0.3,1) both",
         }}
@@ -153,6 +166,62 @@ function ClientFormModal({
           <FieldInput label="Email" value={email} onChange={setEmail} placeholder="client@email.com" type="email" required />
           <FieldInput label="Portal Password" value={password} onChange={setPassword} placeholder="Set a login password" type="text" required />
           <FieldInput label="Project Name" value={projectName} onChange={setProjectName} placeholder="e.g. E-commerce Website" />
+
+          {/* Assign Team Members */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: "var(--ink4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Assign Team Members
+              <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, marginLeft: 5 }}>(optional)</span>
+            </label>
+            {members.length === 0 ? (
+              <p style={{ fontSize: 12, color: "var(--ink4)" }}>No team members added yet.</p>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {members.map((m) => {
+                  const selected = assignedMemberIds.includes(m.id ?? "");
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => toggleMember(m.id ?? "")}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 7,
+                        padding: "6px 10px", borderRadius: 10, cursor: "pointer",
+                        background: selected ? `${m.color}18` : "var(--bg-alt)",
+                        border: `0.5px solid ${selected ? m.color : "var(--border2)"}`,
+                        transition: "all .15s",
+                      }}
+                    >
+                      <div style={{
+                        width: 22, height: 22, borderRadius: 7, overflow: "hidden", flexShrink: 0,
+                        background: m.imageUrl ? "transparent" : `${m.color}22`,
+                        border: `1px solid ${m.color}44`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        {m.imageUrl
+                          ? <img src={m.imageUrl} alt={m.name} style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
+                          : <span style={{ fontSize: 8, fontWeight: 800, color: m.color }}>{m.initials || m.name[0]}</span>
+                        }
+                      </div>
+                      <div style={{ textAlign: "left" }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: selected ? m.color : "var(--ink2)" }}>{m.name}</div>
+                        <div style={{ fontSize: 10, color: "var(--ink4)" }}>{m.role}</div>
+                      </div>
+                      {selected && (
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style={{ marginLeft: 2, color: m.color }}>
+                          <path d="M1.5 5.5l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {assignedMemberIds.length > 0 && (
+              <p style={{ fontSize: 11, color: "var(--green)" }}>
+                ✓ {assignedMemberIds.length} member{assignedMemberIds.length > 1 ? "s" : ""} assigned to this client
+              </p>
+            )}
+          </div>
         </div>
 
         <div style={{ display: "flex", gap: 10, marginTop: 22 }}>

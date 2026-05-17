@@ -1,7 +1,10 @@
 // ─── src/pages/admin/AdminDashboard.tsx ─────────────────────────────────────
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
-  adminLogout, fetchProjects, deleteProject, type FirestoreProject,
+  adminLogout, fetchProjects, deleteProject,
+  subscribePendingReviews, updateReview, createClientUpdate,
+  fetchClients,
+  type FirestoreProject, type FirestoreReview, type FirestoreClient,
 } from "../../lib/firebase";
 import { ProjectForm }        from "../../components/admin/ProjectForm";
 import { TeamTab }            from "../../components/admin/TeamTab";
@@ -78,10 +81,12 @@ export function ThemeToggle({ dark, onToggle }: { dark: boolean; onToggle: () =>
 // ─── Keyframe injector ────────────────────────────────────────────────────────
 // Only admin-specific keyframes. All token variables live in index.css.
 const ADMIN_KF = `
-  @keyframes spinLoader  { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
-  @keyframes fadeScaleIn { from { opacity:0; transform:scale(0.95) translateY(4px); } to { opacity:1; transform:scale(1) translateY(0); } }
-  @keyframes toastIn     { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes pulseLoad   { 0%,100% { opacity:.45; } 50% { opacity:.9; } }
+  @keyframes spinLoader    { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+  @keyframes fadeScaleIn   { from { opacity:0; transform:scale(0.95) translateY(4px); } to { opacity:1; transform:scale(1) translateY(0); } }
+  @keyframes toastIn       { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulseLoad     { 0%,100% { opacity:.45; } 50% { opacity:.9; } }
+  @keyframes slideInRight  { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+  @keyframes bellShake     { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-12deg)} 40%{transform:rotate(12deg)} 60%{transform:rotate(-8deg)} 80%{transform:rotate(8deg)} }
 `;
 function KFInjector() {
   useEffect(() => {
@@ -881,20 +886,396 @@ function CmdKPalette({ onClose, onNavigate }: { onClose: () => void; onNavigate:
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// REVIEW SYSTEM
+// ═════════════════════════════════════════════════════════════════════════════
+
+function AcceptReviewModal({ review, clients, onClose, onAccepted }: {
+  review:     FirestoreReview;
+  clients:    FirestoreClient[];
+  onClose:    () => void;
+  onAccepted: () => void;
+}) {
+  const [clientId,    setClientId]    = useState(review.linkedClientId ?? "");
+  const [title,       setTitle]       = useState(review.taskTitle);
+  const [description, setDescription] = useState(review.report ?? review.taskDescription ?? "");
+  const [category,    setCategory]    = useState<"seo" | "digital-marketing" | "general">("general");
+  const [status,      setStatus]      = useState<"planning"|"in-progress"|"review"|"completed">("completed");
+  const [pct,         setPct]         = useState(100);
+  const [saving,      setSaving]      = useState(false);
+  const [err,         setErr]         = useState("");
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "8px 12px", borderRadius: 8,
+    border: "0.5px solid var(--border2)", background: "var(--bg-alt)",
+    color: "var(--ink)", fontSize: 13, outline: "none",
+    fontFamily: "'DM Sans', sans-serif", transition: "border-color .2s",
+  };
+
+  async function confirm() {
+    if (!clientId) { setErr("Please select a client."); return; }
+    setSaving(true);
+    try {
+      const client = clients.find((c) => c.id === clientId);
+      await createClientUpdate({
+        clientId,
+        title:             title.trim() || review.taskTitle,
+        description:       description.trim(),
+        status,
+        phase:             review.memberName,
+        completionPercent: pct,
+        category,
+      });
+      await updateReview(review.id!, { status: "accepted" });
+      onAccepted();
+      onClose();
+    } catch { setErr("Failed to accept. Try again."); }
+    finally { setSaving(false); }
+  }
+
+  const CAT_OPTIONS: { v: typeof category; label: string; icon: string }[] = [
+    { v: "seo",               label: "SEO",               icon: "🔍" },
+    { v: "digital-marketing", label: "Digital Marketing", icon: "📣" },
+    { v: "general",           label: "General Update",    icon: "📋" },
+  ];
+  const STATUS_OPTIONS: { v: typeof status; label: string; color: string }[] = [
+    { v: "planning",    label: "Planning",    color: "var(--purple)" },
+    { v: "in-progress", label: "In Progress", color: "var(--gold)"   },
+    { v: "review",      label: "Review",      color: "var(--cyan)"   },
+    { v: "completed",   label: "Completed",   color: "var(--green)"  },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center px-4"
+      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
+      onClick={onClose}>
+      <div className="w-full max-w-[520px] rounded-2xl overflow-hidden"
+        style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", boxShadow: "var(--shadow-lg)", maxHeight: "90vh", overflowY: "auto", animation: "fadeScaleIn .22s cubic-bezier(0.16,1,0.3,1) both" }}
+        onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="px-6 py-4 flex items-start justify-between" style={{ borderBottom: "0.5px solid var(--border)" }}>
+          <div>
+            <h2 className="font-semibold text-[15px]" style={{ color: "var(--ink)" }}>Accept & Post to Client Portal</h2>
+            <p className="text-[11px] mt-1" style={{ color: "var(--ink4)" }}>
+              Review the update details before publishing to the client's portal.
+            </p>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ml-3"
+            style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border2)", cursor: "pointer", color: "var(--ink4)" }}>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+
+        {/* Submission info */}
+        <div className="mx-6 mt-5 px-4 py-3 rounded-xl flex items-center gap-3"
+          style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border2)" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+            style={{ background: `${review.memberColor}22`, color: review.memberColor, border: `1px solid ${review.memberColor}33` }}>
+            {review.memberName[0]}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[12px] font-semibold" style={{ color: "var(--ink)" }}>{review.memberName}</p>
+            <p className="text-[11px] truncate" style={{ color: "var(--ink4)" }}>completed: {review.taskTitle}</p>
+          </div>
+          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
+            style={{ background: "var(--green-pale)", color: "var(--green)" }}>Completed</span>
+        </div>
+
+        {review.report && (
+          <div className="mx-6 mt-3 px-4 py-3 rounded-xl text-[12px] leading-relaxed"
+            style={{ background: "var(--green-pale)", color: "var(--ink3)", border: "0.5px solid rgba(34,197,94,0.2)" }}>
+            <span className="font-semibold text-[11px]" style={{ color: "var(--green)" }}>Member's report: </span>
+            {review.report}
+          </div>
+        )}
+
+        {/* Form */}
+        <div className="px-6 py-5 flex flex-col gap-4">
+
+          {/* Client selector */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>
+              Post to Client *
+            </label>
+            <select value={clientId} onChange={(e) => { setClientId(e.target.value); setErr(""); }}
+              style={{ ...inputStyle, cursor: "pointer" }}
+              onFocus={(e) => { (e.target as HTMLElement).style.borderColor = "var(--accent)"; }}
+              onBlur={(e)  => { (e.target as HTMLElement).style.borderColor = "var(--border2)"; }}>
+              <option value="">Select client…</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}{c.projectName ? ` — ${c.projectName}` : ""}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Title */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Update Title</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle}
+              onFocus={(e) => { (e.target as HTMLElement).style.borderColor = "var(--accent)"; }}
+              onBlur={(e)  => { (e.target as HTMLElement).style.borderColor = "var(--border2)"; }}/>
+          </div>
+
+          {/* Description */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)}
+              rows={4} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }}
+              onFocus={(e) => { (e.target as HTMLElement).style.borderColor = "var(--accent)"; }}
+              onBlur={(e)  => { (e.target as HTMLElement).style.borderColor = "var(--border2)"; }}/>
+          </div>
+
+          {/* Category */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Category</label>
+            <div className="flex gap-2">
+              {CAT_OPTIONS.map(({ v, label, icon }) => (
+                <button key={v} onClick={() => setCategory(v)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-medium transition-all"
+                  style={{
+                    background: category === v ? "var(--accent-pale)" : "var(--bg-alt)",
+                    border: `0.5px solid ${category === v ? "var(--accent)" : "var(--border2)"}`,
+                    color: category === v ? "var(--accent)" : "var(--ink4)",
+                    cursor: "pointer",
+                  }}>
+                  <span>{icon}</span>{label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status + Completion % */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Status</label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {STATUS_OPTIONS.map(({ v, label, color }) => (
+                  <button key={v} onClick={() => setStatus(v)}
+                    className="py-1.5 rounded-lg text-[10px] font-semibold transition-all"
+                    style={{
+                      background: status === v ? `${color}15` : "var(--bg-alt)",
+                      border: `0.5px solid ${status === v ? color : "var(--border2)"}`,
+                      color: status === v ? color : "var(--ink4)",
+                      cursor: "pointer",
+                    }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Completion %</label>
+              <div className="flex items-center gap-2">
+                <input type="range" min={0} max={100} value={pct} onChange={(e) => setPct(Number(e.target.value))}
+                  style={{ flex: 1, accentColor: "var(--accent)" }}/>
+                <span className="text-[13px] font-semibold w-10 text-right" style={{ color: "var(--accent)" }}>{pct}%</span>
+              </div>
+            </div>
+          </div>
+
+          {err && (
+            <p className="text-[12px] px-3 py-2.5 rounded-lg"
+              style={{ background: "var(--red-pale)", color: "var(--red)", border: "0.5px solid rgba(239,68,68,0.25)" }}>
+              {err}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 flex gap-2.5" style={{ borderTop: "0.5px solid var(--border)" }}>
+          <button onClick={onClose}
+            className="flex-1 py-2.5 rounded-lg text-[13px]"
+            style={{ border: "0.5px solid var(--border2)", color: "var(--ink3)", background: "transparent", cursor: "pointer", transition: "background .15s" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
+            Cancel
+          </button>
+          <button onClick={confirm} disabled={saving}
+            className="flex-1 py-2.5 rounded-lg text-[13px] font-semibold text-white"
+            style={{ background: saving ? "var(--accent-pale)" : "var(--green)", border: "none", cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1, transition: "opacity .15s, background .15s", color: saving ? "var(--green)" : "white" }}>
+            {saving ? "Posting…" : "✓ Accept & Post to Portal"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Review Panel ─────────────────────────────────────────────────────────────
+function ReviewPanel({ reviews, clients, onClose, onReload, showToast }: {
+  reviews:   FirestoreReview[];
+  clients:   FirestoreClient[];
+  onClose:   () => void;
+  onReload:  () => void;
+  showToast: (msg: string, type?: "success" | "error") => void;
+}) {
+  const [acceptTarget, setAcceptTarget] = useState<FirestoreReview | null>(null);
+
+  async function handleReject(review: FirestoreReview) {
+    try {
+      await updateReview(review.id!, { status: "rejected" });
+      onReload();
+      showToast("Review rejected.");
+    } catch { showToast("Failed to reject.", "error"); }
+  }
+
+  function relativeTime(ts: FirestoreReview["createdAt"]) {
+    if (!ts) return "";
+    const ms = (ts as any).toMillis?.() ?? 0;
+    const diff = Date.now() - ms;
+    const m = Math.floor(diff / 60000);
+    if (m < 1)  return "just now";
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  }
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-[60]" style={{ background: "rgba(0,0,0,0.4)" }} onClick={onClose}/>
+
+      {/* Panel */}
+      <div className="fixed top-0 right-0 bottom-0 z-[70] flex flex-col"
+        style={{
+          width: "min(420px, 100vw)",
+          background: "var(--bg-panel)",
+          borderLeft: "0.5px solid var(--border2)",
+          boxShadow: "var(--shadow-lg)",
+          animation: "slideInRight .25s cubic-bezier(0.16,1,0.3,1) both",
+        }}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+          style={{ borderBottom: "0.5px solid var(--border)" }}>
+          <div>
+            <h2 className="font-semibold text-[15px]" style={{ color: "var(--ink)" }}>Pending Reviews</h2>
+            <p className="text-[11px] mt-0.5" style={{ color: "var(--ink4)" }}>
+              {reviews.length} update{reviews.length !== 1 ? "s" : ""} waiting for your approval
+            </p>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border2)", cursor: "pointer", color: "var(--ink4)" }}>
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 9M10 1L1 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+
+        {/* List */}
+        <div className="flex-1 overflow-y-auto" style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+          {reviews.length === 0 ? (
+            <div className="flex flex-col items-center justify-center flex-1 gap-3 py-16">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center"
+                style={{ background: "var(--green-pale)", color: "var(--green)", fontSize: 22 }}>✓</div>
+              <p className="font-medium text-[14px]" style={{ color: "var(--ink2)" }}>All caught up!</p>
+              <p className="text-[12px] text-center" style={{ color: "var(--ink4)" }}>No pending reviews.<br/>When a team member completes a task, it'll appear here.</p>
+            </div>
+          ) : (
+            reviews.map((r) => (
+              <div key={r.id} className="rounded-xl overflow-hidden"
+                style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)" }}>
+
+                {/* Top strip */}
+                <div className="px-4 pt-4 pb-3">
+                  <div className="flex items-start gap-3 mb-2">
+                    {/* Member avatar */}
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+                      style={{ background: `${r.memberColor}18`, color: r.memberColor, border: `1px solid ${r.memberColor}28` }}>
+                      {r.memberName[0]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="font-semibold text-[13px]" style={{ color: "var(--ink)" }}>{r.memberName}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                          style={{ background: "var(--green-pale)", color: "var(--green)" }}>completed</span>
+                      </div>
+                      <p className="text-[12px] truncate" style={{ color: "var(--ink3)" }}>{r.taskTitle}</p>
+                      <p className="text-[10px] mt-0.5" style={{ color: "var(--ink4)" }}>{relativeTime(r.createdAt)}</p>
+                    </div>
+                  </div>
+
+                  {/* Report */}
+                  {r.report && (
+                    <div className="px-3 py-2.5 rounded-lg text-[12px] leading-relaxed mt-2"
+                      style={{ background: "var(--bg-alt)", color: "var(--ink3)", border: "0.5px solid var(--border)" }}>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--ink4)" }}>Report · </span>
+                      {r.report.slice(0, 180)}{r.report.length > 180 ? "…" : ""}
+                    </div>
+                  )}
+
+                  {/* Linked client badge */}
+                  {r.linkedClientId && (
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <svg width="11" height="11" viewBox="0 0 14 14" fill="none" style={{ color: "var(--accent)", flexShrink: 0 }}>
+                        <circle cx="5.5" cy="4" r="2.2" stroke="currentColor" strokeWidth="1.1"/>
+                        <path d="M1 13c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+                      </svg>
+                      <span className="text-[11px]" style={{ color: "var(--accent)" }}>
+                        Linked: {r.linkedClientName || r.linkedClientId}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="px-4 pb-4 flex gap-2">
+                  <button onClick={() => handleReject(r)}
+                    className="flex-1 py-2 rounded-lg text-[12px] font-medium transition-all"
+                    style={{ border: "0.5px solid var(--border2)", background: "transparent", color: "var(--ink3)", cursor: "pointer" }}
+                    onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--red-pale)"; el.style.color = "var(--red)"; el.style.borderColor = "rgba(239,68,68,0.3)"; }}
+                    onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink3)"; el.style.borderColor = "var(--border2)"; }}>
+                    ✕ Reject
+                  </button>
+                  <button onClick={() => setAcceptTarget(r)}
+                    className="flex-[2] py-2 rounded-lg text-[12px] font-semibold transition-all text-white"
+                    style={{ background: "var(--green)", border: "none", cursor: "pointer" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.88"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
+                    ✓ Accept & Post to Portal
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Accept modal — above panel */}
+      {acceptTarget && (
+        <AcceptReviewModal
+          review={acceptTarget}
+          clients={clients}
+          onClose={() => setAcceptTarget(null)}
+          onAccepted={() => {
+            setAcceptTarget(null);
+            onReload();
+            showToast("Update posted to client portal!");
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // MAIN ADMIN DASHBOARD
 // ═════════════════════════════════════════════════════════════════════════════
 
 export function AdminDashboard({ user }: Props) {
-  const [projects,     setProjects]     = useState<FirestoreProject[]>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [tab,          setTab]          = useState<Tab>("overview");
-  const [search,       setSearch]       = useState("");
-  const [formOpen,     setFormOpen]     = useState(false);
-  const [editProject,  setEditProject]  = useState<FirestoreProject | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<FirestoreProject | null>(null);
-  const [sidebarOpen,  setSidebarOpen]  = useState(true);
-  const [toast,        setToast]        = useState<{ msg: string; type: "success" | "error" } | null>(null);
-  const [dark,         setDark]         = useState<boolean>(() => getStoredTheme());
+  const [projects,      setProjects]      = useState<FirestoreProject[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [tab,           setTab]           = useState<Tab>("overview");
+  const [search,        setSearch]        = useState("");
+  const [formOpen,      setFormOpen]      = useState(false);
+  const [editProject,   setEditProject]   = useState<FirestoreProject | null>(null);
+  const [deleteTarget,  setDeleteTarget]  = useState<FirestoreProject | null>(null);
+  const [sidebarOpen,   setSidebarOpen]   = useState(true);
+  const [toast,         setToast]         = useState<{ msg: string; type: "success" | "error" } | null>(null);
+  const [dark,          setDark]          = useState<boolean>(() => getStoredTheme());
+  const [pendingReviews, setPendingReviews] = useState<FirestoreReview[]>([]);
+  const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
+  const [allClients,    setAllClients]    = useState<FirestoreClient[]>([]);
 
   const w        = useWindowWidth();
   const isMobile = w < 640;
@@ -924,6 +1305,15 @@ export function AdminDashboard({ user }: Props) {
   }, [showToast]);
 
   useEffect(() => { loadProjects(); }, [loadProjects]);
+
+  // Subscribe to pending reviews in real-time
+  useEffect(() => {
+    const unsub = subscribePendingReviews(setPendingReviews);
+    return unsub;
+  }, []);
+
+  // Fetch clients list for the AcceptReviewModal
+  useEffect(() => { fetchClients().then(setAllClients).catch(() => {}); }, []);
 
   async function handleDelete() {
     if (!deleteTarget?.id) return;
@@ -1185,11 +1575,28 @@ export function AdminDashboard({ user }: Props) {
                 </PrimaryBtn>
               )}
 
-              {/* Bell */}
+              {/* Bell — pending reviews */}
               <div className="relative">
-                <IconBtn title="Notifications" size={30}><Ic.Bell /></IconBtn>
-                <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full pointer-events-none"
-                  style={{ background: "var(--red)", border: "1.5px solid var(--bg-panel)" }}/>
+                <button
+                  title={pendingReviews.length > 0 ? `${pendingReviews.length} pending review${pendingReviews.length > 1 ? "s" : ""}` : "No pending reviews"}
+                  onClick={() => setReviewPanelOpen(true)}
+                  className="flex items-center justify-center rounded-lg transition-all"
+                  style={{
+                    width: 30, height: 30, background: "transparent", border: "none",
+                    color: pendingReviews.length > 0 ? "var(--gold)" : "var(--ink4)",
+                    cursor: "pointer",
+                    animation: pendingReviews.length > 0 ? "bellShake 0.6s ease 0.3s" : "none",
+                  }}
+                  onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--bg-alt)"; el.style.color = pendingReviews.length > 0 ? "var(--gold)" : "var(--ink2)"; }}
+                  onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = pendingReviews.length > 0 ? "var(--gold)" : "var(--ink4)"; }}>
+                  <Ic.Bell />
+                </button>
+                {pendingReviews.length > 0 && (
+                  <div className="absolute -top-1 -right-1 flex items-center justify-center rounded-full pointer-events-none"
+                    style={{ minWidth: 16, height: 16, padding: "0 4px", background: "var(--red)", border: "1.5px solid var(--bg-panel)", fontSize: 9, fontWeight: 700, color: "white" }}>
+                    {pendingReviews.length}
+                  </div>
+                )}
               </div>
 
               {/* Theme toggle */}
@@ -1248,6 +1655,15 @@ export function AdminDashboard({ user }: Props) {
         )}
         {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
         {cmdOpen && <CmdKPalette onClose={() => setCmdOpen(false)} onNavigate={(t) => { switchTab(t); setCmdOpen(false); }} />}
+        {reviewPanelOpen && (
+          <ReviewPanel
+            reviews={pendingReviews}
+            clients={allClients}
+            onClose={() => setReviewPanelOpen(false)}
+            onReload={() => { /* subscribePendingReviews auto-updates state */ }}
+            showToast={showToast}
+          />
+        )}
       </div>
     </>
   );

@@ -148,15 +148,16 @@ export const deleteLead = (id: string) => deleteDoc(doc(db, LEADS_COL, id));
 
 // ─── Clients ──────────────────────────────────────────────────────────────────
 export type FirestoreClient = {
-  id?:               string;
-  name:              string;
-  company:           string;
-  email:             string;
-  password:          string;
-  projectName:       string;
+  id?:                string;
+  name:               string;
+  company:            string;
+  email:              string;
+  password:           string;
+  projectName:        string;
   notificationEmail?: string;
-  createdAt?:        Timestamp;
-  updatedAt?:        Timestamp;
+  assignedMemberIds?: string[];
+  createdAt?:         Timestamp;
+  updatedAt?:         Timestamp;
 };
 
 const CLIENTS_COL = "clients";
@@ -269,21 +270,23 @@ export const saveNotificationSettings = (data: NotificationSettings) =>
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 export type FirestoreTask = {
-  id?:              string;
-  title:            string;
-  description:      string;
-  type:             "daily" | "weekly";
-  priority:         "high" | "medium" | "low";
-  assignedToId:     string;
-  assignedToName:   string;
-  assignedToColor:  string;
-  dueDate:          string;
-  status:           "pending" | "in-progress" | "completed" | "overdue";
-  report?:          string;
-  reportedBy?:      string;
-  completedAt?:     string;
-  createdAt?:       Timestamp;
-  updatedAt?:       Timestamp;
+  id?:               string;
+  title:             string;
+  description:       string;
+  type:              "daily" | "weekly";
+  priority:          "high" | "medium" | "low";
+  assignedToId:      string;
+  assignedToName:    string;
+  assignedToColor:   string;
+  dueDate:           string;
+  status:            "pending" | "in-progress" | "completed" | "overdue";
+  report?:           string;
+  reportedBy?:       string;
+  completedAt?:      string;
+  linkedClientId?:   string;
+  linkedClientName?: string;
+  createdAt?:        Timestamp;
+  updatedAt?:        Timestamp;
 };
 
 const TASKS_COL = "tasks";
@@ -361,5 +364,61 @@ export function subscribeNewFeedbackFromClients(
         if (f.fromClient) onNewFeedback(f);
       }
     });
+  });
+}
+
+// ─── Pending Reviews ──────────────────────────────────────────────────────────
+// Created when a team member submits a completion report.
+// Admin reviews → accepts (creates ClientUpdate) or rejects.
+export type FirestoreReview = {
+  id?:               string;
+  taskId:            string;
+  taskTitle:         string;
+  taskDescription?:  string;
+  report?:           string;
+  memberId:          string;
+  memberName:        string;
+  memberColor:       string;
+  linkedClientId?:   string;
+  linkedClientName?: string;
+  status:            "pending" | "accepted" | "rejected";
+  createdAt?:        Timestamp;
+  updatedAt?:        Timestamp;
+};
+
+const REVIEWS_COL = "pending_reviews";
+
+export async function fetchPendingReviews(): Promise<FirestoreReview[]> {
+  const snap = await getDocs(collection(db, REVIEWS_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreReview))
+    .filter((r) => r.status === "pending")
+    .sort((a, b) => {
+      const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+}
+
+export const createReview = (data: Omit<FirestoreReview, "id" | "createdAt" | "updatedAt">) =>
+  addDoc(collection(db, REVIEWS_COL), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+
+export const updateReview = (id: string, data: Partial<FirestoreReview>) =>
+  updateDoc(doc(db, REVIEWS_COL, id), { ...data, updatedAt: serverTimestamp() });
+
+// Real-time subscription — fires on every change with full pending list.
+export function subscribePendingReviews(
+  onData: (reviews: FirestoreReview[]) => void
+): () => void {
+  return onSnapshot(collection(db, REVIEWS_COL), (snap) => {
+    const reviews = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as FirestoreReview))
+      .filter((r) => r.status === "pending")
+      .sort((a, b) => {
+        const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+        const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+        return tb - ta;
+      });
+    onData(reviews);
   });
 }

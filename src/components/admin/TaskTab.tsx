@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   fetchTasks, createTask, updateTask, deleteTask,
-  fetchMembers,
-  type FirestoreTask, type FirestoreMember,
+  fetchMembers, fetchClients, createReview,
+  type FirestoreTask, type FirestoreMember, type FirestoreClient,
 } from "../../lib/firebase";
 import { sendTaskAssignedEmail } from "../../lib/email";
 
@@ -408,19 +408,24 @@ function AddTaskModal({ task, members, onClose, onSaved }: {
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const [clients, setClients] = useState<FirestoreClient[]>([]);
+  useEffect(() => { fetchClients().then(setClients).catch(() => {}); }, []);
+
   const [form, setForm] = useState({
-    title:           task?.title           ?? "",
-    description:     task?.description     ?? "",
-    type:            task?.type            ?? "daily" as FirestoreTask["type"],
-    priority:        task?.priority        ?? "medium" as FirestoreTask["priority"],
-    assignedToId:    task?.assignedToId    ?? "",
-    assignedToName:  task?.assignedToName  ?? "",
-    assignedToColor: task?.assignedToColor ?? "",
-    dueDate:         task?.dueDate         ?? todayStr(),
-    status:          task?.status          ?? "pending" as FirestoreTask["status"],
-    report:          task?.report          ?? "",
-    reportedBy:      task?.reportedBy      ?? "",
-    completedAt:     task?.completedAt     ?? "",
+    title:             task?.title             ?? "",
+    description:       task?.description       ?? "",
+    type:              task?.type              ?? "daily" as FirestoreTask["type"],
+    priority:          task?.priority          ?? "medium" as FirestoreTask["priority"],
+    assignedToId:      task?.assignedToId      ?? "",
+    assignedToName:    task?.assignedToName    ?? "",
+    assignedToColor:   task?.assignedToColor   ?? "",
+    dueDate:           task?.dueDate           ?? todayStr(),
+    status:            task?.status            ?? "pending" as FirestoreTask["status"],
+    report:            task?.report            ?? "",
+    reportedBy:        task?.reportedBy        ?? "",
+    completedAt:       task?.completedAt       ?? "",
+    linkedClientId:    task?.linkedClientId    ?? "",
+    linkedClientName:  task?.linkedClientName  ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
@@ -434,6 +439,11 @@ function AddTaskModal({ task, members, onClose, onSaved }: {
     const m = members.find((x) => x.id === id);
     setForm((f) => ({ ...f, assignedToId: id, assignedToName: m?.name ?? "", assignedToColor: m?.color ?? "var(--accent)" }));
     setErr("");
+  }
+
+  function pickClient(id: string) {
+    const c = clients.find((x) => x.id === id);
+    setForm((f) => ({ ...f, linkedClientId: id, linkedClientName: c ? `${c.name}${c.projectName ? ` — ${c.projectName}` : ""}` : "" }));
   }
 
   async function submit() {
@@ -597,6 +607,25 @@ function AddTaskModal({ task, members, onClose, onSaved }: {
             </select>
           </div>
 
+          {/* Link to Client (optional) */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>
+              Link to Client <span style={{ color: "var(--ink4)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+            </label>
+            <select value={form.linkedClientId} onChange={(e) => pickClient(e.target.value)}
+              style={{ ...inputBase, cursor: "pointer" }} onFocus={focusBorder} onBlur={blurBorder}>
+              <option value="">None — no client linked</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}{c.projectName ? ` — ${c.projectName}` : ""}</option>
+              ))}
+            </select>
+            {form.linkedClientId && (
+              <p className="text-[11px]" style={{ color: "var(--green)", marginTop: 2 }}>
+                ✓ When completed, a review will be sent to you for this client's portal.
+              </p>
+            )}
+          </div>
+
           {/* Due Date */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Due Date *</label>
@@ -652,6 +681,19 @@ function ReportModal({ task, onClose, onSaved }: {
         report, status: "completed",
         completedAt: new Date().toISOString(),
         reportedBy: task.assignedToName,
+      });
+      // Create a pending review for admin to approve
+      await createReview({
+        taskId:            task.id,
+        taskTitle:         task.title,
+        taskDescription:   task.description,
+        report,
+        memberId:          task.assignedToId,
+        memberName:        task.assignedToName,
+        memberColor:       task.assignedToColor || "#6366F1",
+        linkedClientId:    task.linkedClientId  ?? "",
+        linkedClientName:  task.linkedClientName ?? "",
+        status:            "pending",
       });
       onSaved(); onClose();
     } catch { /* silent */ }
@@ -818,6 +860,8 @@ function TaskCard({ task, onEdit, onDelete, onReport, onReload }: {
     if (!task.id || eff === "overdue" || toggling) return;
     const next = STATUS_CYCLE[eff];
     if (!next) return;
+    // For completion, use the Report modal for proper report + review creation
+    if (next === "completed") { onReport(task); return; }
     setToggling(true);
     try {
       await updateTask(task.id, { status: next });
