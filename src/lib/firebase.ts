@@ -7,8 +7,15 @@ import {
 import {
   getFirestore, collection, addDoc, updateDoc, deleteDoc, setDoc,
   doc, getDocs, getDoc, query, orderBy, serverTimestamp, Timestamp,
-  onSnapshot,
+  onSnapshot, increment,
 } from "firebase/firestore";
+
+// ─── Score constants ──────────────────────────────────────────────────────────
+// Reward when admin accepts a member's completed task; penalty when a task
+// is not completed by its deadline.
+export const TASK_SCORE_REWARD  = 10;
+export const TASK_SCORE_PENALTY = 10;
+export const PKT_TZ_OFFSET_MS   = 5 * 60 * 60 * 1000; // Pakistan = UTC+5, no DST
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
@@ -70,6 +77,7 @@ export type FirestoreMember = {
   imagePublicId: string;
   order:         number;
   email?:        string;
+  score?:        number;   // cumulative performance score; +reward on accept, -penalty on overdue
   socials: {
     linkedin:  string;
     twitter:   string;
@@ -81,6 +89,9 @@ export type FirestoreMember = {
 };
 
 const TEAM_COL = "team";
+// Atomic +/- adjustment to a member's cumulative score
+export const adjustMemberScore = (id: string, delta: number) =>
+  updateDoc(doc(db, TEAM_COL, id), { score: increment(delta), updatedAt: serverTimestamp() });
 export async function fetchMemberById(id: string): Promise<FirestoreMember | null> {
   const snap = await getDoc(doc(db, TEAM_COL, id));
   if (!snap.exists()) return null;
@@ -301,6 +312,9 @@ export type FirestoreTask = {
   assignedToName:    string;
   assignedToColor:   string;
   dueDate:           string;
+  deadline?:         string;   // ISO datetime — 24h-from-creation hard deadline (PKT-aware)
+  penaltyApplied?:   boolean;  // true once overdue penalty was deducted from member score
+  scoreApplied?:     boolean;  // true once accept reward was added to member score
   status:            "pending" | "in-progress" | "completed" | "overdue";
   report?:           string;
   reportedBy?:       string;

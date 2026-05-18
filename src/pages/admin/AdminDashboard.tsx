@@ -6,6 +6,7 @@ import {
   subscribePendingReviews, updateReview, createClientUpdate,
   fetchClients, fetchAdminSettings, saveAdminSettings,
   logActivity, subscribeActivityLog,
+  adjustMemberScore, updateTask, TASK_SCORE_REWARD,
   type FirestoreProject, type FirestoreReview, type FirestoreClient, type ActivityLog,
 } from "../../lib/firebase";
 import { ProjectForm }        from "../../components/admin/ProjectForm";
@@ -975,7 +976,16 @@ function AcceptReviewModal({ review, clients, onClose, onAccepted, adminEmail }:
         category,
       });
       await updateReview(review.id!, { status: "accepted" });
-      logActivity({ action: "Review accepted", detail: `${review.memberName} — ${review.taskTitle}`, adminEmail: adminEmail ?? "", icon: "✓", category: "review" }).catch(() => {});
+
+      // Reward the member's score (idempotent via scoreApplied flag on the task).
+      if (review.memberId && review.taskId) {
+        try {
+          await adjustMemberScore(review.memberId, TASK_SCORE_REWARD);
+          await updateTask(review.taskId, { scoreApplied: true });
+        } catch { /* silent — accept already succeeded */ }
+      }
+
+      logActivity({ action: "Review accepted", detail: `${review.memberName} — ${review.taskTitle} (+${TASK_SCORE_REWARD})`, adminEmail: adminEmail ?? "", icon: "✓", category: "review" }).catch(() => {});
       onAccepted();
       onClose();
     } catch { setErr("Failed to accept. Try again."); }

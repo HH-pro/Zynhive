@@ -13,7 +13,9 @@ import { Timestamp } from "firebase/firestore";
 function todayStr() { return new Date().toISOString().split("T")[0]; }
 
 function isOverdue(t: FirestoreTask) {
-  return t.status !== "completed" && !!t.dueDate && t.dueDate < todayStr();
+  if (t.status === "completed") return false;
+  if (t.deadline) return new Date(t.deadline).getTime() < Date.now();
+  return !!t.dueDate && t.dueDate < todayStr();
 }
 
 function effectiveStatus(t: FirestoreTask): "pending" | "in-progress" | "completed" | "overdue" {
@@ -23,9 +25,24 @@ function effectiveStatus(t: FirestoreTask): "pending" | "in-progress" | "complet
 }
 
 function daysLabel(t: FirestoreTask): { text: string; color: string } {
-  if (!t.dueDate) return { text: "", color: "#94a3b8" };
   const eff = effectiveStatus(t);
   if (eff === "completed") return { text: "Done", color: "#10B981" };
+
+  // Deadline (24h cutoff) — hour-grained countdown.
+  if (t.deadline) {
+    const diffMs = new Date(t.deadline).getTime() - Date.now();
+    if (diffMs < 0) {
+      const overH = Math.floor(Math.abs(diffMs) / 3600000);
+      return { text: overH >= 1 ? `${overH}h overdue` : `${Math.max(1, Math.floor(Math.abs(diffMs)/60000))}m overdue`, color: "#EF4444" };
+    }
+    const hours = Math.floor(diffMs / 3600000);
+    if (hours >= 24) return { text: `${Math.floor(hours/24)}d ${hours%24}h left`, color: "#10B981" };
+    if (hours >= 6)  return { text: `${hours}h left`, color: "#F59E0B" };
+    if (hours >= 1)  return { text: `${hours}h ${Math.floor((diffMs%3600000)/60000)}m left`, color: "#EF4444" };
+    return { text: `${Math.max(1, Math.floor(diffMs/60000))}m left`, color: "#EF4444" };
+  }
+
+  if (!t.dueDate) return { text: "", color: "#94a3b8" };
   const now = new Date(); now.setHours(0, 0, 0, 0);
   const due = new Date(t.dueDate + "T00:00:00");
   const diff = Math.round((due.getTime() - now.getTime()) / 86400000);
@@ -38,6 +55,18 @@ function daysLabel(t: FirestoreTask): { text: string; color: string } {
 function fmtDate(s: string) {
   if (!s) return "—";
   return new Date(s + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+// Pakistan-time deadline display, e.g. "May 20, 4:30 PM PKT"
+function fmtDeadlinePKT(iso: string | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-US", {
+    timeZone: "Asia/Karachi",
+    month: "short", day: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true,
+  }) + " PKT";
 }
 
 function fmtTs(ts: Timestamp | undefined) {
@@ -260,7 +289,7 @@ function ReportModal({
                 {task.title}
               </p>
               <p style={{ fontSize: 11, color: isDark ? "#64748B" : "#94A3B8" }}>
-                Due {fmtDate(task.dueDate)}
+                Due {task.deadline ? fmtDeadlinePKT(task.deadline) : fmtDate(task.dueDate)}
                 {totalCount > 0 && (
                   <span style={{ marginLeft: 8, color: allChecked ? "#10B981" : "#F59E0B", fontWeight: 600 }}>
                     · {doneCount}/{totalCount} steps done
@@ -641,8 +670,10 @@ function TaskCard({
 
         {/* Bottom row */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 12, color: isDark ? "#64748B" : "#94A3B8" }}>
-            📅 {fmtDate(task.dueDate)}
+          <span
+            title={task.deadline ? `Deadline: ${fmtDeadlinePKT(task.deadline)}` : undefined}
+            style={{ fontSize: 12, color: isDark ? "#64748B" : "#94A3B8" }}>
+            📅 {task.deadline ? fmtDeadlinePKT(task.deadline) : fmtDate(task.dueDate)}
           </span>
 
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>

@@ -157,9 +157,29 @@ function MemberCard({
         </div>
 
         {/* Info */}
-        <h3 className="font-display text-[15px] font-bold text-[var(--ink)] leading-snug tracking-tight mb-0.5">
-          {member.name}
-        </h3>
+        <div className="flex items-start justify-between gap-2 mb-0.5">
+          <h3 className="font-display text-[15px] font-bold text-[var(--ink)] leading-snug tracking-tight">
+            {member.name}
+          </h3>
+          {/* Score badge — green positive, red negative, gray zero */}
+          {(() => {
+            const score = member.score ?? 0;
+            const isPos = score > 0;
+            const isNeg = score < 0;
+            const color = isPos ? "var(--green)" : isNeg ? "var(--red)" : "var(--ink4)";
+            const bg    = isPos ? "var(--green-pale)" : isNeg ? "var(--red-pale)" : "var(--bg-surface)";
+            return (
+              <div
+                title={`Score: ${score} (accept +10 / overdue −10)`}
+                className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 flex items-center gap-1"
+                style={{ color, background: bg, border: `0.5px solid ${color}33` }}
+              >
+                <span>★</span>
+                <span>{isPos ? `+${score}` : score}</span>
+              </div>
+            );
+          })()}
+        </div>
         <p className="font-mono text-[10px] mb-3" style={{ color: member.color }}>
           {member.role}
         </p>
@@ -323,7 +343,7 @@ export function TeamTab({ showToast }: Props) {
         {[
           { label: "Total Members",   val: members.length },
           { label: "With Photos",     val: members.filter((m) => m.imageUrl).length },
-          { label: "With Socials",    val: members.filter((m) => Object.values(m.socials).some(Boolean)).length },
+          { label: "Top Score",       val: members.length ? Math.max(...members.map((m) => m.score ?? 0)) : 0 },
           { label: "Roles Covered",   val: new Set(members.map((m) => m.role)).size },
         ].map(({ label, val }) => (
           <div

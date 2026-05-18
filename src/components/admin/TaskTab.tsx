@@ -4,6 +4,7 @@ import {
   fetchTasks, createTask, updateTask, deleteTask,
   fetchMembers, fetchClients, createReview,
   fetchIdeas, updateIdea, deleteIdea,
+  adjustMemberScore, TASK_SCORE_PENALTY,
   type FirestoreTask, type FirestoreMember, type FirestoreClient, type FirestoreIdea, type ChecklistItem,
 } from "../../lib/firebase";
 import { RoutinesPanel } from "./RoutinesPanel";
@@ -15,8 +16,16 @@ function todayStr(): string {
   return new Date().toISOString().split("T")[0];
 }
 
+// 24h-from-now ISO deadline (admin always works in real-time; PKT is a display concern)
+function defaultDeadline(): string {
+  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+}
+
 function isOverdue(task: FirestoreTask): boolean {
   if (task.status === "completed") return false;
+  // Deadline (datetime) takes precedence — 24h hard cutoff.
+  if (task.deadline) return new Date(task.deadline).getTime() < Date.now();
+  // Fallback to legacy date-only field.
   return !!task.dueDate && task.dueDate < todayStr();
 }
 
@@ -32,10 +41,45 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+// Renders a deadline ISO timestamp in Pakistan time, e.g. "May 20, 4:30 PM PKT".
+function formatDeadlinePKT(iso: string | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-US", {
+    timeZone: "Asia/Karachi",
+    month:    "short",
+    day:      "numeric",
+    hour:     "numeric",
+    minute:   "2-digit",
+    hour12:   true,
+  }) + " PKT";
+}
+
 function daysLabel(task: FirestoreTask): string {
-  if (!task.dueDate) return "";
   const eff = effectiveStatus(task);
   if (eff === "completed") return "Done";
+
+  // Deadline-based (24h cutoff) — show hours/minutes for finer granularity.
+  if (task.deadline) {
+    const diffMs = new Date(task.deadline).getTime() - Date.now();
+    if (diffMs < 0) {
+      const overMs = Math.abs(diffMs);
+      const overH  = Math.floor(overMs / 3600000);
+      if (overH >= 24) return `${Math.floor(overH / 24)}d overdue`;
+      if (overH >= 1)  return `${overH}h overdue`;
+      const overM = Math.max(1, Math.floor(overMs / 60000));
+      return `${overM}m overdue`;
+    }
+    const hours = Math.floor(diffMs / 3600000);
+    if (hours >= 24) return `${Math.floor(hours / 24)}d ${hours % 24}h left`;
+    if (hours >= 1)  return `${hours}h ${Math.floor((diffMs % 3600000) / 60000)}m left`;
+    const mins = Math.max(1, Math.floor(diffMs / 60000));
+    return `${mins}m left`;
+  }
+
+  // Legacy dueDate (date-only) fallback.
+  if (!task.dueDate) return "";
   const now = new Date(); now.setHours(0, 0, 0, 0);
   const due = new Date(task.dueDate + "T00:00:00");
   const diff = Math.round((due.getTime() - now.getTime()) / 86400000);
@@ -68,7 +112,19 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string; glo
 };
 
 function deadlinePct(task: FirestoreTask): number {
-  if (!task.dueDate || task.status === "completed") return 0;
+  if (task.status === "completed") return 0;
+
+  // Deadline-based — fraction of a 24h budget consumed.
+  if (task.deadline) {
+    const diffMs = new Date(task.deadline).getTime() - Date.now();
+    if (diffMs <= 0) return 100;
+    const remainH = diffMs / 3600000;
+    if (remainH >= 24) return 5;
+    // Linearly map 24h→8 and 0h→100
+    return Math.min(100, Math.round(100 - (remainH / 24) * 92));
+  }
+
+  if (!task.dueDate) return 0;
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const due = new Date(task.dueDate + "T00:00:00");
   const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
@@ -137,12 +193,15 @@ function QuickAddBar({ members, onAdded, showToast }: {
     if (!memberId)       { showToast("Select a team member", "error"); return; }
     setSaving(true);
     try {
+      const deadline = defaultDeadline();
       await createTask({
         title: title.trim(), description: "", type, priority,
         assignedToId: memberId,
         assignedToName:  selectedMember?.name  ?? "",
         assignedToColor: selectedMember?.color ?? "var(--accent)",
-        dueDate, status: "pending", report: "", reportedBy: "", completedAt: "",
+        dueDate, deadline,
+        penaltyApplied: false, scoreApplied: false,
+        status: "pending", report: "", reportedBy: "", completedAt: "",
       });
       if (selectedMember?.email) {
         const portalUrl = `${window.location.origin}/member/${selectedMember.id}`;
@@ -213,6 +272,18 @@ function QuickAddBar({ members, onAdded, showToast }: {
           padding: "10px 14px",
           display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
         }}>
+
+          {/* 24h deadline chip — informative, non-editable */}
+          <div title={`Deadline: ${formatDeadlinePKT(defaultDeadline())}`}
+            style={{
+              display: "flex", alignItems: "center", gap: 5,
+              padding: "4px 10px", borderRadius: 7, fontSize: 11, fontWeight: 600,
+              background: "var(--accent-pale)", border: "0.5px solid var(--accent)",
+              color: "var(--accent)",
+            }}>
+            <span>⏱ 24h · PKT</span>
+          </div>
+
 
           {/* Member select with colored dot */}
           <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
@@ -495,7 +566,13 @@ function AddTaskModal({ task, members, onClose, onSaved }: {
       if (task?.id) {
         await updateTask(task.id, { ...form, checklistItems: cleanChecklist });
       } else {
-        await createTask({ ...form, checklistItems: cleanChecklist });
+        await createTask({
+          ...form,
+          checklistItems:  cleanChecklist,
+          deadline:        defaultDeadline(),
+          penaltyApplied:  false,
+          scoreApplied:    false,
+        });
         // Send email notification if member has an email saved
         const assignedMember = members.find((m) => m.id === form.assignedToId);
         if (assignedMember?.email) {
@@ -884,7 +961,7 @@ function ReportModal({ task, onClose, onSaved }: {
               <div className="flex items-center gap-2 mt-0.5">
                 <div className="w-1.5 h-1.5 rounded-full" style={{ background: task.assignedToColor || "var(--accent)" }}/>
                 <span className="text-[11px]" style={{ color: "var(--ink4)" }}>{task.assignedToName}</span>
-                <span className="text-[11px]" style={{ color: "var(--ink4)" }}>· Due {formatDate(task.dueDate)}</span>
+                <span className="text-[11px]" style={{ color: "var(--ink4)" }}>· Due {task.deadline ? formatDeadlinePKT(task.deadline) : formatDate(task.dueDate)}</span>
               </div>
             </div>
             <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
@@ -1172,8 +1249,9 @@ function TaskCard({ task, onEdit, onDelete, onReport, onReload, selected, onSele
             <span className="text-[12px] font-medium" style={{ color: "var(--ink3)" }}>{task.assignedToName}</span>
           </div>
 
-          <span className="text-[11px]" style={{ color: "var(--ink4)" }}>
-            {formatDate(task.dueDate)}
+          <span className="text-[11px]" style={{ color: "var(--ink4)" }}
+            title={task.deadline ? `Deadline (PKT): ${formatDeadlinePKT(task.deadline)}` : ""}>
+            {task.deadline ? formatDeadlinePKT(task.deadline) : formatDate(task.dueDate)}
           </span>
 
           {/* Actions */}
@@ -1335,13 +1413,15 @@ function KanbanCard({ task, onEdit, onDelete, onReport }: {
             {task.estimatedHours != null && (
               <span style={{ fontSize: 9, color: "var(--ink4)", fontWeight: 600 }}>⏱{task.estimatedHours}h</span>
             )}
-            {task.dueDate && (
-              <span style={{
-                fontSize: 10, color: "var(--ink4)",
-                background: "var(--bg-alt)", border: "0.5px solid var(--border)",
-                borderRadius: 6, padding: "2px 6px", whiteSpace: "nowrap", flexShrink: 0,
-              }}>
-                {formatDate(task.dueDate)}
+            {(task.deadline || task.dueDate) && (
+              <span
+                title={task.deadline ? `Deadline (PKT): ${formatDeadlinePKT(task.deadline)}` : undefined}
+                style={{
+                  fontSize: 10, color: "var(--ink4)",
+                  background: "var(--bg-alt)", border: "0.5px solid var(--border)",
+                  borderRadius: 6, padding: "2px 6px", whiteSpace: "nowrap", flexShrink: 0,
+                }}>
+                {task.deadline ? formatDeadlinePKT(task.deadline) : formatDate(task.dueDate)}
               </span>
             )}
           </div>
@@ -1842,6 +1922,25 @@ export function TaskTab({ showToast, openAdd, onOpenAddDone }: Props) {
     try {
       const [t, m] = await Promise.all([fetchTasks(), fetchMembers()]);
       setTasks(t); setMembers(m);
+
+      // Apply overdue penalty (once per task) for tasks whose deadline has
+      // passed without completion. We mark `penaltyApplied: true` so a refresh
+      // does not deduct twice.
+      const toPenalize = t.filter(
+        (x) => x.id && isOverdue(x) && !x.penaltyApplied && x.assignedToId
+      );
+      if (toPenalize.length > 0) {
+        await Promise.all(toPenalize.map(async (x) => {
+          try {
+            await adjustMemberScore(x.assignedToId, -TASK_SCORE_PENALTY);
+            await updateTask(x.id!, { penaltyApplied: true });
+          } catch { /* silent — best-effort */ }
+        }));
+        showToast(`${toPenalize.length} overdue task${toPenalize.length !== 1 ? "s" : ""} — score adjusted (−${TASK_SCORE_PENALTY} each)`, "error");
+        // Re-fetch so the UI reflects penaltyApplied flag.
+        const refreshed = await fetchTasks();
+        setTasks(refreshed);
+      }
     } catch { showToast("Failed to load tasks", "error"); }
     finally { setLoading(false); }
   }, [showToast]);
