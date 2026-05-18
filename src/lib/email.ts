@@ -604,6 +604,144 @@ function buildTaskAssignedHtml(
   return emailWrapper(body);
 }
 
+// ─── Task rejected / revision-requested template ─────────────────────────────
+function buildTaskRejectedHtml(
+  toName: string, taskTitle: string, reason: string,
+  newDeadline: string, portalUrl: string
+): string {
+  const REJECT_GRADIENT = "linear-gradient(135deg,#7F1D1D 0%,#B91C1C 50%,#EF4444 100%)";
+  const safeReason = (reason || "").trim();
+
+  const body = `
+    <!-- HEADER -->
+    <tr>
+      <td style="background:${REJECT_GRADIENT};padding:0;text-align:center;">
+        <div style="height:4px;background:linear-gradient(90deg,#FCA5A5,#FECACA,#FCA5A5);"></div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:40px 40px 44px;text-align:center;">
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.22);
+                             border-radius:100px;padding:8px 20px;">
+                    <table cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td style="background:rgba(255,255,255,0.2);border-radius:6px;width:20px;height:20px;
+                                 text-align:center;vertical-align:middle;line-height:20px;">
+                        <span style="color:#fff;font-size:7px;font-weight:900;font-family:Arial,sans-serif;">ZH</span>
+                      </td>
+                      <td style="padding-left:8px;vertical-align:middle;">
+                        <span style="color:#fff;font-size:13px;font-weight:800;letter-spacing:-0.2px;
+                                     font-family:Arial,sans-serif;">ZynHive</span>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:20px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.18);border-radius:100px;padding:6px 16px;">
+                    <span style="color:rgba(255,255,255,0.95);font-size:11px;font-weight:700;
+                                 letter-spacing:0.08em;text-transform:uppercase;font-family:Arial,sans-serif;">
+                      ● &nbsp;Revision Requested
+                    </span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="color:#ffffff;font-size:26px;font-weight:800;margin:0 0 10px;line-height:1.2;
+                         letter-spacing:-0.6px;font-family:Arial,sans-serif;">
+                Your Submission Needs Revision
+              </h1>
+              <p style="color:rgba(255,255,255,0.78);font-size:14px;margin:0;line-height:1.6;
+                        font-family:Arial,sans-serif;max-width:380px;margin-left:auto;margin-right:auto;">
+                The task has been re-assigned to you with a fresh 24-hour deadline.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- BODY -->
+    <tr>
+      <td style="padding:36px 40px 32px;background:#ffffff;">
+        <p style="color:#0F172A;font-size:17px;font-weight:600;margin:0 0 6px;
+                  line-height:1.5;font-family:Arial,sans-serif;">
+          Hello, ${toName} 👋
+        </p>
+        <p style="color:#64748B;font-size:14px;margin:0 0 28px;line-height:1.65;font-family:Arial,sans-serif;">
+          Your manager reviewed your submission and asked for revisions. Please address the feedback and re-submit before the new deadline.
+        </p>
+
+        <!-- Task card -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:22px;">
+          <tr>
+            <td style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:16px;padding:22px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
+                <tr>
+                  <td>
+                    <span style="display:inline-block;background:#FEE2E2;border:1px solid #FCA5A540;
+                                 color:#B91C1C;font-size:10px;font-weight:700;text-transform:uppercase;
+                                 letter-spacing:0.08em;padding:3px 10px;border-radius:99px;
+                                 font-family:Arial,sans-serif;">
+                      Revise & Re-submit
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="color:#64748B;font-size:12px;font-family:Arial,sans-serif;">
+                      ⏱ New deadline: <strong style="color:#1E293B;">${newDeadline}</strong>
+                    </span>
+                  </td>
+                </tr>
+              </table>
+              <p style="color:#7F1D1D;font-size:19px;font-weight:700;margin:0 0 10px;
+                        line-height:1.3;font-family:Arial,sans-serif;">${taskTitle}</p>
+              ${safeReason ? `
+              <div style="background:#ffffff;border:1px solid #FECACA;border-radius:10px;padding:14px 16px;margin-top:8px;">
+                <p style="color:#B91C1C;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;font-family:Arial,sans-serif;">
+                  Admin Feedback
+                </p>
+                <p style="color:#475569;font-size:13px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">${safeReason}</p>
+              </div>` : ""}
+            </td>
+          </tr>
+        </table>
+
+        <!-- CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+          <tr>
+            <td align="center">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background:${REJECT_GRADIENT};border-radius:14px;
+                             box-shadow:0 8px 24px rgba(239,68,68,0.35);">
+                    <a href="${portalUrl}"
+                      style="display:block;color:#ffffff;text-decoration:none;
+                             padding:16px 52px;font-size:15px;font-weight:800;
+                             letter-spacing:-0.2px;font-family:Arial,sans-serif;white-space:nowrap;">
+                      Open Task &nbsp;→
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="border-top:1px solid #F1F5F9;padding-top:20px;text-align:center;">
+              <p style="color:#94A3B8;font-size:12px;margin:0;line-height:1.7;font-family:Arial,sans-serif;">
+                Submitting after the new deadline will deduct points from your performance score.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;
+  return emailWrapper(body);
+}
+
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 export async function sendUpdateNotificationEmail(params: {
@@ -624,6 +762,18 @@ export async function sendTaskAssignedEmail(params: {
   const subject = `New Task Assigned: ${taskTitle}`;
   const html    = buildTaskAssignedHtml(toName, taskTitle, taskDescription, priority, dueDate, portalUrl);
   const body    = `Hi ${toName},\n\nA new task has been assigned to you: "${taskTitle}"\n\nPriority: ${priority}\nDue: ${dueDate}\n\nView your portal: ${portalUrl}\n\n— ZynHive Team`;
+  await sendEmail({ to: toEmail, subject, body, html });
+}
+
+export async function sendTaskRejectedEmail(params: {
+  toEmail: string; toName: string; taskTitle: string;
+  reason: string; newDeadline: string; portalUrl: string;
+}): Promise<void> {
+  const { toEmail, toName, taskTitle, reason, newDeadline, portalUrl } = params;
+  const subject = `Revision Requested: ${taskTitle}`;
+  const html    = buildTaskRejectedHtml(toName, taskTitle, reason, newDeadline, portalUrl);
+  const reasonLine = reason ? `\n\nFeedback from admin:\n${reason}\n` : "";
+  const body = `Hi ${toName},\n\nYour submission for "${taskTitle}" needs revision.${reasonLine}\nThe task has been re-assigned to you with a new 24-hour deadline:\n${newDeadline}\n\nOpen your portal: ${portalUrl}\n\n— ZynHive Team`;
   await sendEmail({ to: toEmail, subject, body, html });
 }
 

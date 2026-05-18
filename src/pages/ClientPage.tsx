@@ -63,7 +63,7 @@ const PORTAL_CSS = `
     --cp-bg-glass:    rgba(11,15,28,.92);
     --cp-bg-card:     rgba(255,255,255,.026);
     --cp-bg-hover:    rgba(255,255,255,.042);
-    --cp-bg-new:      rgba(99,102,241,.06);
+    --cp-bg-new:      rgba(79,125,255,.08);
     --cp-bg-input:    rgba(255,255,255,.06);
     --cp-bg-badge:    rgba(255,255,255,.06);
     --cp-bg-stat:     rgba(255,255,255,.034);
@@ -76,8 +76,8 @@ const PORTAL_CSS = `
     --cp-border:      rgba(255,255,255,.068);
     --cp-border-md:   rgba(255,255,255,.052);
     --cp-scrollbar:   #1E293B;
-    --cp-dots:        rgba(99,102,241,.06);
-    --cp-glow:        rgba(99,102,241,.11);
+    --cp-dots:        rgba(79,125,255,.08);
+    --cp-glow:        rgba(79,125,255,.14);
     --cp-shadow-card: 0 2px 20px rgba(0,0,0,.38);
     --cp-shadow-lg:   0 24px 80px rgba(0,0,0,.52);
     --cp-approved-bg: rgba(16,185,129,.08);
@@ -91,7 +91,7 @@ const PORTAL_CSS = `
     --cp-bg-glass:    rgba(255,255,255,.95);
     --cp-bg-card:     rgba(255,255,255,.85);
     --cp-bg-hover:    #fff;
-    --cp-bg-new:      rgba(99,102,241,.052);
+    --cp-bg-new:      rgba(30,58,138,.05);
     --cp-bg-input:    rgba(0,0,0,.04);
     --cp-bg-badge:    rgba(0,0,0,.05);
     --cp-bg-stat:     rgba(255,255,255,.96);
@@ -105,9 +105,9 @@ const PORTAL_CSS = `
     --cp-border-md:   rgba(0,0,0,.058);
     --cp-scrollbar:   #CBD5E1;
     --cp-dots:        rgba(99,102,241,.05);
-    --cp-glow:        rgba(99,102,241,.07);
-    --cp-shadow-card: 0 2px 14px rgba(99,102,241,.07);
-    --cp-shadow-lg:   0 24px 80px rgba(99,102,241,.11);
+    --cp-glow:        rgba(30,58,138,.07);
+    --cp-shadow-card: 0 2px 14px rgba(30,58,138,.07);
+    --cp-shadow-lg:   0 24px 80px rgba(79,125,255,.14);
     --cp-approved-bg: rgba(16,185,129,.07);
     --cp-approved-border: rgba(16,185,129,.2);
   }
@@ -641,7 +641,15 @@ function PortalNav({ client, isDark, onToggleTheme, onLogout, onOpenEmailSetting
             <div style={{ fontSize:12,fontWeight:600,color:"var(--cp-text-body)",lineHeight:1.3 }}>{client.name}</div>
             {client.company && <div style={{ fontSize:10,color:"var(--cp-text-dim)" }}>{client.company}</div>}
           </div>
-          <div style={{ width:32,height:32,borderRadius:9,background:"linear-gradient(135deg,rgba(99,102,241,.28),rgba(129,140,248,.12))",border:"1px solid rgba(99,102,241,.22)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#818CF8",flexShrink:0 }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: 10,
+            background: "linear-gradient(135deg, #4F7DFF 0%, #22B8D4 100%)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 12, fontWeight: 800, color: "#fff", flexShrink: 0,
+            boxShadow: "0 4px 14px rgba(79,125,255,0.35), inset 0 1px 0 rgba(255,255,255,0.20)",
+            letterSpacing: "-0.02em",
+            textShadow: "0 1px 2px rgba(0,0,0,0.25)",
+          }}>
             {initials(client.name)}
           </div>
           <button onClick={onLogout}
@@ -1216,50 +1224,101 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
       <PortalNav client={client} isDark={isDark} onToggleTheme={onToggleTheme} onLogout={onLogout} onOpenEmailSettings={() => setEmailM(true)}/>
 
       {/* ── Hero ── */}
-      <div style={{ background:"var(--cp-bg-hero)",borderBottom:"1px solid var(--cp-border-md)",transition:"background .3s,border-color .3s" }}>
-        <div className="cp-hero-inner" style={{ maxWidth:960,margin:"0 auto",padding:"28px 24px 24px" }}>
+      <div style={{
+        position: "relative",
+        background: isDark
+          ? "linear-gradient(135deg, rgba(79,125,255,0.10) 0%, rgba(34,184,212,0.04) 60%, transparent 100%), var(--cp-bg-hero)"
+          : "linear-gradient(135deg, rgba(30,58,138,0.06) 0%, rgba(8,145,178,0.03) 60%, transparent 100%), var(--cp-bg-hero)",
+        borderBottom: "1px solid var(--cp-border-md)",
+        transition: "background .3s, border-color .3s",
+        overflow: "hidden",
+      }}>
+        {/* Subtle grid backdrop */}
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.5,
+          backgroundImage: isDark
+            ? "linear-gradient(rgba(140,170,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(140,170,255,0.05) 1px, transparent 1px)"
+            : "linear-gradient(rgba(30,58,138,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(30,58,138,0.05) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+          maskImage: "radial-gradient(ellipse 60% 60% at 50% 0%, black 30%, transparent 100%)",
+        }}/>
+
+        <div className="cp-hero-inner" style={{ maxWidth:960,margin:"0 auto",padding:"32px 24px 28px", position:"relative", zIndex:1 }}>
           <div className="cp-hero-cols cp-fade-up" style={{ display:"flex",alignItems:"center",gap:24 }}>
 
             <div style={{ flex:1,minWidth:0 }}>
-              <p style={{ fontSize:13,color:"var(--cp-text-dim)",fontWeight:500,marginBottom:5 }}>
+              {/* Greeting chip */}
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                padding: "5px 11px", borderRadius: 99, marginBottom: 12,
+                background: isDark ? "rgba(79,125,255,0.12)" : "rgba(30,58,138,0.07)",
+                border: `1px solid ${isDark ? "rgba(79,125,255,0.25)" : "rgba(30,58,138,0.15)"}`,
+                fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+                color: isDark ? "#7099FF" : "#1E3A8A",
+              }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 8px #10B981" }}/>
+                Client Portal
+              </div>
+
+              <p style={{ fontSize: 13.5, color: "var(--cp-text-muted)", fontWeight: 500, marginBottom: 6 }}>
                 {greeting()}, {client.name.split(" ")[0]}! 👋
               </p>
-              <h1 style={{ fontSize:22,fontWeight:800,color:"var(--cp-text-h)",letterSpacing:"-0.4px",lineHeight:1.25,marginBottom:8 }}>
+              <h1 style={{
+                fontSize: 28, fontWeight: 800, color: "var(--cp-text-h)",
+                letterSpacing: "-0.025em", lineHeight: 1.15, marginBottom: 10,
+              }}>
                 {client.projectName || "Your Project Dashboard"}
               </h1>
-              <div style={{ display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:14 }}>
+              <div style={{ display:"flex",alignItems:"center",gap:14,flexWrap:"wrap",marginBottom:14 }}>
                 {client.company && (
-                  <span style={{ fontSize:12,color:"var(--cp-text-dim)",display:"flex",alignItems:"center",gap:4 }}>
-                    <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="5" width="10" height="7" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M5 5V4a2 2 0 014 0v1" stroke="currentColor" strokeWidth="1.2"/></svg>
+                  <span style={{ fontSize:12.5,color:"var(--cp-text-muted)",display:"flex",alignItems:"center",gap:5,fontWeight:500 }}>
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><rect x="2" y="5" width="10" height="7" rx="1" stroke="currentColor" strokeWidth="1.3"/><path d="M5 5V4a2 2 0 014 0v1" stroke="currentColor" strokeWidth="1.3"/></svg>
                     {client.company}
                   </span>
                 )}
                 {latest?.createdAt && (
-                  <span style={{ fontSize:11,color:"var(--cp-text-dim)",display:"flex",alignItems:"center",gap:4 }}>
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.1"/><path d="M6 3.5V6l1.5 1.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/></svg>
+                  <span style={{ fontSize:12,color:"var(--cp-text-dim)",display:"flex",alignItems:"center",gap:5 }}>
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2"/><path d="M6 3.5V6l1.5 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                     Last updated {formatDate(latest.createdAt)}
                   </span>
                 )}
               </div>
               {latest && latestCfg && (
-                <div style={{ display:"inline-flex",alignItems:"center",gap:8,padding:"8px 14px",borderRadius:10,background:"var(--cp-bg-badge)",border:"1px solid var(--cp-border)",fontSize:12 }}>
+                <div style={{
+                  display:"inline-flex",alignItems:"center",gap:8,padding:"9px 16px",borderRadius:12,
+                  background: isDark ? "rgba(16,25,55,0.6)" : "rgba(255,255,255,0.85)",
+                  border:"1px solid var(--cp-border)", fontSize:12.5,
+                  backdropFilter: "blur(8px)",
+                  boxShadow: isDark ? "0 4px 14px rgba(0,0,0,0.3)" : "0 2px 8px rgba(10,19,48,0.06)",
+                }}>
                   <StatusDot status={latest.status} color={latestCfg.color}/>
-                  <span style={{ color:"var(--cp-text-muted)" }}>Latest: </span>
-                  <span style={{ color:"var(--cp-text-h)",fontWeight:600 }}>{latest.title}</span>
-                  <span style={{ padding:"1px 7px",borderRadius:99,background:latestCfg.bg,color:latestCfg.color,border:`1px solid ${latestCfg.border}`,fontSize:10,fontWeight:700 }}>{latestCfg.label}</span>
+                  <span style={{ color:"var(--cp-text-muted)",fontWeight:500 }}>Latest:</span>
+                  <span style={{ color:"var(--cp-text-h)",fontWeight:700 }}>{latest.title}</span>
+                  <span style={{ padding:"2px 8px",borderRadius:99,background:latestCfg.bg,color:latestCfg.color,border:`1px solid ${latestCfg.border}`,fontSize:10,fontWeight:700,letterSpacing:"0.04em",textTransform:"uppercase" }}>{latestCfg.label}</span>
                 </div>
               )}
             </div>
 
             {updates.length > 0 && (
-              <div className="cp-ring-col" style={{ flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:4 }}>
-                <div style={{ position:"relative",width:96,height:96 }}>
-                  <ProgressRing pct={overallPct} size={96} color="#6366F1"/>
+              <div className="cp-ring-col" style={{ flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:6 }}>
+                <div style={{ position:"relative",width:108,height:108 }}>
+                  <ProgressRing pct={overallPct} size={108} color={isDark ? "#4F7DFF" : "#1E3A8A"}/>
                   <div style={{ position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center" }}>
-                    <span style={{ fontSize:18,fontWeight:800,color:"#818CF8",fontFamily:"monospace",lineHeight:1 }}>{overallPct}%</span>
+                    <span style={{
+                      fontSize: 22, fontWeight: 800,
+                      color: isDark ? "#7099FF" : "#1E3A8A",
+                      letterSpacing: "-0.02em", lineHeight: 1,
+                    }}>
+                      {overallPct}%
+                    </span>
+                    <span style={{ fontSize: 9, marginTop: 3, color: "var(--cp-text-dim)", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}>
+                      Done
+                    </span>
                   </div>
                 </div>
-                <span style={{ fontSize:10,color:"var(--cp-text-dim)",fontWeight:500,textAlign:"center",lineHeight:1.4 }}>Overall<br/>Progress</span>
+                <span style={{ fontSize: 10.5, color: "var(--cp-text-dim)", fontWeight: 600, textAlign: "center", lineHeight: 1.4, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                  Overall Progress
+                </span>
               </div>
             )}
           </div>
@@ -1272,18 +1331,54 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
           <div style={{ maxWidth:960,margin:"0 auto",padding:"18px 20px" }}>
             <div className="cp-metrics-grid cp-fade-up cp-d1" style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12 }}>
               {[
-                { label:"Total",       value:updates.length, color:"#6366F1", icon:"📋", sub:"updates" },
+                { label:"Total",       value:updates.length, color: isDark ? "#4F7DFF" : "#1E3A8A", icon:"📋", sub:"updates" },
                 { label:"Completed",   value:completed,       color:"#10B981", icon:"✅", sub:"tasks done" },
                 { label:"In Progress", value:active,          color:"#F59E0B", icon:"⚡", sub:"active" },
-                { label:"You Reviewed",value:reviewed,        color:"#3B82F6", icon:"👍", sub:"approved" },
+                { label:"You Reviewed",value:reviewed,        color: isDark ? "#22B8D4" : "#0891B2", icon:"👍", sub:"approved" },
               ].map(({ label, value, color, icon, sub }) => (
-                <div key={label} className="cp-metric">
+                <div key={label} className="cp-metric"
+                  style={{
+                    background: isDark ? "rgba(16,25,55,0.55)" : "rgba(255,255,255,0.85)",
+                    border: `1px solid ${isDark ? "rgba(190,210,255,0.10)" : "rgba(15,30,80,0.08)"}`,
+                    borderRadius: 14, padding: "16px 18px",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    boxShadow: isDark ? "0 2px 8px rgba(0,0,0,0.25)" : "0 2px 8px rgba(10,19,48,0.05)",
+                    transition: "transform .18s, box-shadow .22s, border-color .18s",
+                  }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.transform = "translateY(-2px)";
+                    el.style.boxShadow = isDark ? "0 8px 22px rgba(0,0,0,0.45)" : "0 8px 22px rgba(10,19,48,0.10)";
+                    el.style.borderColor = `${color}50`;
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.transform = "translateY(0)";
+                    el.style.boxShadow = isDark ? "0 2px 8px rgba(0,0,0,0.25)" : "0 2px 8px rgba(10,19,48,0.05)";
+                    el.style.borderColor = isDark ? "rgba(190,210,255,0.10)" : "rgba(15,30,80,0.08)";
+                  }}>
                   <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8 }}>
-                    <span style={{ fontSize:18 }}>{icon}</span>
-                    <span style={{ fontSize:22,fontWeight:800,color,fontFamily:"monospace",lineHeight:1 }}>{value}</span>
+                    <span style={{
+                      width: 26, height: 26, borderRadius: 8, fontSize: 13,
+                      background: `${color}1A`, border: `1px solid ${color}30`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      {icon}
+                    </span>
+                    <span style={{
+                      fontSize: 24, fontWeight: 800, color,
+                      letterSpacing: "-0.02em", lineHeight: 1,
+                    }}>
+                      {value}
+                    </span>
                   </div>
-                  <div style={{ fontSize:12,fontWeight:600,color:"var(--cp-text-body)" }}>{label}</div>
-                  <div style={{ fontSize:10,color:"var(--cp-text-dim)",marginTop:2 }}>{sub}</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--cp-text-body)", letterSpacing: "-0.005em" }}>
+                    {label}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "var(--cp-text-dim)", marginTop: 2, fontWeight: 500 }}>
+                    {sub}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1300,7 +1395,7 @@ function UpdatesView({ client: initialClient, isDark, onToggleTheme, onLogout }:
           </div>
         ) : updates.length === 0 ? (
           <div className="cp-fade-up" style={{ textAlign:"center",paddingTop:80 }}>
-            <div style={{ width:76,height:76,borderRadius:20,background:"rgba(99,102,241,.07)",border:"1px solid rgba(99,102,241,.14)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,margin:"0 auto 20px" }}>🚀</div>
+            <div style={{ width:76,height:76,borderRadius:20,background:"rgba(30,58,138,.07)",border:"1px solid rgba(99,102,241,.14)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,margin:"0 auto 20px" }}>🚀</div>
             <p style={{ fontSize:18,fontWeight:700,color:"var(--cp-text-h)",marginBottom:10 }}>Your project has kicked off!</p>
             <p style={{ fontSize:14,color:"var(--cp-text-muted)",lineHeight:1.7,maxWidth:300,margin:"0 auto" }}>
               Updates will appear here as the team completes work on your project.

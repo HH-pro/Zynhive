@@ -947,27 +947,44 @@ export function MemberPage() {
         {/* ── Navbar ──────────────────────────────────────────────────────────── */}
         <nav style={{
           position: "sticky", top: 0, zIndex: 50,
-          background: isDark ? "rgba(7,9,15,.95)" : "rgba(241,245,249,.95)",
-          backdropFilter: "blur(16px)",
-          borderBottom: `1px solid ${isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.08)"}`,
-          padding: "0 24px", height: 56,
+          background: isDark ? "rgba(6,11,34,.88)" : "rgba(242,245,252,.92)",
+          backdropFilter: "blur(20px) saturate(1.4)",
+          WebkitBackdropFilter: "blur(20px) saturate(1.4)",
+          borderBottom: `1px solid ${isDark ? "rgba(190,210,255,.07)" : "rgba(15,30,80,.07)"}`,
+          padding: "0 24px", height: 60,
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+          boxShadow: isDark ? "0 1px 0 rgba(0,0,0,0.4)" : "0 1px 4px rgba(10,19,48,0.04)",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: 8,
-              background: member.color || "#6366F1",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 11, fontWeight: 800, color: "white", flexShrink: 0,
-            }}>
-              {member.initials || member.name?.[0]?.toUpperCase()}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ position: "relative", width: 34, height: 34, flexShrink: 0 }}>
+              <div style={{
+                position: "absolute", inset: 0, borderRadius: 10,
+                background: "linear-gradient(135deg, #4F7DFF 0%, #22B8D4 100%)",
+                boxShadow: "0 4px 14px rgba(79,125,255,0.35)",
+              }}/>
+              <div style={{
+                position: "absolute", inset: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 12, fontWeight: 800, color: "white",
+                textShadow: "0 1px 2px rgba(0,0,0,0.3)",
+              }}>
+                ZH
+              </div>
             </div>
-            <div>
-              <span style={{ fontSize: 13, fontWeight: 700, color: isDark ? "#F1F5F9" : "#0F172A" }}>
-                {member.name}
+            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
+              <span style={{
+                fontSize: 14, fontWeight: 700,
+                color: isDark ? "#EEF2FF" : "#0A1330",
+                letterSpacing: "-0.015em",
+              }}>
+                ZynHive
               </span>
-              <span style={{ fontSize: 11, color: isDark ? "#64748B" : "#94A3B8", marginLeft: 6 }}>
-                · Task Portal
+              <span style={{
+                fontSize: 10.5, fontWeight: 500, marginTop: 1,
+                color: isDark ? "#8C99C2" : "#6B7AA0",
+                letterSpacing: "0.04em",
+              }}>
+                Member Portal
               </span>
             </div>
           </div>
@@ -975,98 +992,266 @@ export function MemberPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {stats.overdue > 0 && (
               <span style={{
-                fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 99,
-                background: "rgba(239,68,68,.12)", color: "#EF4444",
-                border: "1px solid rgba(239,68,68,.25)",
+                fontSize: 11, fontWeight: 700, padding: "4px 11px", borderRadius: 99,
+                background: "rgba(239,68,68,.14)", color: "#EF4444",
+                border: "1px solid rgba(239,68,68,.30)",
+                display: "inline-flex", alignItems: "center", gap: 6,
+                animation: "glowPulse 2.4s ease-in-out infinite",
               }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#EF4444" }}/>
                 {stats.overdue} overdue
               </span>
             )}
-            <button onClick={toggleTheme} style={{
-              width: 32, height: 32, borderRadius: 8, cursor: "pointer",
-              background: isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.06)",
-              border: `1px solid ${isDark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.1)"}`,
-              color: isDark ? "#94A3B8" : "#64748B", fontSize: 14,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
+            <button onClick={toggleTheme}
+              aria-label="Toggle theme"
+              style={{
+                width: 36, height: 36, borderRadius: 10, cursor: "pointer",
+                background: isDark ? "rgba(190,210,255,.06)" : "rgba(15,30,80,.05)",
+                border: `1px solid ${isDark ? "rgba(190,210,255,.12)" : "rgba(15,30,80,.10)"}`,
+                color: isDark ? "#C5CFF1" : "#4B567B",
+                fontSize: 15,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "background .18s, border-color .18s, transform .15s",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = isDark ? "rgba(79,125,255,0.12)" : "rgba(30,58,138,0.08)";
+                el.style.borderColor = isDark ? "rgba(79,125,255,0.30)" : "rgba(30,58,138,0.20)";
+                el.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = isDark ? "rgba(190,210,255,.06)" : "rgba(15,30,80,.05)";
+                el.style.borderColor = isDark ? "rgba(190,210,255,.12)" : "rgba(15,30,80,.10)";
+                el.style.transform = "translateY(0)";
+              }}>
               {isDark ? "☀" : "☽"}
             </button>
           </div>
         </nav>
 
         {/* ── Hero / Profile ───────────────────────────────────────────────────── */}
-        <div style={{
-          padding: "32px 24px 24px",
-          background: isDark
-            ? `linear-gradient(160deg, ${member.color}18 0%, transparent 60%)`
-            : `linear-gradient(160deg, ${member.color}12 0%, transparent 60%)`,
-          borderBottom: `1px solid ${isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.07)"}`,
-        }}>
-          <div style={{ maxWidth: 820, margin: "0 auto" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
-
-              {/* Avatar */}
+        {(() => {
+          const hour = new Date().getHours();
+          const greeting = hour < 5 ? "Working late" : hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : hour < 21 ? "Good evening" : "Welcome back";
+          const firstName = member.name.split(" ")[0];
+          const score = member.score ?? 0;
+          return (
+            <div style={{
+              position: "relative",
+              padding: "40px 24px 32px",
+              background: isDark
+                ? `linear-gradient(135deg, rgba(79,125,255,0.10) 0%, rgba(34,184,212,0.05) 40%, transparent 100%), radial-gradient(ellipse 80% 60% at 10% 0%, rgba(79,125,255,0.12) 0%, transparent 60%)`
+                : `linear-gradient(135deg, rgba(30,58,138,0.07) 0%, rgba(8,145,178,0.04) 40%, transparent 100%), radial-gradient(ellipse 80% 60% at 10% 0%, rgba(30,58,138,0.08) 0%, transparent 60%)`,
+              borderBottom: `1px solid ${isDark ? "rgba(190,210,255,.07)" : "rgba(15,30,80,.07)"}`,
+              overflow: "hidden",
+            }}>
+              {/* Subtle grid */}
               <div style={{
-                width: 68, height: 68, borderRadius: 20, flexShrink: 0,
-                border: `3px solid ${member.color}40`,
-                background: member.imageUrl ? "transparent" : `${member.color}20`,
-                overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                {member.imageUrl
-                  ? <img src={member.imageUrl} alt={member.name} style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
-                  : <span style={{ fontSize: 24, fontWeight: 800, color: member.color }}>{member.initials}</span>
-                }
-              </div>
+                position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.4,
+                backgroundImage: isDark
+                  ? "linear-gradient(rgba(140,170,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(140,170,255,0.05) 1px, transparent 1px)"
+                  : "linear-gradient(rgba(30,58,138,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(30,58,138,0.05) 1px, transparent 1px)",
+                backgroundSize: "48px 48px",
+                maskImage: "radial-gradient(ellipse 60% 60% at 50% 0%, black 30%, transparent 100%)",
+              }}/>
 
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h1 style={{ fontSize: 22, fontWeight: 800, color: isDark ? "#F1F5F9" : "#0F172A", marginBottom: 4 }}>
-                  {member.name}
-                </h1>
-                <p style={{ fontSize: 13, color: isDark ? "#64748B" : "#94A3B8" }}>{member.role}</p>
-              </div>
+              <div style={{ maxWidth: 820, margin: "0 auto", position: "relative", zIndex: 1 }}>
 
-              {/* Completion ring */}
-              <div style={{ textAlign: "center", flexShrink: 0 }}>
-                <svg width="64" height="64" viewBox="0 0 64 64">
-                  <circle cx="32" cy="32" r="26" fill="none" stroke={isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.07)"} strokeWidth="6"/>
-                  <circle cx="32" cy="32" r="26" fill="none"
-                    stroke={member.color || "#6366F1"} strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 26}`}
-                    strokeDashoffset={`${2 * Math.PI * 26 * (1 - completionPct / 100)}`}
-                    transform="rotate(-90 32 32)"
-                    style={{ transition: "stroke-dashoffset .6s ease" }}
-                  />
-                  <text x="32" y="37" textAnchor="middle" fontSize="13" fontWeight="800" fill={member.color || "#6366F1"}>
-                    {completionPct}%
-                  </text>
-                </svg>
-                <p style={{ fontSize: 10, color: isDark ? "#64748B" : "#94A3B8", marginTop: 2 }}>Done</p>
-              </div>
-            </div>
-
-            {/* Stat pills */}
-            <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
-              {[
-                { label: "Total",       value: stats.total,      color: "#6366F1" },
-                { label: "Pending",     value: stats.pending,    color: "#94A3B8" },
-                { label: "In Progress", value: stats.inProgress, color: "#F59E0B" },
-                { label: "Completed",   value: stats.completed,  color: "#10B981" },
-                { label: "Overdue",     value: stats.overdue,    color: "#EF4444" },
-              ].map(({ label, value, color }) => (
-                <div key={label} style={{
-                  padding: "8px 14px", borderRadius: 10,
-                  background: isDark ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.04)",
-                  border: `1px solid ${isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.07)"}`,
-                  display: "flex", alignItems: "center", gap: 8,
+                {/* Greeting chip */}
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 7,
+                  padding: "5px 11px", borderRadius: 99, marginBottom: 14,
+                  background: isDark ? "rgba(79,125,255,0.12)" : "rgba(30,58,138,0.07)",
+                  border: `1px solid ${isDark ? "rgba(79,125,255,0.25)" : "rgba(30,58,138,0.15)"}`,
+                  fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+                  color: isDark ? "#7099FF" : "#1E3A8A",
                 }}>
-                  <span style={{ fontSize: 18, fontWeight: 800, color }}>{value}</span>
-                  <span style={{ fontSize: 11, color: isDark ? "#64748B" : "#94A3B8" }}>{label}</span>
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 8px #10B981" }}/>
+                  Member Portal
                 </div>
-              ))}
+
+                <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+
+                  {/* Avatar */}
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <div style={{
+                      width: 76, height: 76, borderRadius: 22,
+                      background: member.imageUrl
+                        ? "transparent"
+                        : `linear-gradient(135deg, ${member.color}, ${member.color}99)`,
+                      padding: 3,
+                      overflow: "hidden",
+                      boxShadow: `0 12px 32px ${member.color}40, 0 0 0 1px ${member.color}30`,
+                    }}>
+                      <div style={{
+                        width: "100%", height: "100%", borderRadius: 19,
+                        background: isDark ? "#0A1130" : "#fff",
+                        overflow: "hidden",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        {member.imageUrl ? (
+                          <img src={member.imageUrl} alt={member.name}
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
+                        ) : (
+                          <span style={{ fontSize: 26, fontWeight: 800, color: member.color, letterSpacing: "-0.02em" }}>
+                            {member.initials}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Status dot */}
+                    <div style={{
+                      position: "absolute", bottom: 2, right: 2,
+                      width: 16, height: 16, borderRadius: "50%", background: "#10B981",
+                      border: `3px solid ${isDark ? "#070A1C" : "#F2F5FC"}`,
+                      boxShadow: "0 0 12px rgba(16,185,129,0.6)",
+                    }}/>
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontSize: 12, fontWeight: 500, marginBottom: 2,
+                      color: isDark ? "#8C99C2" : "#6B7AA0",
+                      letterSpacing: "-0.005em",
+                    }}>
+                      {greeting},
+                    </p>
+                    <h1 style={{
+                      fontSize: 28, fontWeight: 800, marginBottom: 6,
+                      color: isDark ? "#EEF2FF" : "#0A1330",
+                      letterSpacing: "-0.025em", lineHeight: 1.15,
+                    }}>
+                      {firstName} 👋
+                    </h1>
+                    <p style={{ fontSize: 13, color: isDark ? "#8C99C2" : "#6B7AA0", fontWeight: 500 }}>
+                      {member.role}
+                    </p>
+                  </div>
+
+                  {/* Score + Ring stack */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+
+                    {/* Performance score */}
+                    <div style={{
+                      padding: "10px 14px", borderRadius: 14,
+                      background: score > 0
+                        ? (isDark ? "rgba(52,211,153,0.10)" : "rgba(15,157,111,0.07)")
+                        : score < 0
+                        ? (isDark ? "rgba(248,113,113,0.10)" : "rgba(220,41,68,0.07)")
+                        : (isDark ? "rgba(255,255,255,0.04)" : "rgba(15,30,80,0.04)"),
+                      border: `1px solid ${score > 0 ? "rgba(16,185,129,0.30)" : score < 0 ? "rgba(220,41,68,0.30)" : (isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.10)")}`,
+                      textAlign: "center", minWidth: 76,
+                    }}>
+                      <div style={{
+                        fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+                        color: isDark ? "#8C99C2" : "#6B7AA0", marginBottom: 2,
+                      }}>
+                        ★ Score
+                      </div>
+                      <div style={{
+                        fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em",
+                        color: score > 0 ? "#10B981" : score < 0 ? "#EF4444" : (isDark ? "#8C99C2" : "#6B7AA0"),
+                      }}>
+                        {score > 0 ? `+${score}` : score}
+                      </div>
+                    </div>
+
+                    {/* Completion ring */}
+                    <div style={{ textAlign: "center", flexShrink: 0 }}>
+                      <svg width="72" height="72" viewBox="0 0 72 72">
+                        <defs>
+                          <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor={member.color || "#4F7DFF"}/>
+                            <stop offset="100%" stopColor={member.color ? `${member.color}99` : "#22B8D4"}/>
+                          </linearGradient>
+                        </defs>
+                        <circle cx="36" cy="36" r="30" fill="none"
+                          stroke={isDark ? "rgba(190,210,255,.07)" : "rgba(15,30,80,.07)"} strokeWidth="6"/>
+                        <circle cx="36" cy="36" r="30" fill="none"
+                          stroke="url(#ringGrad)" strokeWidth="6"
+                          strokeLinecap="round"
+                          strokeDasharray={`${2 * Math.PI * 30}`}
+                          strokeDashoffset={`${2 * Math.PI * 30 * (1 - completionPct / 100)}`}
+                          transform="rotate(-90 36 36)"
+                          style={{ transition: "stroke-dashoffset .6s ease", filter: `drop-shadow(0 0 6px ${member.color || "#4F7DFF"}80)` }}
+                        />
+                        <text x="36" y="41" textAnchor="middle" fontSize="14" fontWeight="800"
+                          fill={isDark ? "#EEF2FF" : "#0A1330"}>
+                          {completionPct}%
+                        </text>
+                      </svg>
+                      <p style={{
+                        fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
+                        color: isDark ? "#8C99C2" : "#6B7AA0", marginTop: 2,
+                      }}>
+                        Done
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stat pills — polished cards with hover */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginTop: 24 }}>
+                  {[
+                    { label: "Total",       value: stats.total,      color: "#4F7DFF", icon: "📋" },
+                    { label: "Pending",     value: stats.pending,    color: "#8C99C2", icon: "○" },
+                    { label: "In Progress", value: stats.inProgress, color: "#F59E0B", icon: "◐" },
+                    { label: "Completed",   value: stats.completed,  color: "#10B981", icon: "✓" },
+                    { label: "Overdue",     value: stats.overdue,    color: "#EF4444", icon: "!" },
+                  ].map(({ label, value, color, icon }) => (
+                    <div key={label}
+                      style={{
+                        padding: "12px 14px", borderRadius: 12,
+                        background: isDark ? "rgba(16,25,55,0.6)" : "rgba(255,255,255,0.85)",
+                        border: `1px solid ${isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)"}`,
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        boxShadow: isDark ? "0 2px 8px rgba(0,0,0,0.25)" : "0 2px 8px rgba(10,19,48,0.05)",
+                        transition: "transform .18s, box-shadow .22s, border-color .18s",
+                        cursor: "default",
+                      }}
+                      onMouseEnter={(e) => {
+                        const el = e.currentTarget as HTMLElement;
+                        el.style.transform = "translateY(-2px)";
+                        el.style.boxShadow = isDark ? "0 8px 20px rgba(0,0,0,0.45)" : "0 8px 22px rgba(10,19,48,0.10)";
+                        el.style.borderColor = `${color}55`;
+                      }}
+                      onMouseLeave={(e) => {
+                        const el = e.currentTarget as HTMLElement;
+                        el.style.transform = "translateY(0)";
+                        el.style.boxShadow = isDark ? "0 2px 8px rgba(0,0,0,0.25)" : "0 2px 8px rgba(10,19,48,0.05)";
+                        el.style.borderColor = isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)";
+                      }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <span style={{
+                          width: 22, height: 22, borderRadius: 7, fontSize: 11, fontWeight: 800,
+                          background: `${color}1A`, color,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          border: `1px solid ${color}30`,
+                        }}>
+                          {icon}
+                        </span>
+                        <span style={{
+                          fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+                          color: isDark ? "#8C99C2" : "#6B7AA0",
+                        }}>
+                          {label}
+                        </span>
+                      </div>
+                      <div style={{
+                        fontSize: 24, fontWeight: 800, color: isDark ? "#EEF2FF" : "#0A1330",
+                        letterSpacing: "-0.02em", lineHeight: 1,
+                      }}>
+                        {value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* ── Main Content ─────────────────────────────────────────────────────── */}
         <div style={{ maxWidth: 820, margin: "0 auto", padding: "24px 20px 48px" }}>
@@ -1082,14 +1267,35 @@ export function MemberPage() {
                 overdue: `Overdue (${stats.overdue})`,
               };
               const active = filter === f;
-              const accentColor = f === "overdue" ? "#EF4444" : f === "completed" ? "#10B981" : f === "in-progress" ? "#F59E0B" : "#6366F1";
+              const accentColor = f === "overdue" ? "#EF4444" : f === "completed" ? "#10B981" : f === "in-progress" ? "#F59E0B" : "#4F7DFF";
               return (
                 <button key={f} onClick={() => setFilter(f)} style={{
-                  padding: "7px 14px", borderRadius: 99, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                  background: active ? `${accentColor}18` : "transparent",
-                  border: `1px solid ${active ? accentColor : (isDark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.1)")}`,
-                  color: active ? accentColor : (isDark ? "#64748B" : "#94A3B8"),
-                  transition: "all .15s",
+                  padding: "8px 16px", borderRadius: 99, fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+                  background: active
+                    ? `${accentColor}18`
+                    : (isDark ? "rgba(16,25,55,0.5)" : "rgba(255,255,255,0.7)"),
+                  border: `1px solid ${active ? accentColor : (isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)")}`,
+                  color: active ? accentColor : (isDark ? "#8C99C2" : "#6B7AA0"),
+                  transition: "all .15s var(--ease)",
+                  letterSpacing: "-0.005em",
+                  backdropFilter: "blur(6px)",
+                  WebkitBackdropFilter: "blur(6px)",
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.borderColor = `${accentColor}50`;
+                    el.style.color = accentColor;
+                    el.style.transform = "translateY(-1px)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.borderColor = isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)";
+                    el.style.color = isDark ? "#8C99C2" : "#6B7AA0";
+                    el.style.transform = "translateY(0)";
+                  }
                 }}>
                   {labels[f]}
                 </button>
@@ -1097,13 +1303,26 @@ export function MemberPage() {
             })}
 
             <button onClick={load} style={{
-              marginLeft: "auto", padding: "7px 14px", borderRadius: 99, fontSize: 12, fontWeight: 600,
-              background: "transparent", cursor: "pointer",
-              border: `1px solid ${isDark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.1)"}`,
-              color: isDark ? "#64748B" : "#94A3B8", transition: "all .15s",
+              marginLeft: "auto", padding: "8px 16px", borderRadius: 99, fontSize: 12.5, fontWeight: 600,
+              background: isDark ? "rgba(16,25,55,0.5)" : "rgba(255,255,255,0.7)", cursor: "pointer",
+              border: `1px solid ${isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)"}`,
+              color: isDark ? "#8C99C2" : "#6B7AA0",
+              transition: "all .15s var(--ease)",
+              display: "inline-flex", alignItems: "center", gap: 6,
+              backdropFilter: "blur(6px)",
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "#6366F1"; (e.currentTarget as HTMLElement).style.color = "#6366F1"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = isDark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.1)"; (e.currentTarget as HTMLElement).style.color = isDark ? "#64748B" : "#94A3B8"; }}>
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.borderColor = "rgba(79,125,255,0.4)";
+              el.style.color = "#4F7DFF";
+              el.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.borderColor = isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)";
+              el.style.color = isDark ? "#8C99C2" : "#6B7AA0";
+              el.style.transform = "translateY(0)";
+            }}>
               ↻ Refresh
             </button>
           </div>

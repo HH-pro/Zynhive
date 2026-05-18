@@ -6,9 +6,10 @@ import {
   subscribePendingReviews, updateReview, createClientUpdate,
   fetchClients, fetchAdminSettings, saveAdminSettings,
   logActivity, subscribeActivityLog,
-  adjustMemberScore, updateTask, TASK_SCORE_REWARD,
+  adjustMemberScore, updateTask, fetchMemberById, TASK_SCORE_REWARD,
   type FirestoreProject, type FirestoreReview, type FirestoreClient, type ActivityLog,
 } from "../../lib/firebase";
+import { sendTaskRejectedEmail } from "../../lib/email";
 import { ProjectForm }        from "../../components/admin/ProjectForm";
 import { TeamTab }            from "../../components/admin/TeamTab";
 import { LeadTab }            from "../../components/admin/Leadtab";
@@ -91,7 +92,7 @@ const ADMIN_KF = `
   @keyframes slideInRight  { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
   @keyframes slideUpFade   { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
   @keyframes bellShake     { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-12deg)} 40%{transform:rotate(12deg)} 60%{transform:rotate(-8deg)} 80%{transform:rotate(8deg)} }
-  @keyframes glowPulse     { 0%,100%{box-shadow:0 0 6px rgba(124,58,237,.5)} 50%{box-shadow:0 0 18px rgba(124,58,237,.9),0 0 32px rgba(124,58,237,.4)} }
+  @keyframes glowPulse     { 0%,100%{box-shadow:0 0 6px rgba(79,125,255,.45)} 50%{box-shadow:0 0 18px rgba(79,125,255,.85),0 0 32px rgba(79,125,255,.35)} }
   @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 `;
 function KFInjector() {
@@ -1285,11 +1286,65 @@ function ReviewPanel({ reviews, clients, onClose, onReload, showToast, adminEmai
   const [acceptTarget, setAcceptTarget] = useState<FirestoreReview | null>(null);
 
   async function handleReject(review: FirestoreReview) {
+    // Optional feedback the admin can pass back to the member.
+    const reason = (window.prompt(
+      `Reject "${review.taskTitle}" — give ${review.memberName} a reason / what to fix?\n(optional, will be emailed to them)`,
+      ""
+    ) ?? "").trim();
+
     try {
       await updateReview(review.id!, { status: "rejected" });
-      logActivity({ action: "Review rejected", detail: `${review.memberName} — ${review.taskTitle}`, adminEmail: adminEmail ?? "", icon: "✕", category: "review" }).catch(() => {});
+
+      // Re-open the task: fresh 24h deadline, clear prior submission,
+      // reset penalty/score flags so the next outcome counts again.
+      let newDeadlinePKT = "";
+      if (review.taskId) {
+        const newDeadlineIso = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        newDeadlinePKT = new Date(newDeadlineIso).toLocaleString("en-US", {
+          timeZone: "Asia/Karachi",
+          month: "short", day: "numeric",
+          hour: "numeric", minute: "2-digit", hour12: true,
+        }) + " PKT";
+        try {
+          await updateTask(review.taskId, {
+            status:         "pending",
+            deadline:       newDeadlineIso,
+            report:         "",
+            reportedBy:     "",
+            completedAt:    "",
+            penaltyApplied: false,
+            scoreApplied:   false,
+          });
+        } catch { /* silent */ }
+      }
+
+      // Email the member (fire-and-forget — don't block UI on email failure).
+      if (review.memberId) {
+        fetchMemberById(review.memberId).then((m) => {
+          if (m?.email) {
+            const portalUrl = `${window.location.origin}/member/${m.id}`;
+            sendTaskRejectedEmail({
+              toEmail:     m.email,
+              toName:      m.name,
+              taskTitle:   review.taskTitle,
+              reason,
+              newDeadline: newDeadlinePKT,
+              portalUrl,
+            }).catch(() => {});
+          }
+        }).catch(() => {});
+      }
+
+      logActivity({
+        action:     "Review rejected",
+        detail:     `${review.memberName} — ${review.taskTitle}${reason ? ` · "${reason.slice(0, 60)}"` : ""} · re-assigned (+24h)`,
+        adminEmail: adminEmail ?? "",
+        icon:       "✕",
+        category:   "review",
+      }).catch(() => {});
+
       onReload();
-      showToast("Review rejected.");
+      showToast("Rejected — task re-assigned & member notified.");
     } catch { showToast("Failed to reject.", "error"); }
   }
 
@@ -1740,9 +1795,9 @@ export function AdminDashboard({ user }: Props) {
                         gap:            showLabels ? 10 : 0,
                         padding:        showLabels ? "10px 10px" : "10px 0",
                         justifyContent: showLabels ? "flex-start" : "center",
-                        background:     active ? "linear-gradient(90deg,rgba(124,58,237,0.13),rgba(124,58,237,0.04))" : "transparent",
+                        background:     active ? "linear-gradient(90deg, var(--accent-pale2), var(--accent-pale))" : "transparent",
                         color:          active ? "var(--accent)" : "var(--ink3)",
-                        border:         active ? "0.5px solid rgba(124,58,237,0.2)" : "0.5px solid transparent",
+                        border:         active ? "1px solid var(--accent-dim)" : "1px solid transparent",
                         cursor: "pointer", fontWeight: active ? 600 : 400,
                         transition: "all .15s", textAlign: "left", lineHeight: 1,
                         fontFamily: "inherit",
@@ -1756,7 +1811,7 @@ export function AdminDashboard({ user }: Props) {
                           position: "absolute", left: 0, top: "18%", bottom: "18%",
                           width: 3, borderRadius: 3,
                           background: "var(--grad-accent)",
-                          boxShadow: "0 0 8px rgba(124,58,237,0.7)",
+                          boxShadow: "var(--glow-accent)",
                         }} />
                       )}
                       <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>{item.icon}</span>
@@ -1789,8 +1844,13 @@ export function AdminDashboard({ user }: Props) {
             return (
               <div className="flex-shrink-0 flex items-center gap-2.5 overflow-hidden"
                 style={{ padding: showFull ? "10px 14px" : "10px 0", justifyContent: showFull ? "flex-start" : "center" }}>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[11px]"
-                  style={{ background: "var(--grad-accent)", color: "white", boxShadow: "0 0 0 2px var(--bg-panel), 0 0 0 4px rgba(124,58,237,0.5)" }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[11px]"
+                  style={{
+                    background: "var(--grad-accent)",
+                    color: "white",
+                    boxShadow: "0 0 0 2px var(--bg-panel), 0 0 0 4px var(--accent-dim), 0 4px 12px var(--accent-pale)",
+                    letterSpacing: "-0.02em",
+                  }}>
                   {user.email?.[0]?.toUpperCase() ?? "A"}
                 </div>
                 {showFull && (
@@ -1810,15 +1870,16 @@ export function AdminDashboard({ user }: Props) {
           {/* Header */}
           <header className="flex items-center gap-2 flex-shrink-0"
             style={{
-              height: 52,
-              padding: "0 16px",
-              background: "var(--bg-panel)",
-              borderBottom: "0.5px solid var(--border)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
+              height: 58,
+              padding: "0 18px",
+              background: "var(--nav-glass)",
+              borderBottom: "1px solid var(--border)",
+              backdropFilter: "blur(18px) saturate(1.4)",
+              WebkitBackdropFilter: "blur(18px) saturate(1.4)",
               position: "sticky",
               top: 0,
               zIndex: 20,
+              boxShadow: "var(--shadow-sm)",
             }}>
 
             {/* Hamburger on mobile + tablet */}
@@ -1829,10 +1890,21 @@ export function AdminDashboard({ user }: Props) {
             )}
 
             {/* Breadcrumb */}
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              {!isMobile && !isTablet && <span className="text-[11px]" style={{ color: "var(--ink4)" }}>ZynHive</span>}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {!isMobile && !isTablet && (
+                <span className="flex items-center gap-2">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full"
+                    style={{ background: "var(--green)", boxShadow: "0 0 8px var(--green)" }}/>
+                  <span className="font-mono text-[10.5px] tracking-[0.12em] uppercase font-semibold"
+                    style={{ color: "var(--ink4)" }}>
+                    ZynHive
+                  </span>
+                </span>
+              )}
               {!isMobile && !isTablet && <span style={{ color: "var(--ink4)" }}><Ic.Breadcrumb /></span>}
-              <span className="font-semibold text-[13px]" style={{ color: "var(--ink)" }}>{activeNavItem?.label}</span>
+              <span className="font-semibold text-[14px] tracking-tight" style={{ color: "var(--ink)", letterSpacing: "-0.015em" }}>
+                {activeNavItem?.label}
+              </span>
             </div>
 
             {/* Inline search — projects, desktop only */}

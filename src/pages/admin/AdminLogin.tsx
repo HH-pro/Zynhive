@@ -68,55 +68,77 @@ export function AdminLogin({ onSuccess }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
-      style={{ background: "var(--bg-base)" }}>
+    <div className="navy-hero-bg min-h-screen flex items-center justify-center px-4 relative">
+      <div className="navy-orb navy-orb-a"/>
+      <div className="navy-orb navy-orb-b"/>
 
-      {/* Grid bg */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: "linear-gradient(rgba(124,58,237,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,0.05) 1px,transparent 1px)",
-        backgroundSize: "56px 56px",
-      }}/>
+      <div className="relative z-10 w-full max-w-[440px]"
+        style={{ animation: "fadeScaleIn .55s var(--ease) both" }}>
 
-      {/* Ambient glow orbs */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] pointer-events-none"
-        style={{ background: "radial-gradient(ellipse,rgba(124,58,237,0.12) 0%,transparent 65%)" }}/>
-      <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] pointer-events-none"
-        style={{ background: "radial-gradient(ellipse,rgba(79,70,229,0.08) 0%,transparent 65%)" }}/>
-
-      <div className="relative z-10 w-full max-w-[400px]">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <div className="relative w-11 h-11">
-              <div className="absolute inset-0 rounded-xl"
-                style={{ background: "var(--grad-accent)", boxShadow: "var(--glow-accent)" }}/>
-              <div className="absolute inset-[2px] rounded-[10px]" style={{ background: "var(--bg-base)" }}/>
+        {/* Logo + tagline */}
+        <div className="text-center mb-9">
+          <div className="inline-flex items-center gap-3 mb-5">
+            <div className="relative w-12 h-12">
+              <div className="absolute inset-0 rounded-2xl"
+                style={{
+                  background: "linear-gradient(135deg, #4F7DFF 0%, #22B8D4 100%)",
+                  boxShadow: "0 8px 28px rgba(79,125,255,0.45), inset 0 1px 0 rgba(255,255,255,0.25)",
+                }}/>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="font-mono font-bold text-[11px]" style={{ background: "var(--grad-accent)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ZH</span>
+                <span className="font-display font-extrabold text-[15px] tracking-tight"
+                  style={{ color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>
+                  ZH
+                </span>
               </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+                style={{
+                  background: "#10B981",
+                  border: "2px solid #060B22",
+                  boxShadow: "0 0 8px rgba(16,185,129,0.6)",
+                }}/>
             </div>
-            <span className="font-display font-bold text-xl tracking-tight" style={{ color: "var(--ink)" }}>
-              ZynHive<span className="grad-text">.</span>
+            <span className="font-display font-bold text-[22px] tracking-tight"
+              style={{ color: "#EEF2FF" }}>
+              ZynHive
             </span>
           </div>
-          <p className="font-mono text-[11px] tracking-[0.15em] uppercase" style={{ color: "var(--ink4)" }}>Admin Portal · Restricted</p>
+          <p className="font-mono text-[10.5px] tracking-[0.22em] uppercase"
+            style={{ color: "rgba(238,242,255,0.50)" }}>
+            Admin Portal · Secure Access
+          </p>
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl p-8 glass-card" style={{
-          boxShadow: "0 0 0 1px var(--border),0 32px 80px rgba(0,0,0,0.4),0 0 80px rgba(124,58,237,0.05)",
-        }}>
-          <h1 className="font-display text-[22px] font-bold mb-1 tracking-tight" style={{ color: "var(--ink)" }}>Welcome back</h1>
-          <p className="text-[13px] mb-6 font-body" style={{ color: "var(--ink4)" }}>Sign in to manage your portfolio</p>
+        <div className="rounded-3xl p-9 relative"
+          style={{
+            background: "rgba(16, 25, 55, 0.78)",
+            backdropFilter: "blur(20px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(20px) saturate(1.6)",
+            border: "1px solid rgba(190,210,255,0.14)",
+            boxShadow:
+              "0 0 0 1px rgba(255,255,255,0.04) inset, 0 32px 88px rgba(0,0,0,0.55), 0 0 80px rgba(79,125,255,0.10)",
+          }}>
+
+          <h1 className="font-display text-[26px] font-bold mb-1.5 tracking-tight"
+            style={{ color: "#EEF2FF", letterSpacing: "-0.03em" }}>
+            Welcome back
+          </h1>
+          <p className="text-[13.5px] mb-7"
+            style={{ color: "rgba(238,242,255,0.55)", fontWeight: 300 }}>
+            Sign in to your dashboard to manage projects, leads, and your team.
+          </p>
 
           {/* Lockout Banner */}
           {isLocked && (
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5 text-[13px] font-medium" style={{
-              background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "var(--red)",
-            }}>
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5 text-[13px] font-medium"
+              style={{
+                background: "rgba(248,113,113,0.10)",
+                border: "1px solid rgba(248,113,113,0.30)",
+                color: "#F87171",
+              }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
-                <path d="M5.5 7V5.5a2.5 2.5 0 015 0V7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                <path d="M5.5 7V5.5a2.5 2.5 0 015 0V7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
               </svg>
               <span>Account locked · Retry in <strong>{countdown}s</strong></span>
             </div>
@@ -124,64 +146,109 @@ export function AdminLogin({ onSuccess }: Props) {
 
           {/* Warning Banner */}
           {showWarning && !isLocked && (
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5 text-[13px]" style={{
-              background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.25)", color: "var(--gold)",
-            }}>
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5 text-[13px]"
+              style={{
+                background: "rgba(251,191,36,0.10)",
+                border: "1px solid rgba(251,191,36,0.28)",
+                color: "#FBBF24",
+              }}>
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M7.5 1L14 13H1L7.5 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
-                <path d="M7.5 6v3M7.5 11h.01" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                <path d="M7.5 1L14 13H1L7.5 1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                <path d="M7.5 6v3M7.5 11h.01" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
               </svg>
               <span><strong>{remaining}</strong> attempt{remaining !== 1 ? "s" : ""} remaining before lockout</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {/* Email */}
-            <div className="flex flex-col gap-1.5">
-              <label className="font-mono text-[10px] tracking-[0.12em] uppercase" style={{ color: "var(--ink3)" }}>Email</label>
+            <div className="flex flex-col gap-2">
+              <label className="font-mono text-[10px] tracking-[0.16em] uppercase font-semibold"
+                style={{ color: "rgba(238,242,255,0.62)" }}>
+                Email
+              </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <rect x="1" y="3" width="12" height="9" rx="1.5" stroke="var(--ink4)" strokeWidth="1"/>
-                    <path d="M1 5l6 4 6-4" stroke="var(--ink4)" strokeWidth="1" strokeLinejoin="round"/>
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <rect x="1.5" y="3.5" width="13" height="10" rx="2" stroke="rgba(238,242,255,0.4)" strokeWidth="1.2"/>
+                    <path d="M1.5 5.5l6.5 4.5 6.5-4.5" stroke="rgba(238,242,255,0.4)" strokeWidth="1.2" strokeLinejoin="round"/>
                   </svg>
                 </div>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@zynhive.com" required disabled={isLocked}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none transition-all duration-200 border"
-                  style={{ background: "var(--bg-alt)", color: "var(--ink)", borderColor: "var(--border2)", opacity: isLocked ? 0.5 : 1 }}
-                  onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; (e.target as HTMLInputElement).style.boxShadow = "0 0 0 3px var(--accent-pale)"; }}
-                  onBlur={(e)  => { (e.target as HTMLInputElement).style.borderColor = "var(--border2)"; (e.target as HTMLInputElement).style.boxShadow = "none"; }}
+                  className="w-full pl-11 pr-4 py-3 rounded-xl text-[14.5px] outline-none transition-all duration-200 border"
+                  style={{
+                    background: "rgba(10,18,48,0.55)",
+                    color: "#EEF2FF",
+                    borderColor: "rgba(190,210,255,0.16)",
+                    opacity: isLocked ? 0.5 : 1,
+                    fontWeight: 400,
+                  }}
+                  onFocus={(e) => {
+                    const el = e.target as HTMLInputElement;
+                    el.style.borderColor = "#4F7DFF";
+                    el.style.boxShadow = "0 0 0 3px rgba(79,125,255,0.25)";
+                    el.style.background = "rgba(10,18,48,0.85)";
+                  }}
+                  onBlur={(e) => {
+                    const el = e.target as HTMLInputElement;
+                    el.style.borderColor = "rgba(190,210,255,0.16)";
+                    el.style.boxShadow = "none";
+                    el.style.background = "rgba(10,18,48,0.55)";
+                  }}
                 />
               </div>
             </div>
 
             {/* Password */}
-            <div className="flex flex-col gap-1.5">
-              <label className="font-mono text-[10px] tracking-[0.12em] uppercase" style={{ color: "var(--ink3)" }}>Password</label>
+            <div className="flex flex-col gap-2">
+              <label className="font-mono text-[10px] tracking-[0.16em] uppercase font-semibold"
+                style={{ color: "rgba(238,242,255,0.62)" }}>
+                Password
+              </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <rect x="3" y="6" width="8" height="7" rx="1" stroke="var(--ink4)" strokeWidth="1"/>
-                    <path d="M5 6V4.5a2 2 0 014 0V6" stroke="var(--ink4)" strokeWidth="1" strokeLinecap="round"/>
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <rect x="3" y="7" width="10" height="7.5" rx="1.5" stroke="rgba(238,242,255,0.4)" strokeWidth="1.2"/>
+                    <path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="rgba(238,242,255,0.4)" strokeWidth="1.2" strokeLinecap="round"/>
                   </svg>
                 </div>
                 <input type={showPw ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••" required disabled={isLocked}
-                  className="w-full pl-9 pr-10 py-2.5 rounded-xl text-[14px] outline-none transition-all duration-200 border"
-                  style={{ background: "var(--bg-alt)", color: "var(--ink)", borderColor: "var(--border2)", opacity: isLocked ? 0.5 : 1 }}
-                  onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "var(--accent)"; (e.target as HTMLInputElement).style.boxShadow = "0 0 0 3px var(--accent-pale)"; }}
-                  onBlur={(e)  => { (e.target as HTMLInputElement).style.borderColor = "var(--border2)"; (e.target as HTMLInputElement).style.boxShadow = "none"; }}
+                  className="w-full pl-11 pr-12 py-3 rounded-xl text-[14.5px] outline-none transition-all duration-200 border"
+                  style={{
+                    background: "rgba(10,18,48,0.55)",
+                    color: "#EEF2FF",
+                    borderColor: "rgba(190,210,255,0.16)",
+                    opacity: isLocked ? 0.5 : 1,
+                    fontWeight: 400,
+                  }}
+                  onFocus={(e) => {
+                    const el = e.target as HTMLInputElement;
+                    el.style.borderColor = "#4F7DFF";
+                    el.style.boxShadow = "0 0 0 3px rgba(79,125,255,0.25)";
+                    el.style.background = "rgba(10,18,48,0.85)";
+                  }}
+                  onBlur={(e) => {
+                    const el = e.target as HTMLInputElement;
+                    el.style.borderColor = "rgba(190,210,255,0.16)";
+                    el.style.boxShadow = "none";
+                    el.style.background = "rgba(10,18,48,0.55)";
+                  }}
                 />
                 <button type="button" onClick={() => setShowPw(!showPw)} disabled={isLocked}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-                  style={{ color: "var(--ink4)", cursor: "pointer", background: "none", border: "none", padding: 0 }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--accent)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--ink4)"; }}>
+                  aria-label={showPw ? "Hide password" : "Show password"}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors"
+                  style={{
+                    color: "rgba(238,242,255,0.50)",
+                    cursor: "pointer", background: "none", border: "none", padding: 0,
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#4F7DFF"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(238,242,255,0.50)"; }}>
                   {showPw ? (
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M5.5 4.5A5 5 0 0112 7a5.5 5.5 0 01-1 1.4M2 7a5 5 0 014.5-4.9" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2l12 12M6 5a5.5 5.5 0 018 3 5.5 5.5 0 01-1.5 2.5M2 8a5.5 5.5 0 015-5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                   ) : (
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7s2.5-4.5 6-4.5S13 7 13 7s-2.5 4.5-6 4.5S1 7 1 7z" stroke="currentColor" strokeWidth="1"/><circle cx="7" cy="7" r="1.5" stroke="currentColor" strokeWidth="1"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.7-5 7-5 7 5 7 5-2.7 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.2"/><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.2"/></svg>
                   )}
                 </button>
               </div>
@@ -189,11 +256,15 @@ export function AdminLogin({ onSuccess }: Props) {
 
             {/* Error (non-lockout) */}
             {error && !isLocked && (
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border text-[13px]"
-                style={{ background: "rgba(248,113,113,0.07)", borderColor: "rgba(248,113,113,0.2)", color: "var(--red)" }}>
-                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                  <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" strokeWidth="1"/>
-                  <path d="M6.5 4v3M6.5 9h.01" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg border text-[13px]"
+                style={{
+                  background: "rgba(248,113,113,0.08)",
+                  borderColor: "rgba(248,113,113,0.24)",
+                  color: "#F87171",
+                }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2"/>
+                  <path d="M7 4v3.5M7 9.5h.01" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
                 </svg>
                 {error}
               </div>
@@ -201,29 +272,76 @@ export function AdminLogin({ onSuccess }: Props) {
 
             {/* Submit */}
             <button type="submit" disabled={loading || isLocked}
-              className="relative w-full py-3 rounded-xl text-sm font-semibold text-white mt-2 disabled:cursor-not-allowed"
+              className="relative w-full py-3.5 rounded-xl text-[14.5px] font-semibold mt-2 disabled:cursor-not-allowed overflow-hidden"
               style={{
-                background: isLocked ? "var(--bg-alt)" : "var(--grad-accent)",
-                color: isLocked ? "var(--ink4)" : "white",
-                border: "none", cursor: loading || isLocked ? "not-allowed" : "pointer",
-                boxShadow: isLocked ? "none" : "var(--glow-accent)",
-                opacity: loading ? 0.8 : 1,
-                transition: "opacity .15s, box-shadow .2s",
+                background: isLocked
+                  ? "rgba(190,210,255,0.10)"
+                  : "linear-gradient(135deg, #2B4DAF 0%, #4F7DFF 100%)",
+                color: isLocked ? "rgba(238,242,255,0.40)" : "#fff",
+                border: "none",
+                cursor: loading || isLocked ? "not-allowed" : "pointer",
+                boxShadow: isLocked
+                  ? "none"
+                  : "0 10px 32px rgba(79,125,255,0.40), inset 0 1px 0 rgba(255,255,255,0.18)",
+                opacity: loading ? 0.85 : 1,
+                transition: "transform .18s var(--ease), box-shadow .22s var(--ease), filter .18s",
+                letterSpacing: "-0.01em",
+              }}
+              onMouseEnter={(e) => {
+                if (!loading && !isLocked) {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.transform = "translateY(-1.5px)";
+                  el.style.boxShadow = "0 16px 40px rgba(79,125,255,0.55), inset 0 1px 0 rgba(255,255,255,0.22)";
+                  el.style.filter = "brightness(1.08)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.transform = "translateY(0)";
+                el.style.boxShadow = isLocked
+                  ? "none"
+                  : "0 10px 32px rgba(79,125,255,0.40), inset 0 1px 0 rgba(255,255,255,0.18)";
+                el.style.filter = "brightness(1)";
               }}>
               {loading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 rounded-full" style={{ borderColor: "rgba(255,255,255,0.3)", borderTopColor: "white", animation: "spinLoader .7s linear infinite" }}/>
+                <span className="flex items-center justify-center gap-2.5">
+                  <span className="w-[15px] h-[15px] border-2 rounded-full inline-block"
+                    style={{
+                      borderColor: "rgba(255,255,255,0.30)",
+                      borderTopColor: "#fff",
+                      animation: "spinLoader .7s linear infinite",
+                    }}/>
                   Signing in…
-                </div>
+                </span>
               ) : isLocked ? (
                 `Locked · ${countdown}s`
-              ) : "Sign In →"}
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  Sign In
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
+              )}
             </button>
           </form>
+
+          {/* Divider + helper */}
+          <div className="mt-7 pt-6 border-t flex items-center justify-between gap-3"
+            style={{ borderColor: "rgba(190,210,255,0.10)" }}>
+            <p className="text-[11.5px]" style={{ color: "rgba(238,242,255,0.45)" }}>
+              Forgot your password?
+            </p>
+            <span className="font-mono text-[10px] tracking-[0.10em]"
+              style={{ color: "rgba(238,242,255,0.32)" }}>
+              Contact your admin
+            </span>
+          </div>
         </div>
 
-        <p className="text-center text-[11px] mt-6 font-mono" style={{ color: "var(--ink4)" }}>
-          ZynHive Admin · Restricted Access
+        <p className="text-center text-[11px] mt-6 font-mono tracking-[0.15em]"
+          style={{ color: "rgba(238,242,255,0.32)" }}>
+          ZynHive Admin · v2 · Restricted Access
         </p>
       </div>
     </div>
