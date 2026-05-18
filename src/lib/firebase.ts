@@ -281,6 +281,16 @@ export const saveAdminSettings = (data: AdminSettings) =>
   setDoc(doc(db, SETTINGS_COL, "admin"), data, { merge: true });
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
+export type ChecklistItem = {
+  id:                string;
+  title:             string;
+  checked:           boolean;
+  checkedAt:         string;
+  impact?:           "high" | "medium" | "low";
+  estimatedMinutes?: number;
+  category?:         string;
+};
+
 export type FirestoreTask = {
   id?:               string;
   title:             string;
@@ -298,6 +308,7 @@ export type FirestoreTask = {
   estimatedHours?:   number;
   linkedClientId?:   string;
   linkedClientName?: string;
+  checklistItems?:   ChecklistItem[];
   createdAt?:        Timestamp;
   updatedAt?:        Timestamp;
 };
@@ -435,6 +446,116 @@ export function subscribePendingReviews(
     onData(reviews);
   });
 }
+
+// ─── Routines ─────────────────────────────────────────────────────────────────
+export type RoutineItem = {
+  id:                string;
+  title:             string;
+  impact:            "high" | "medium" | "low";
+  estimatedMinutes:  number;
+  category:          string;
+  checked:           boolean;
+  checkedAt:         string;
+};
+
+export type FirestoreRoutine = {
+  id?:               string;
+  title:             string;
+  timeRange:         string;
+  date:              string;
+  assignedToId:      string;
+  assignedToName:    string;
+  assignedToColor:   string;
+  items:             RoutineItem[];
+  status:            "pending" | "in-progress" | "completed";
+  report:            string;
+  reportedAt?:       string;
+  createdAt?:        Timestamp;
+  updatedAt?:        Timestamp;
+};
+
+const ROUTINES_COL = "routines";
+
+export async function fetchRoutines(): Promise<FirestoreRoutine[]> {
+  const snap = await getDocs(collection(db, ROUTINES_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreRoutine))
+    .sort((a, b) => {
+      const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+}
+
+export async function fetchRoutinesByMemberId(memberId: string): Promise<FirestoreRoutine[]> {
+  const snap = await getDocs(collection(db, ROUTINES_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreRoutine))
+    .filter((r) => r.assignedToId === memberId)
+    .sort((a, b) => {
+      const dateComp = (b.date ?? "").localeCompare(a.date ?? "");
+      if (dateComp !== 0) return dateComp;
+      const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+}
+
+export const createRoutine = (data: Omit<FirestoreRoutine, "id" | "createdAt" | "updatedAt">) =>
+  addDoc(collection(db, ROUTINES_COL), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+
+export const updateRoutine = (id: string, data: Partial<FirestoreRoutine>) =>
+  updateDoc(doc(db, ROUTINES_COL, id), { ...data, updatedAt: serverTimestamp() });
+
+export const deleteRoutine = (id: string) => deleteDoc(doc(db, ROUTINES_COL, id));
+
+// ─── Ideas ────────────────────────────────────────────────────────────────────
+export type FirestoreIdea = {
+  id?:          string;
+  title:        string;
+  description:  string;
+  memberId:     string;
+  memberName:   string;
+  memberColor:  string;
+  category:     string;
+  status:       "new" | "reviewed" | "implemented";
+  adminComment: string;
+  createdAt?:   Timestamp;
+  updatedAt?:   Timestamp;
+};
+
+const IDEAS_COL = "ideas";
+
+export async function fetchIdeas(): Promise<FirestoreIdea[]> {
+  const snap = await getDocs(collection(db, IDEAS_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreIdea))
+    .sort((a, b) => {
+      const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+}
+
+export async function fetchIdeasByMemberId(memberId: string): Promise<FirestoreIdea[]> {
+  const snap = await getDocs(collection(db, IDEAS_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreIdea))
+    .filter((i) => i.memberId === memberId)
+    .sort((a, b) => {
+      const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+}
+
+export const createIdea = (data: Omit<FirestoreIdea, "id" | "createdAt" | "updatedAt">) =>
+  addDoc(collection(db, IDEAS_COL), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+
+export const updateIdea = (id: string, data: Partial<FirestoreIdea>) =>
+  updateDoc(doc(db, IDEAS_COL, id), { ...data, updatedAt: serverTimestamp() });
+
+export const deleteIdea = (id: string) => deleteDoc(doc(db, IDEAS_COL, id));
 
 // ─── Activity Log ─────────────────────────────────────────────────────────────
 export type ActivityLog = {

@@ -2,7 +2,9 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   fetchMemberById, fetchTasksByMemberId, updateTask, updateMember, createReview, fetchAdminSettings,
-  type FirestoreMember, type FirestoreTask,
+  fetchIdeasByMemberId, createIdea,
+  fetchRoutinesByMemberId, updateRoutine,
+  type FirestoreMember, type FirestoreTask, type FirestoreIdea, type FirestoreRoutine, type ChecklistItem,
 } from "../lib/firebase";
 import { sendAdminReviewEmail } from "../lib/email";
 import { Timestamp } from "firebase/firestore";
@@ -157,6 +159,12 @@ function ReportModal({
   const eff = effectiveStatus(task);
   const sc  = SC[eff];
 
+  const checklist  = task.checklistItems ?? [];
+  const doneCount  = checklist.filter((i) => i.checked).length;
+  const totalCount = checklist.length;
+  const allChecked = totalCount > 0 && doneCount === totalCount;
+  const pct        = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
   async function submit() {
     if (!report.trim() || !task.id) return;
     setSaving(true);
@@ -208,15 +216,16 @@ function ReportModal({
         className="mp-modal-box"
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: "100%", maxWidth: 480, borderRadius: 20, overflow: "hidden",
+          width: "100%", maxWidth: 520, borderRadius: 20, overflow: "hidden",
           background: isDark ? "#13161E" : "#FFFFFF",
           border: `1px solid ${isDark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.1)"}`,
           boxShadow: "0 24px 80px rgba(0,0,0,.45)",
+          maxHeight: "92vh", display: "flex", flexDirection: "column",
         }}>
 
         {/* Header */}
         <div style={{
-          padding: "20px 24px 16px",
+          padding: "20px 24px 16px", flexShrink: 0,
           borderBottom: `1px solid ${isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.07)"}`,
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
@@ -225,7 +234,7 @@ function ReportModal({
                 {isView ? "Completion Report" : "Submit Report"}
               </h3>
               <p style={{ fontSize: 12, color: isDark ? "#64748B" : "#94A3B8" }}>
-                {isView ? "Report submitted by team member" : "Describe what was accomplished"}
+                {isView ? "Report submitted by team member" : "Check off all steps, then describe what was accomplished"}
               </p>
             </div>
             <button onClick={onClose}
@@ -252,19 +261,111 @@ function ReportModal({
               </p>
               <p style={{ fontSize: 11, color: isDark ? "#64748B" : "#94A3B8" }}>
                 Due {fmtDate(task.dueDate)}
+                {totalCount > 0 && (
+                  <span style={{ marginLeft: 8, color: allChecked ? "#10B981" : "#F59E0B", fontWeight: 600 }}>
+                    · {doneCount}/{totalCount} steps done
+                  </span>
+                )}
               </p>
             </div>
             <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: sc.bg, color: sc.color, flexShrink: 0 }}>
               {sc.label}
             </span>
           </div>
+
+          {/* Checklist progress bar */}
+          {totalCount > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ height: 5, background: isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.06)", borderRadius: 99, overflow: "hidden" }}>
+                <div style={{
+                  height: "100%", width: `${pct}%`,
+                  background: allChecked ? "#10B981" : "#6366F1",
+                  borderRadius: 99, transition: "width .4s ease",
+                }}/>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Body */}
-        <div style={{ padding: "20px 24px" }}>
-          <label style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: isDark ? "#64748B" : "#94A3B8", display: "block", marginBottom: 8 }}>
-            {isView ? "Submitted Report" : "Completion Notes *"}
-          </label>
+        {/* Body (scrollable) */}
+        <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
+
+          {/* Checklist steps */}
+          {checklist.length > 0 && (
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: isDark ? "#64748B" : "#94A3B8", display: "block", marginBottom: 8 }}>
+                Steps {isView ? `— ${doneCount}/${totalCount} completed` : "— tick off as you go"}
+              </label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {checklist.map((item, idx) => (
+                  <div key={item.id} style={{
+                    display: "flex", alignItems: "center", gap: 10, padding: "9px 12px",
+                    borderRadius: 10,
+                    background: item.checked
+                      ? (isDark ? "rgba(16,185,129,.08)" : "rgba(16,185,129,.06)")
+                      : (isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)"),
+                    border: `1px solid ${item.checked ? "rgba(16,185,129,.2)" : (isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.06)")}`,
+                    opacity: item.checked ? 0.8 : 1,
+                  }}>
+                    <div style={{
+                      width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                      border: `2px solid ${item.checked ? "#10B981" : (isDark ? "rgba(255,255,255,.2)" : "rgba(0,0,0,.2)")}`,
+                      background: item.checked ? "#10B981" : "transparent",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      {item.checked && (
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path d="M2 5l2.5 2.5 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {(item.impact || item.estimatedMinutes || item.category) && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginBottom: 3 }}>
+                          {item.impact && (() => {
+                            const ic = item.impact === "high" ? "#EF4444" : item.impact === "low" ? "#10B981" : "#F59E0B";
+                            return <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 99, background: `${ic}18`, color: ic }}>{item.impact.charAt(0).toUpperCase() + item.impact.slice(1)} Impact</span>;
+                          })()}
+                          {!!item.estimatedMinutes && (
+                            <span style={{ fontSize: 10, color: isDark ? "#64748B" : "#94A3B8" }}>
+                              ⏱ {item.estimatedMinutes >= 60 ? `${Math.floor(item.estimatedMinutes / 60)}h${item.estimatedMinutes % 60 > 0 ? ` ${item.estimatedMinutes % 60}m` : ""}` : `${item.estimatedMinutes}m`}
+                            </span>
+                          )}
+                          {item.category && (
+                            <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 99, background: isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.05)", color: isDark ? "#94A3B8" : "#64748B" }}>
+                              {item.category}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <span style={{
+                        fontSize: 13, fontWeight: 500,
+                        color: item.checked ? (isDark ? "#6EE7B7" : "#065F46") : (isDark ? "#E2E8F0" : "#1E293B"),
+                        textDecoration: item.checked ? "line-through" : "none",
+                      }}>
+                        {idx + 1}. {item.title}
+                      </span>
+                    </div>
+                    {item.checked && item.checkedAt && (
+                      <span style={{ fontSize: 10, color: "#10B981", flexShrink: 0 }}>
+                        {new Date(item.checkedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {!isView && !allChecked && (
+                <p style={{ fontSize: 11, color: "#F59E0B", marginTop: 8, display: "flex", alignItems: "center", gap: 5 }}>
+                  ⚠ {totalCount - doneCount} step{totalCount - doneCount !== 1 ? "s" : ""} remaining — check them off from the task card before submitting.
+                </p>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: isDark ? "#64748B" : "#94A3B8", display: "block", marginBottom: 8 }}>
+              {isView ? "Submitted Report" : "Completion Report *"}
+            </label>
 
           {isView ? (
             <div style={{
@@ -321,6 +422,7 @@ function ReportModal({
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
@@ -328,16 +430,25 @@ function ReportModal({
 
 // ─── Task Card ────────────────────────────────────────────────────────────────
 function TaskCard({
-  task, isDark, onStart, onReport, starting,
+  task, isDark, onStart, onReport, starting, onToggleItem,
 }: {
   task: FirestoreTask; isDark: boolean;
   onStart: () => void; onReport: () => void;
   starting: boolean;
+  onToggleItem: (itemId: string, checked: boolean) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const eff  = effectiveStatus(task);
   const sc   = SC[eff];
   const pc   = PC[task.priority];
   const due  = daysLabel(task);
+
+  const checklist  = task.checklistItems ?? [];
+  const doneCount  = checklist.filter((i) => i.checked).length;
+  const totalCount = checklist.length;
+  const allChecked = totalCount > 0 && doneCount === totalCount;
+  const pct        = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+  const hasChecklist = totalCount > 0;
 
   return (
     <div className="mp-card" style={{
@@ -360,6 +471,16 @@ function TaskCard({
           <Badge label={pc.label} color={pc.color} bg={pc.bg}/>
           {due.text && (
             <span style={{ fontSize: 11, fontWeight: 600, color: due.color }}>{due.text}</span>
+          )}
+          {hasChecklist && (
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 99,
+              background: allChecked ? "rgba(16,185,129,.13)" : (isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.06)"),
+              color: allChecked ? "#10B981" : (isDark ? "#94A3B8" : "#64748B"),
+              border: `1px solid ${allChecked ? "rgba(16,185,129,.25)" : "transparent"}`,
+            }}>
+              ☑ {doneCount}/{totalCount}
+            </span>
           )}
           <span style={{
             marginLeft: "auto", fontSize: 11, fontWeight: 700, padding: "3px 10px",
@@ -403,6 +524,121 @@ function TaskCard({
           </div>
         )}
 
+        {/* Checklist expand toggle */}
+        {hasChecklist && eff !== "completed" && (
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            style={{
+              width: "100%", padding: "8px 12px", borderRadius: 10, marginBottom: 12,
+              background: isDark ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.03)",
+              border: `1px solid ${isDark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.07)"}`,
+              display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
+              transition: "background .15s",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.06)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.03)"; }}
+          >
+            <div style={{ flex: 1, height: 5, background: isDark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.08)", borderRadius: 99, overflow: "hidden" }}>
+              <div style={{
+                height: "100%", width: `${pct}%`,
+                background: allChecked ? "#10B981" : "#6366F1",
+                borderRadius: 99, transition: "width .4s ease",
+              }}/>
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 700, color: allChecked ? "#10B981" : (isDark ? "#94A3B8" : "#64748B"), flexShrink: 0 }}>
+              {doneCount}/{totalCount} steps
+            </span>
+            <span style={{ fontSize: 11, color: isDark ? "#64748B" : "#94A3B8", transform: expanded ? "rotate(180deg)" : "none", transition: "transform .2s", flexShrink: 0 }}>▾</span>
+          </button>
+        )}
+
+        {/* Expanded checklist */}
+        {expanded && hasChecklist && eff !== "completed" && (
+          <div style={{
+            marginBottom: 12, padding: "10px 12px", borderRadius: 12,
+            background: isDark ? "rgba(255,255,255,.025)" : "rgba(0,0,0,.02)",
+            border: `1px solid ${isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.06)"}`,
+            display: "flex", flexDirection: "column", gap: 6,
+          }}>
+            {checklist.map((item, idx) => (
+              <div
+                key={item.id}
+                onClick={() => onToggleItem(item.id, !item.checked)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
+                  borderRadius: 9, cursor: "pointer",
+                  background: item.checked
+                    ? (isDark ? "rgba(16,185,129,.08)" : "rgba(16,185,129,.06)")
+                    : "transparent",
+                  border: `1px solid ${item.checked ? "rgba(16,185,129,.2)" : "transparent"}`,
+                  transition: "all .15s",
+                }}
+                onMouseEnter={(e) => { if (!item.checked) (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.03)"; }}
+                onMouseLeave={(e) => { if (!item.checked) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              >
+                <div style={{
+                  width: 20, height: 20, borderRadius: 6, flexShrink: 0, marginTop: item.impact ? 2 : 0,
+                  border: `2px solid ${item.checked ? "#10B981" : (isDark ? "rgba(255,255,255,.25)" : "rgba(0,0,0,.25)")}`,
+                  background: item.checked ? "#10B981" : "transparent",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all .15s",
+                }}>
+                  {item.checked && (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M2 5l2.5 2.5 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* badges row */}
+                  {(item.impact || item.estimatedMinutes || item.category) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginBottom: 3 }}>
+                      {item.impact && (() => {
+                        const ic = item.impact === "high" ? "#EF4444" : item.impact === "low" ? "#10B981" : "#F59E0B";
+                        return (
+                          <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 99, background: `${ic}18`, color: ic }}>
+                            {item.impact.charAt(0).toUpperCase() + item.impact.slice(1)} Impact
+                          </span>
+                        );
+                      })()}
+                      {!!item.estimatedMinutes && (
+                        <span style={{ fontSize: 10, color: isDark ? "#64748B" : "#94A3B8" }}>
+                          ⏱ {item.estimatedMinutes >= 60
+                            ? `${Math.floor(item.estimatedMinutes / 60)}h${item.estimatedMinutes % 60 > 0 ? ` ${item.estimatedMinutes % 60}m` : ""}`
+                            : `${item.estimatedMinutes}m`}
+                        </span>
+                      )}
+                      {item.category && (
+                        <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 99, background: isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.05)", color: isDark ? "#94A3B8" : "#64748B" }}>
+                          {item.category}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <span style={{
+                    fontSize: 13, fontWeight: 500,
+                    color: item.checked ? (isDark ? "#6EE7B7" : "#065F46") : (isDark ? "#E2E8F0" : "#1E293B"),
+                    textDecoration: item.checked ? "line-through" : "none",
+                    opacity: item.checked ? 0.75 : 1,
+                  }}>
+                    {idx + 1}. {item.title}
+                  </span>
+                </div>
+                {item.checked && item.checkedAt && (
+                  <span style={{ fontSize: 10, color: "#10B981", flexShrink: 0 }}>
+                    {new Date(item.checkedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+              </div>
+            ))}
+            {allChecked && (
+              <p style={{ fontSize: 11, color: "#10B981", fontWeight: 600, textAlign: "center", marginTop: 4, padding: "6px", background: "rgba(16,185,129,.07)", borderRadius: 8 }}>
+                ✓ All steps done — ready to submit your report!
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Bottom row */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <span style={{ fontSize: 12, color: isDark ? "#64748B" : "#94A3B8" }}>
@@ -428,8 +664,8 @@ function TaskCard({
               <button onClick={onReport} style={{
                 display: "flex", alignItems: "center", gap: 6,
                 padding: "7px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                background: "#10B981", color: "white",
-                border: "none", cursor: "pointer", transition: "opacity .15s",
+                background: allChecked && hasChecklist ? "#10B981" : (hasChecklist ? "rgba(16,185,129,.7)" : "#10B981"),
+                color: "white", border: "none", cursor: "pointer", transition: "opacity .15s",
               }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.88"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
@@ -449,6 +685,7 @@ function TaskCard({
           </div>
         </div>
       </div>
+
     </div>
   );
 }
@@ -484,6 +721,14 @@ export function MemberPage() {
   const [toast,       setToast]       = useState<string | null>(null);
   const [emailInput,  setEmailInput]  = useState("");
   const [emailSaving, setEmailSaving] = useState(false);
+  const [ideas,        setIdeas]        = useState<FirestoreIdea[]>([]);
+  const [ideaTitle,    setIdeaTitle]    = useState("");
+  const [ideaDesc,     setIdeaDesc]     = useState("");
+  const [ideaSaving,   setIdeaSaving]   = useState(false);
+  const [routines,     setRoutines]     = useState<FirestoreRoutine[]>([]);
+  const [routineReport,setRoutineReport]= useState<{ id: string; text: string } | null>(null);
+  const [reportSaving, setReportSaving] = useState(false);
+  const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(null);
 
   const toggleTheme = () => { const d = !isDark; setIsDark(d); saveTheme(d); };
 
@@ -496,8 +741,15 @@ export function MemberPage() {
     if (!memberId) { setNotFound(true); setLoading(false); return; }
     setLoading(true);
     try {
-      const [m, t] = await Promise.all([fetchMemberById(memberId), fetchTasksByMemberId(memberId)]);
-      if (!m) { setNotFound(true); } else { setMember(m); setTasks(t); setEmailInput(m.email ?? ""); }
+      const [m, t] = await Promise.all([
+        fetchMemberById(memberId),
+        fetchTasksByMemberId(memberId),
+      ]);
+      if (!m) { setNotFound(true); } else {
+        setMember(m); setTasks(t); setEmailInput(m.email ?? "");
+        fetchIdeasByMemberId(memberId).then(setIdeas).catch(() => {});
+        fetchRoutinesByMemberId(memberId).then(setRoutines).catch(() => {});
+      }
     } catch { setNotFound(true); }
     finally { setLoading(false); }
   }, [memberId]);
@@ -518,6 +770,84 @@ export function MemberPage() {
       showToast(trimmed ? "Email saved! You'll be notified on new tasks ✉️" : "Email removed.");
     } catch { showToast("Failed to save email."); }
     finally { setEmailSaving(false); }
+  }
+
+  async function submitIdea() {
+    if (!ideaTitle.trim() || !memberId || !member) return;
+    setIdeaSaving(true);
+    try {
+      await createIdea({
+        title:       ideaTitle.trim(),
+        description: ideaDesc.trim(),
+        memberId,
+        memberName:  member.name,
+        memberColor: member.color || "#6366F1",
+        category:    "",
+        status:      "new",
+        adminComment: "",
+      });
+      setIdeaTitle(""); setIdeaDesc("");
+      const updated = await fetchIdeasByMemberId(memberId);
+      setIdeas(updated);
+      showToast("Idea submitted! Your team will review it 💡");
+    } catch { showToast("Failed to submit idea."); }
+    finally { setIdeaSaving(false); }
+  }
+
+  async function toggleChecklistItem(taskId: string, itemId: string, checked: boolean) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const updatedItems: ChecklistItem[] = (task.checklistItems ?? []).map((item) =>
+      item.id === itemId ? { ...item, checked, checkedAt: checked ? new Date().toISOString() : "" } : item
+    );
+    setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, checklistItems: updatedItems } : t));
+    setReportTask((prev) => prev?.id === taskId ? { ...prev, checklistItems: updatedItems } : prev);
+    try {
+      await updateTask(taskId, { checklistItems: updatedItems });
+    } catch {
+      setTasks((prev) => prev.map((t) => t.id === taskId ? task : t));
+      setReportTask((prev) => prev?.id === taskId ? task : prev);
+      showToast("Failed to save. Try again.");
+    }
+  }
+
+  async function toggleRoutineItem(routineId: string, itemId: string, checked: boolean) {
+    const routine = routines.find((r) => r.id === routineId);
+    if (!routine || !routineId) return;
+    const updatedItems = routine.items.map((item) =>
+      item.id === itemId
+        ? { ...item, checked, checkedAt: checked ? new Date().toISOString() : "" }
+        : item
+    );
+    const allDone = updatedItems.every((i) => i.checked);
+    const anyDone = updatedItems.some((i) => i.checked);
+    const newStatus = allDone ? "completed" : anyDone ? "in-progress" : "pending";
+    const optimistic: FirestoreRoutine = { ...routine, items: updatedItems, status: newStatus };
+    setRoutines((prev) => prev.map((r) => r.id === routineId ? optimistic : r));
+    try {
+      await updateRoutine(routineId, { items: updatedItems, status: newStatus });
+    } catch {
+      setRoutines((prev) => prev.map((r) => r.id === routineId ? routine : r));
+      showToast("Failed to save. Try again.");
+    }
+  }
+
+  async function submitRoutineReport(routineId: string, report: string) {
+    if (!report.trim()) return;
+    setReportSaving(true);
+    try {
+      await updateRoutine(routineId, {
+        report: report.trim(),
+        reportedAt: new Date().toISOString(),
+        status: "completed",
+      });
+      setRoutines((prev) => prev.map((r) =>
+        r.id === routineId ? { ...r, report: report.trim(), status: "completed" } : r
+      ));
+      setRoutineReport(null);
+      showToast("Report submitted! Great work ✅");
+    } catch { showToast("Failed to submit report."); }
+    finally { setReportSaving(false); }
   }
 
   async function handleStart(task: FirestoreTask) {
@@ -770,6 +1100,7 @@ export function MemberPage() {
                   starting={startingId === t.id}
                   onStart={() => handleStart(t)}
                   onReport={() => setReportTask(t)}
+                  onToggleItem={(itemId, checked) => toggleChecklistItem(t.id!, itemId, checked)}
                 />
               ))}
             </div>
@@ -828,6 +1159,357 @@ export function MemberPage() {
               <p style={{ fontSize: 11, color: isDark ? "#64748B" : "#94A3B8", marginTop: 8, marginBottom: 0 }}>
                 Currently notifying: <strong style={{ color: isDark ? "#A5B4FC" : "#4F46E5" }}>{member.email}</strong>
               </p>
+            )}
+          </div>
+
+          {/* ── Daily Routines Section ───────────────────────────────────────── */}
+          {routines.length > 0 && (
+            <div style={{ marginTop: 28 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: isDark ? "#64748B" : "#94A3B8", marginBottom: 12 }}>
+                Daily Routines ({routines.length})
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {routines.map((routine) => {
+                  const checkedCount = routine.items.filter((i) => i.checked).length;
+                  const total        = routine.items.length;
+                  const pct          = total > 0 ? Math.round((checkedCount / total) * 100) : 0;
+                  const isExpanded   = expandedRoutineId === routine.id;
+                  const statusColor  = routine.status === "completed" ? "#10B981" : routine.status === "in-progress" ? "#F59E0B" : "#94A3B8";
+                  const statusLabel  = routine.status === "completed" ? "Completed" : routine.status === "in-progress" ? "In Progress" : "Pending";
+
+                  return (
+                    <div key={routine.id} className="mp-card" style={{
+                      borderRadius: 16, overflow: "hidden",
+                      background: isDark ? "rgba(255,255,255,.025)" : "#FFFFFF",
+                      border: `1px solid ${isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.08)"}`,
+                    }}>
+                      {/* Color bar */}
+                      <div style={{ height: 3, background: member?.color || "#6366F1" }}/>
+
+                      {/* Header — clickable to expand */}
+                      <div
+                        onClick={() => setExpandedRoutineId(isExpanded ? null : (routine.id ?? null))}
+                        style={{ padding: "14px 16px", cursor: "pointer" }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: 14, fontWeight: 700, color: isDark ? "#F1F5F9" : "#0F172A", marginBottom: 2 }}>
+                              {routine.title}
+                            </p>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                              {routine.timeRange && (
+                                <span style={{ fontSize: 11, color: isDark ? "#64748B" : "#94A3B8" }}>🕐 {routine.timeRange}</span>
+                              )}
+                              <span style={{ fontSize: 11, color: isDark ? "#64748B" : "#94A3B8" }}>
+                                📅 {new Date(routine.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                              </span>
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                            <span style={{
+                              fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 99,
+                              background: `${statusColor}18`, color: statusColor,
+                              border: `1px solid ${statusColor}30`,
+                            }}>
+                              {statusLabel}
+                            </span>
+                            <span style={{ fontSize: 12, color: isDark ? "#64748B" : "#94A3B8", transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform .2s" }}>▾</span>
+                          </div>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{ flex: 1, height: 6, background: isDark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.06)", borderRadius: 99, overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${pct}%`, background: pct === 100 ? "#10B981" : (member?.color || "#6366F1"), borderRadius: 99, transition: "width .4s ease" }}/>
+                          </div>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: pct === 100 ? "#10B981" : (isDark ? "#94A3B8" : "#64748B"), flexShrink: 0 }}>
+                            {checkedCount}/{total}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Expanded checklist */}
+                      {isExpanded && (
+                        <div style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.06)"}`, padding: "12px 16px 16px" }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+                            {routine.items.map((item) => {
+                              const impactColor = item.impact === "high" ? "#EF4444" : item.impact === "medium" ? "#F59E0B" : "#10B981";
+                              const impactLabel = item.impact === "high" ? "High" : item.impact === "medium" ? "Medium" : "Low";
+                              return (
+                                <div key={item.id}
+                                  onClick={() => routine.id && routine.status !== "completed" && toggleRoutineItem(routine.id, item.id, !item.checked)}
+                                  style={{
+                                    display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 12px",
+                                    borderRadius: 10, cursor: routine.status !== "completed" ? "pointer" : "default",
+                                    background: item.checked
+                                      ? (isDark ? "rgba(16,185,129,.08)" : "rgba(16,185,129,.06)")
+                                      : (isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)"),
+                                    border: `1px solid ${item.checked ? "rgba(16,185,129,.2)" : (isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.06)")}`,
+                                    transition: "all .15s",
+                                  }}>
+                                  {/* Checkbox */}
+                                  <div style={{
+                                    width: 20, height: 20, borderRadius: 6, flexShrink: 0, marginTop: 1,
+                                    border: `2px solid ${item.checked ? "#10B981" : (isDark ? "rgba(255,255,255,.2)" : "rgba(0,0,0,.2)")}`,
+                                    background: item.checked ? "#10B981" : "transparent",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    transition: "all .15s",
+                                  }}>
+                                    {item.checked && (
+                                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                        <path d="M2 5l2.5 2.5 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                      </svg>
+                                    )}
+                                  </div>
+
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    {/* Badges row */}
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
+                                      <span style={{
+                                        fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 99,
+                                        background: `${impactColor}18`, color: impactColor,
+                                      }}>
+                                        {impactLabel} Impact
+                                      </span>
+                                      {item.estimatedMinutes > 0 && (
+                                        <span style={{ fontSize: 10, color: isDark ? "#64748B" : "#94A3B8" }}>
+                                          ⏱ {item.estimatedMinutes >= 60
+                                            ? `${Math.floor(item.estimatedMinutes / 60)}h${item.estimatedMinutes % 60 > 0 ? ` ${item.estimatedMinutes % 60}m` : ""}`
+                                            : `${item.estimatedMinutes}m`}
+                                        </span>
+                                      )}
+                                      {item.category && (
+                                        <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 99, background: isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.05)", color: isDark ? "#94A3B8" : "#64748B" }}>
+                                          {item.category}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p style={{
+                                      fontSize: 13, fontWeight: 500,
+                                      color: item.checked ? (isDark ? "#6EE7B7" : "#065F46") : (isDark ? "#E2E8F0" : "#1E293B"),
+                                      textDecoration: item.checked ? "line-through" : "none",
+                                      opacity: item.checked ? 0.7 : 1,
+                                    }}>
+                                      {item.title}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Report section */}
+                          {(() => {
+                            const activeReport = routineReport?.id === routine.id ? routineReport : null;
+                            return routine.report ? (
+                            <div style={{
+                              padding: "12px 14px", borderRadius: 10,
+                              background: isDark ? "rgba(16,185,129,.08)" : "rgba(16,185,129,.06)",
+                              border: "1px solid rgba(16,185,129,.2)",
+                            }}>
+                              <p style={{ fontSize: 11, fontWeight: 700, color: "#10B981", marginBottom: 4 }}>Submitted Report</p>
+                              <p style={{ fontSize: 12, color: isDark ? "#6EE7B7" : "#065F46", lineHeight: 1.6 }}>{routine.report}</p>
+                            </div>
+                          ) : routine.status !== "completed" && (
+                            activeReport ? (
+                              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                <textarea
+                                  value={activeReport.text}
+                                  onChange={(e) => setRoutineReport({ id: routine.id!, text: e.target.value })}
+                                  placeholder="Summarize what you accomplished today…"
+                                  rows={3}
+                                  style={{
+                                    width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13,
+                                    background: isDark ? "rgba(255,255,255,.06)" : "#F8FAFC",
+                                    border: `1px solid ${isDark ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.1)"}`,
+                                    color: isDark ? "#F1F5F9" : "#0F172A", outline: "none",
+                                    fontFamily: "inherit", resize: "vertical", lineHeight: 1.6,
+                                  }}
+                                  onFocus={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = "#10B981"; }}
+                                  onBlur={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = isDark ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.1)"; }}
+                                />
+                                <div style={{ display: "flex", gap: 8 }}>
+                                  <button
+                                    onClick={() => setRoutineReport(null)}
+                                    style={{
+                                      flex: 1, padding: "8px", borderRadius: 8, fontSize: 12,
+                                      background: "transparent", color: isDark ? "#64748B" : "#94A3B8",
+                                      border: `1px solid ${isDark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.1)"}`,
+                                      cursor: "pointer",
+                                    }}>
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={() => routine.id && submitRoutineReport(routine.id, activeReport.text)}
+                                    disabled={reportSaving || !activeReport.text.trim()}
+                                    style={{
+                                      flex: 2, padding: "8px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                                      background: reportSaving || !activeReport.text.trim() ? "rgba(16,185,129,.4)" : "#10B981",
+                                      border: "none", color: "white",
+                                      cursor: reportSaving || !activeReport.text.trim() ? "default" : "pointer",
+                                    }}>
+                                    {reportSaving ? "Submitting…" : "✓ Submit Report"}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setRoutineReport({ id: routine.id!, text: "" })}
+                                style={{
+                                  width: "100%", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 600,
+                                  background: pct >= 50
+                                    ? "#10B981"
+                                    : (isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.04)"),
+                                  color: pct >= 50 ? "white" : (isDark ? "#64748B" : "#94A3B8"),
+                                  border: pct >= 50
+                                    ? "none"
+                                    : `1px solid ${isDark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.1)"}`,
+                                  cursor: "pointer", transition: "all .15s",
+                                }}>
+                                {pct >= 50 ? "✓ Submit Report" : "Submit Report"}
+                              </button>
+                            )
+                          );
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Ideas Section ─────────────────────────────────────────────────── */}
+          <div style={{ marginTop: 28 }}>
+
+            {/* Submit form */}
+            <div style={{
+              padding: "20px 22px", borderRadius: 16,
+              background: isDark ? "rgba(255,255,255,.025)" : "#FFFFFF",
+              border: `1px solid ${isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.08)"}`,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                  background: "rgba(245,158,11,.15)",
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15,
+                }}>💡</div>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: isDark ? "#E2E8F0" : "#1E293B", margin: 0 }}>
+                    Share an Idea
+                  </p>
+                  <p style={{ fontSize: 11, color: isDark ? "#64748B" : "#94A3B8", margin: 0, marginTop: 1 }}>
+                    Got a suggestion? Share it with your team
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <input
+                  value={ideaTitle}
+                  onChange={(e) => setIdeaTitle(e.target.value)}
+                  placeholder="Idea title…"
+                  style={{
+                    width: "100%", padding: "9px 13px", borderRadius: 10, fontSize: 13,
+                    background: isDark ? "rgba(255,255,255,.06)" : "#F8FAFC",
+                    border: `1px solid ${isDark ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.1)"}`,
+                    color: isDark ? "#F1F5F9" : "#0F172A", outline: "none", fontFamily: "inherit",
+                    transition: "border-color .2s",
+                  }}
+                  onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "#F59E0B"; }}
+                  onBlur={(e)  => { (e.target as HTMLInputElement).style.borderColor = isDark ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.1)"; }}
+                />
+                <textarea
+                  value={ideaDesc}
+                  onChange={(e) => setIdeaDesc(e.target.value)}
+                  placeholder="Describe your idea in detail…"
+                  rows={3}
+                  style={{
+                    width: "100%", padding: "9px 13px", borderRadius: 10, fontSize: 13,
+                    background: isDark ? "rgba(255,255,255,.06)" : "#F8FAFC",
+                    border: `1px solid ${isDark ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.1)"}`,
+                    color: isDark ? "#F1F5F9" : "#0F172A", outline: "none", fontFamily: "inherit",
+                    resize: "vertical", lineHeight: 1.6, transition: "border-color .2s",
+                  }}
+                  onFocus={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = "#F59E0B"; }}
+                  onBlur={(e)  => { (e.target as HTMLTextAreaElement).style.borderColor = isDark ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.1)"; }}
+                />
+                <button
+                  onClick={submitIdea}
+                  disabled={ideaSaving || !ideaTitle.trim()}
+                  style={{
+                    alignSelf: "flex-end", padding: "9px 20px", borderRadius: 10,
+                    fontSize: 13, fontWeight: 700,
+                    background: ideaSaving || !ideaTitle.trim() ? "rgba(245,158,11,.4)" : "#F59E0B",
+                    border: "none", color: "white",
+                    cursor: ideaSaving || !ideaTitle.trim() ? "default" : "pointer",
+                    transition: "opacity .15s", display: "flex", alignItems: "center", gap: 6,
+                  }}>
+                  {ideaSaving ? "Submitting…" : "💡 Submit Idea"}
+                </button>
+              </div>
+            </div>
+
+            {/* Previously submitted ideas */}
+            {ideas.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: isDark ? "#64748B" : "#94A3B8", marginBottom: 10 }}>
+                  Your Ideas ({ideas.length})
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {ideas.map((idea) => {
+                    const statusCfg = {
+                      new:         { label: "New",         color: "#6366F1", bg: "rgba(99,102,241,.12)"  },
+                      reviewed:    { label: "Reviewed",    color: "#F59E0B", bg: "rgba(245,158,11,.12)"  },
+                      implemented: { label: "Implemented", color: "#10B981", bg: "rgba(16,185,129,.12)"  },
+                    }[idea.status];
+                    return (
+                      <div key={idea.id} className="mp-card" style={{
+                        padding: "14px 16px", borderRadius: 12,
+                        background: isDark ? "rgba(255,255,255,.03)" : "#FFFFFF",
+                        border: `1px solid ${isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.07)"}`,
+                      }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: isDark ? "#F1F5F9" : "#0F172A", margin: 0, flex: 1 }}>
+                            {idea.title}
+                          </p>
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, padding: "3px 9px",
+                            borderRadius: 99, flexShrink: 0,
+                            background: statusCfg.bg, color: statusCfg.color,
+                            border: `1px solid ${statusCfg.color}30`,
+                          }}>
+                            {statusCfg.label}
+                          </span>
+                        </div>
+                        {idea.description && (
+                          <p style={{ fontSize: 12, color: isDark ? "#64748B" : "#94A3B8", marginTop: 6, lineHeight: 1.6 }}>
+                            {idea.description}
+                          </p>
+                        )}
+                        {idea.adminComment && (
+                          <div style={{
+                            marginTop: 10, padding: "9px 12px", borderRadius: 9,
+                            background: isDark ? "rgba(99,102,241,.08)" : "rgba(99,102,241,.06)",
+                            border: `1px solid rgba(99,102,241,.18)`,
+                          }}>
+                            <p style={{ fontSize: 11, fontWeight: 700, color: "#6366F1", marginBottom: 3 }}>Admin Comment</p>
+                            <p style={{ fontSize: 12, color: isDark ? "#A5B4FC" : "#4338CA", lineHeight: 1.6, margin: 0 }}>
+                              {idea.adminComment}
+                            </p>
+                          </div>
+                        )}
+                        <p style={{ fontSize: 10, color: isDark ? "#475569" : "#CBD5E1", marginTop: 8, marginBottom: 0 }}>
+                          {idea.createdAt
+                            ? new Date((idea.createdAt as { toMillis(): number }).toMillis()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                            : ""}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
 

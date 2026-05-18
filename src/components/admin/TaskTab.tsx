@@ -3,8 +3,10 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   fetchTasks, createTask, updateTask, deleteTask,
   fetchMembers, fetchClients, createReview,
-  type FirestoreTask, type FirestoreMember, type FirestoreClient,
+  fetchIdeas, updateIdea, deleteIdea,
+  type FirestoreTask, type FirestoreMember, type FirestoreClient, type FirestoreIdea, type ChecklistItem,
 } from "../../lib/firebase";
+import { RoutinesPanel } from "./RoutinesPanel";
 import { sendTaskAssignedEmail } from "../../lib/email";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -452,8 +454,20 @@ function AddTaskModal({ task, members, onClose, onSaved }: {
     linkedClientName:  task?.linkedClientName  ?? "",
     estimatedHours:    task?.estimatedHours    ?? (undefined as number | undefined),
   });
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(task?.checklistItems ?? []);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+
+  function clUid() { return Math.random().toString(36).slice(2, 10); }
+  function addClItem() {
+    setChecklistItems((p) => [...p, { id: clUid(), title: "", checked: false, checkedAt: "", impact: "medium" as const, estimatedMinutes: 0, category: "" }]);
+  }
+  function removeClItem(id: string) {
+    setChecklistItems((p) => p.filter((i) => i.id !== id));
+  }
+  function updateClItem(id: string, patch: Partial<ChecklistItem>) {
+    setChecklistItems((p) => p.map((i) => i.id === id ? { ...i, ...patch } : i));
+  }
 
   function set<K extends keyof typeof form>(k: K, v: typeof form[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -476,11 +490,12 @@ function AddTaskModal({ task, members, onClose, onSaved }: {
     if (!form.assignedToId)   { setErr("Please assign to a team member."); return; }
     if (!form.dueDate)        { setErr("Please pick a due date."); return; }
     setSaving(true);
+    const cleanChecklist = checklistItems.filter((i) => i.title.trim());
     try {
       if (task?.id) {
-        await updateTask(task.id, form);
+        await updateTask(task.id, { ...form, checklistItems: cleanChecklist });
       } else {
-        await createTask(form);
+        await createTask({ ...form, checklistItems: cleanChecklist });
         // Send email notification if member has an email saved
         const assignedMember = members.find((m) => m.id === form.assignedToId);
         if (assignedMember?.email) {
@@ -558,6 +573,102 @@ function AddTaskModal({ task, members, onClose, onSaved }: {
               placeholder="What needs to be done? Include any specific instructions…"
               rows={3} style={{ ...inputBase, resize: "vertical", lineHeight: 1.6 }}
               onFocus={focusBorder} onBlur={blurBorder}/>
+          </div>
+
+          {/* Checklist / Routine Steps */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>
+                Routine Steps
+                {checklistItems.length > 0 && (
+                  <span style={{ marginLeft: 6, color: "var(--accent)", fontWeight: 700 }}>{checklistItems.length} steps</span>
+                )}
+              </label>
+              <button onClick={addClItem}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                style={{ background: "var(--accent-pale)", color: "var(--accent)", border: "none", cursor: "pointer" }}>
+                <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M4.5 1v7M1 4.5h7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                Add Step
+              </button>
+            </div>
+
+            {checklistItems.map((item, idx) => {
+              const impactColor = item.impact === "high" ? "var(--red)" : item.impact === "low" ? "var(--green)" : "var(--gold)";
+              const impactBg    = item.impact === "high" ? "var(--red-pale)" : item.impact === "low" ? "var(--green-pale)" : "var(--gold-pale)";
+              return (
+                <div key={item.id} className="flex flex-col gap-2 rounded-xl p-3"
+                  style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border2)" }}>
+
+                  {/* Row 1: number + title + delete */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
+                      style={{ background: "var(--bg-card)", color: "var(--ink4)", border: "0.5px solid var(--border2)" }}>
+                      {idx + 1}
+                    </span>
+                    <input value={item.title} onChange={(e) => updateClItem(item.id, { title: e.target.value })}
+                      placeholder={`Step ${idx + 1} description…`}
+                      style={{ ...inputBase, flex: 1, background: "var(--bg-card)" }}
+                      onFocus={focusBorder} onBlur={blurBorder}/>
+                    <button onClick={() => removeClItem(item.id)}
+                      className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--ink4)" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--red)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--ink4)"; }}>
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Row 2: impact + time + category */}
+                  <div className="flex items-center gap-2 flex-wrap">
+
+                    {/* Impact */}
+                    <div className="flex items-center gap-1">
+                      {(["high", "medium", "low"] as const).map((lvl) => (
+                        <button key={lvl} onClick={() => updateClItem(item.id, { impact: lvl })}
+                          className="px-2 py-0.5 rounded-md text-[9px] font-bold capitalize transition-all"
+                          style={{
+                            background: item.impact === lvl ? impactBg : "var(--bg-card)",
+                            border: `0.5px solid ${item.impact === lvl ? impactColor : "var(--border2)"}`,
+                            color: item.impact === lvl ? impactColor : "var(--ink4)",
+                            cursor: "pointer",
+                          }}>
+                          {lvl}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Estimated minutes */}
+                    <div className="flex items-center gap-1">
+                      <span style={{ fontSize: 10, color: "var(--ink4)" }}>⏱</span>
+                      <input
+                        type="number" min={0} max={480}
+                        value={item.estimatedMinutes || ""}
+                        onChange={(e) => updateClItem(item.id, { estimatedMinutes: parseInt(e.target.value) || 0 })}
+                        placeholder="min"
+                        style={{ ...inputBase, width: 52, padding: "3px 7px", fontSize: 11, background: "var(--bg-card)" }}
+                        onFocus={focusBorder} onBlur={blurBorder}/>
+                      <span style={{ fontSize: 10, color: "var(--ink4)" }}>min</span>
+                    </div>
+
+                    {/* Category */}
+                    <input
+                      value={item.category || ""}
+                      onChange={(e) => updateClItem(item.id, { category: e.target.value })}
+                      placeholder="Category…"
+                      style={{ ...inputBase, flex: 1, minWidth: 80, padding: "3px 9px", fontSize: 11, background: "var(--bg-card)" }}
+                      onFocus={focusBorder} onBlur={blurBorder}/>
+                  </div>
+                </div>
+              );
+            })}
+
+            {checklistItems.length === 0 && (
+              <p className="text-[11px]" style={{ color: "var(--ink4)" }}>
+                Optional — add routine steps with impact level, estimated time, and category.
+              </p>
+            )}
           </div>
 
           {/* Type + Priority */}
@@ -972,6 +1083,18 @@ function TaskCard({ task, onEdit, onDelete, onReport, onReload, selected, onSele
               ⏱ {task.estimatedHours}h
             </span>
           )}
+          {/* Checklist progress */}
+          {task.checklistItems && task.checklistItems.length > 0 && (() => {
+            const done = task.checklistItems.filter((i) => i.checked).length;
+            const total = task.checklistItems.length;
+            const allDone = done === total;
+            return (
+              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1"
+                style={{ background: allDone ? "var(--green-pale)" : "var(--bg-alt)", color: allDone ? "var(--green)" : "var(--ink3)", border: `0.5px solid ${allDone ? "rgba(34,197,94,.25)" : "var(--border2)"}` }}>
+                ☑ {done}/{total}
+              </span>
+            );
+          })()}
 
           {/* Clickable status badge — cycles status; no cycle for overdue */}
           <button
@@ -1339,6 +1462,339 @@ function KanbanBoard({ tasks, onEdit, onDelete, onReport }: {
   );
 }
 
+// ─── Ideas Panel (admin view) ─────────────────────────────────────────────────
+const IDEA_STATUS_CFG = {
+  new:         { label: "New",         color: "var(--accent)",  bg: "var(--accent-pale)"  },
+  reviewed:    { label: "Reviewed",    color: "var(--gold)",    bg: "var(--gold-pale)"    },
+  implemented: { label: "Implemented", color: "var(--green)",   bg: "var(--green-pale)"   },
+};
+
+function IdeaCommentModal({ idea, onClose, onSaved, showToast }: {
+  idea: FirestoreIdea;
+  onClose: () => void;
+  onSaved: () => void;
+  showToast: (msg: string, type?: "success" | "error") => void;
+}) {
+  const [comment, setComment] = useState(idea.adminComment ?? "");
+  const [status,  setStatus]  = useState<FirestoreIdea["status"]>(idea.status);
+  const [saving,  setSaving]  = useState(false);
+
+  async function save() {
+    if (!idea.id) return;
+    setSaving(true);
+    try {
+      await updateIdea(idea.id, { adminComment: comment.trim(), status });
+      onSaved(); onClose();
+    } catch { showToast("Save failed", "error"); }
+    finally { setSaving(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)" }}
+      onClick={onClose}>
+      <div className="w-full max-w-[460px] rounded-2xl overflow-hidden"
+        style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", boxShadow: "var(--shadow-lg)", animation: "fadeScaleIn .22s cubic-bezier(0.16,1,0.3,1) both" }}
+        onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="px-6 py-4 flex items-start justify-between" style={{ borderBottom: "0.5px solid var(--border)" }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: idea.memberColor || "var(--accent)" }}/>
+              <span className="text-[11px]" style={{ color: "var(--ink4)" }}>{idea.memberName}</span>
+            </div>
+            <h2 className="font-semibold text-[15px] leading-snug" style={{ color: "var(--ink)" }}>{idea.title}</h2>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border2)", cursor: "pointer", color: "var(--ink4)" }}>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 flex flex-col gap-4">
+
+          {/* Idea description */}
+          {idea.description && (
+            <div className="p-3 rounded-xl text-[12px] leading-relaxed"
+              style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border)", color: "var(--ink3)" }}>
+              {idea.description}
+            </div>
+          )}
+
+          {/* Status toggle */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Status</label>
+            <div className="flex gap-2">
+              {(["new", "reviewed", "implemented"] as const).map((s) => {
+                const cfg = IDEA_STATUS_CFG[s];
+                return (
+                  <button key={s} onClick={() => setStatus(s)}
+                    className="flex-1 py-2 rounded-lg text-[11px] font-bold transition-all"
+                    style={{
+                      background: status === s ? cfg.bg : "var(--bg-alt)",
+                      border: `0.5px solid ${status === s ? cfg.color : "var(--border2)"}`,
+                      color: status === s ? cfg.color : "var(--ink4)",
+                      cursor: "pointer",
+                    }}>
+                    {cfg.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Admin comment */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Admin Comment</label>
+            <textarea value={comment} onChange={(e) => setComment(e.target.value)}
+              placeholder="Leave feedback or notes for the team member…"
+              rows={4} style={{ ...inputBase, resize: "vertical", lineHeight: 1.6 }}
+              onFocus={focusBorder} onBlur={blurBorder}/>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 flex gap-2.5" style={{ borderTop: "0.5px solid var(--border)" }}>
+          <button onClick={onClose}
+            className="flex-1 py-2.5 rounded-lg text-[13px]"
+            style={{ border: "0.5px solid var(--border2)", color: "var(--ink3)", background: "transparent", cursor: "pointer" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
+            Cancel
+          </button>
+          <button onClick={save} disabled={saving}
+            className="flex-1 py-2.5 rounded-lg text-[13px] font-semibold text-white"
+            style={{ background: "var(--accent)", border: "none", cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IdeasPanel({ showToast }: { showToast: (msg: string, type?: "success" | "error") => void }) {
+  const [ideas,        setIdeas]        = useState<FirestoreIdea[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [filterStatus, setFilterStatus] = useState<"all" | FirestoreIdea["status"]>("all");
+  const [filterMember, setFilterMember] = useState("all");
+  const [editIdea,     setEditIdea]     = useState<FirestoreIdea | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<FirestoreIdea | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { setIdeas(await fetchIdeas()); }
+    catch { showToast("Failed to load ideas", "error"); }
+    finally { setLoading(false); }
+  }, [showToast]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const members = useMemo(() => {
+    const seen = new Map<string, { id: string; name: string; color: string }>();
+    ideas.forEach((i) => { if (!seen.has(i.memberId)) seen.set(i.memberId, { id: i.memberId, name: i.memberName, color: i.memberColor }); });
+    return [...seen.values()];
+  }, [ideas]);
+
+  const filtered = useMemo(() => ideas.filter((i) => {
+    if (filterStatus !== "all" && i.status !== filterStatus) return false;
+    if (filterMember !== "all" && i.memberId !== filterMember) return false;
+    return true;
+  }), [ideas, filterStatus, filterMember]);
+
+  const counts = useMemo(() => ({
+    new:         ideas.filter((i) => i.status === "new").length,
+    reviewed:    ideas.filter((i) => i.status === "reviewed").length,
+    implemented: ideas.filter((i) => i.status === "implemented").length,
+  }), [ideas]);
+
+  async function handleDelete(idea: FirestoreIdea) {
+    if (!idea.id) return;
+    try {
+      await deleteIdea(idea.id);
+      setDeleteTarget(null);
+      await load();
+      showToast("Idea deleted");
+    } catch { showToast("Delete failed", "error"); }
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-semibold text-[15px]" style={{ color: "var(--ink)" }}>Team Ideas</h2>
+          <p className="text-[11px] mt-0.5" style={{ color: "var(--ink4)" }}>
+            {ideas.length} idea{ideas.length !== 1 ? "s" : ""} submitted
+            {counts.new > 0 && <span style={{ color: "var(--accent)" }}> · {counts.new} new</span>}
+          </p>
+        </div>
+        <button onClick={load} className="px-3 py-1.5 rounded-lg text-[12px]"
+          style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", color: "var(--ink4)", cursor: "pointer" }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)"; (e.currentTarget as HTMLElement).style.color = "var(--accent)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border2)"; (e.currentTarget as HTMLElement).style.color = "var(--ink4)"; }}>
+          ↻ Refresh
+        </button>
+      </div>
+
+      {/* Stat chips */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {(["new", "reviewed", "implemented"] as const).map((s) => {
+          const cfg = IDEA_STATUS_CFG[s];
+          return (
+            <div key={s} className="px-3 py-2 rounded-xl flex items-center gap-2"
+              style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)" }}>
+              <span style={{ fontSize: 17, fontWeight: 700, color: cfg.color }}>{counts[s]}</span>
+              <span style={{ fontSize: 11, color: "var(--ink4)" }}>{cfg.label}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        <div className="flex items-center gap-1">
+          <FilterChip active={filterStatus === "all"} onClick={() => setFilterStatus("all")}>All Status</FilterChip>
+          {(["new", "reviewed", "implemented"] as const).map((s) => (
+            <FilterChip key={s} active={filterStatus === s} onClick={() => setFilterStatus(s)}>
+              {IDEA_STATUS_CFG[s].label}
+            </FilterChip>
+          ))}
+        </div>
+        {members.length > 1 && (
+          <div className="flex items-center gap-1">
+            <FilterChip active={filterMember === "all"} onClick={() => setFilterMember("all")}>All Members</FilterChip>
+            {members.map((m) => (
+              <FilterChip key={m.id} active={filterMember === m.id} onClick={() => setFilterMember(m.id)}>
+                <span className="flex items-center gap-1.5">
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: m.color, display: "inline-block", flexShrink: 0 }}/>
+                  {m.name.split(" ")[0]}
+                </span>
+              </FilterChip>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Ideas list */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <div className="w-7 h-7 rounded-full border-2"
+            style={{ borderColor: "var(--border2)", borderTopColor: "var(--accent)", animation: "spinLoader .7s linear infinite" }}/>
+          <span className="text-[12px]" style={{ color: "var(--ink4)" }}>Loading ideas…</span>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 rounded-2xl"
+          style={{ border: "1.5px dashed var(--border2)", textAlign: "center" }}>
+          <div style={{ fontSize: 40 }}>💡</div>
+          <p className="font-semibold text-[14px]" style={{ color: "var(--ink2)" }}>
+            {ideas.length === 0 ? "No ideas yet" : "No ideas match this filter"}
+          </p>
+          <p className="text-[12px]" style={{ color: "var(--ink4)" }}>
+            {ideas.length === 0 ? "Team members can submit ideas from their task portal" : "Try adjusting the filters above"}
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2.5">
+          {filtered.map((idea) => {
+            const cfg = IDEA_STATUS_CFG[idea.status];
+            return (
+              <div key={idea.id} className="rounded-xl overflow-hidden"
+                style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)" }}>
+
+                {/* Color accent bar */}
+                <div style={{ height: 3, background: idea.memberColor || "var(--accent)" }}/>
+
+                <div style={{ padding: "14px 16px" }}>
+                  {/* Top row */}
+                  <div className="flex items-start gap-3 mb-2">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-bold"
+                      style={{ background: `${idea.memberColor || "var(--accent)"}22`, color: idea.memberColor || "var(--accent)", border: `1px solid ${idea.memberColor || "var(--accent)"}33` }}>
+                      {idea.memberName?.[0]?.toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-[11px] font-medium" style={{ color: "var(--ink3)" }}>{idea.memberName}</span>
+                        {idea.createdAt && (
+                          <span className="text-[10px]" style={{ color: "var(--ink4)" }}>
+                            · {new Date((idea.createdAt as { toMillis(): number }).toMillis()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-[13.5px] leading-snug" style={{ color: "var(--ink)" }}>{idea.title}</h3>
+                    </div>
+                    <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full flex-shrink-0"
+                      style={{ background: cfg.bg, color: cfg.color }}>
+                      {cfg.label}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  {idea.description && (
+                    <p className="text-[12px] leading-relaxed mb-2 line-clamp-3" style={{ color: "var(--ink4)", paddingLeft: 36 }}>
+                      {idea.description}
+                    </p>
+                  )}
+
+                  {/* Admin comment preview */}
+                  {idea.adminComment && (
+                    <div className="mb-2 px-3 py-2 rounded-lg text-[11px] leading-relaxed"
+                      style={{ background: "var(--accent-pale)", color: "var(--accent)", border: "0.5px solid rgba(99,102,241,.2)", marginLeft: 36 }}>
+                      <span className="font-semibold">Note: </span>{idea.adminComment.slice(0, 120)}{idea.adminComment.length > 120 ? "…" : ""}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 justify-end">
+                    <button onClick={() => setEditIdea(idea)}
+                      className="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
+                      style={{ background: "var(--accent-pale)", color: "var(--accent)", border: "none", cursor: "pointer" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.8"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
+                      Review
+                    </button>
+                    <button onClick={() => setDeleteTarget(idea)}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                      style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--ink4)" }}
+                      onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "var(--red-pale)"; el.style.color = "var(--red)"; }}
+                      onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "var(--ink4)"; }}>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M1.5 3h9M4 3V2h4v1M3.5 3l.5 7.5M8.5 3l-.5 7.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modals */}
+      {editIdea && (
+        <IdeaCommentModal
+          idea={editIdea}
+          onClose={() => setEditIdea(null)}
+          onSaved={() => { load(); showToast("Idea updated!"); }}
+          showToast={showToast}
+        />
+      )}
+      {deleteTarget && (
+        <DeleteTaskConfirm
+          title={deleteTarget.title}
+          onConfirm={() => handleDelete(deleteTarget)}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+    </div>
+  );
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 // TASK TAB
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1350,6 +1806,7 @@ interface Props {
 }
 
 export function TaskTab({ showToast, openAdd, onOpenAddDone }: Props) {
+  const [activeTab,    setActiveTab]    = useState<"tasks" | "ideas">("tasks");
   const [tasks,        setTasks]        = useState<FirestoreTask[]>([]);
   const [members,      setMembers]      = useState<FirestoreMember[]>([]);
   const [loading,      setLoading]      = useState(true);
@@ -1467,6 +1924,28 @@ export function TaskTab({ showToast, openAdd, onOpenAddDone }: Props) {
 
   return (
     <div className="p-5 flex flex-col gap-4">
+
+      {/* Tab switcher */}
+      <div className="flex items-center gap-1 p-1 rounded-xl self-start"
+        style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border2)" }}>
+        {(["tasks", "ideas"] as const).map((tab) => (
+          <button key={tab} onClick={() => setActiveTab(tab)}
+            className="px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-all"
+            style={{
+              background: activeTab === tab ? "var(--bg-card)" : "transparent",
+              border: activeTab === tab ? "0.5px solid var(--border2)" : "none",
+              color: activeTab === tab ? "var(--ink)" : "var(--ink4)",
+              cursor: "pointer",
+              boxShadow: activeTab === tab ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+            }}>
+            {tab === "tasks" ? "Tasks" : "💡 Ideas"}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "ideas" ? (
+        <IdeasPanel showToast={showToast}/>
+      ) : (<>
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -1724,7 +2203,7 @@ export function TaskTab({ showToast, openAdd, onOpenAddDone }: Props) {
           borderRadius: 14,
           boxShadow: "0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(124,58,237,0.2)",
           animation: "slideUpFade .22s cubic-bezier(0.16,1,0.3,1) both",
-        }}>
+        }} >
           <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)", paddingRight: 6, borderRight: "1px solid var(--border2)" }}>
             {selected.size} selected
           </span>
@@ -1758,6 +2237,15 @@ export function TaskTab({ showToast, openAdd, onOpenAddDone }: Props) {
           </button>
         </div>
       )}
+      {/* ── Routines Section (embedded) ──────────────────────────────────── */}
+      <div style={{
+        borderTop: "1px solid var(--border)",
+        paddingTop: 20, marginTop: 8,
+      }}>
+        <RoutinesPanel showToast={showToast}/>
+      </div>
+
+      </>)}
     </div>
   );
 }
