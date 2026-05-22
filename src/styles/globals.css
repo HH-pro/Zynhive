@@ -63,28 +63,29 @@
   --teal:         var(--cyan);
 }
 
-/* ══ DARK THEME — deep navy premium ════════════════════════════════════════
+/* ══ DARK THEME — pure black premium ═══════════════════════════════════════
    html[data-theme="dark"] set by AdminDashboard ThemeToggle
+   True-black canvas with neon-cyan accent for OLED-style depth.
    ══════════════════════════════════════════════════════════════════════════ */
 [data-theme="dark"] {
-  --bg-base:      #060B22;
-  --bg-alt:       #0C1432;
-  --bg-surface:   #121B40;
-  --bg-panel:     #0A1130;
-  --bg-card:      #101937;
-  --border:       rgba(190,210,255,0.07);
-  --border2:      rgba(190,210,255,0.13);
+  --bg-base:      #000000;
+  --bg-alt:       #0A0A0C;
+  --bg-surface:   #111114;
+  --bg-panel:     #050507;
+  --bg-card:      #0C0C0F;
+  --border:       rgba(255,255,255,0.05);
+  --border2:      rgba(255,255,255,0.10);
 
   --accent:       #4F7DFF;
   --accent2:      #7099FF;
-  --accent-dim:   rgba(79,125,255,0.32);
-  --accent-pale:  rgba(79,125,255,0.10);
-  --accent-pale2: rgba(79,125,255,0.20);
+  --accent-dim:   rgba(79,125,255,0.34);
+  --accent-pale:  rgba(79,125,255,0.08);
+  --accent-pale2: rgba(79,125,255,0.18);
 
-  --ink:          #EEF2FF;
-  --ink2:         #C5CFF1;
-  --ink3:         #8C99C2;
-  --ink4:         #525E84;
+  --ink:          #F4F6FF;
+  --ink2:         #CBD0E5;
+  --ink3:         #8990AE;
+  --ink4:         #5A607A;
 
   --green:        #34D399;
   --green-pale:   rgba(52,211,153,0.12);
@@ -97,7 +98,7 @@
   --cyan:         #38BDF8;
   --cyan-pale:    rgba(56,189,248,0.12);
 
-  --bg:           #060B22;
+  --bg:           #000000;
 
   /* ── Premium tokens ───────────────────────────────────────────────────── */
   --grad-accent:  linear-gradient(135deg, #2B4DAF 0%, #4F7DFF 100%);
@@ -107,24 +108,24 @@
   --grad-gold:    linear-gradient(135deg, #D97706 0%, #FBBF24 100%);
   --grad-cyan:    linear-gradient(135deg, #0891B2 0%, #38BDF8 100%);
 
-  --glow-accent:  0 0 24px rgba(79,125,255,0.42), 0 0 48px rgba(79,125,255,0.18);
-  --glow-green:   0 0 20px rgba(52,211,153,0.35), 0 0 40px rgba(52,211,153,0.12);
-  --glow-red:     0 0 20px rgba(248,113,113,0.35), 0 0 40px rgba(248,113,113,0.12);
-  --glow-gold:    0 0 20px rgba(251,191,36,0.35),  0 0 40px rgba(251,191,36,0.12);
+  --glow-accent:  0 0 24px rgba(79,125,255,0.55), 0 0 56px rgba(79,125,255,0.22);
+  --glow-green:   0 0 20px rgba(52,211,153,0.42), 0 0 44px rgba(52,211,153,0.14);
+  --glow-red:     0 0 20px rgba(248,113,113,0.42), 0 0 44px rgba(248,113,113,0.14);
+  --glow-gold:    0 0 20px rgba(251,191,36,0.42),  0 0 44px rgba(251,191,36,0.14);
 
   --navy:         #0A1230;
   --navy2:        #1E3A8A;
   --cyan2:        #22D3EE;
-  --hero-bg:      #050818;
-  --hero-text:    #EEF2FF;
-  --hero-muted:   rgba(238,242,255,0.52);
+  --hero-bg:      #000000;
+  --hero-text:    #F4F6FF;
+  --hero-muted:   rgba(244,246,255,0.52);
   --hero-border:  rgba(79,125,255,0.22);
-  --marquee-bg:   #0A1130;
+  --marquee-bg:   #050507;
   --marquee-text: #1E2A55;
-  --nav-glass:    rgba(6,11,34,0.94);
-  --shadow-sm:    0 1px 4px rgba(0,0,0,0.55);
-  --shadow-md:    0 6px 22px rgba(0,0,0,0.65);
-  --shadow-lg:    0 16px 52px rgba(0,0,0,0.80);
+  --nav-glass:    rgba(0,0,0,0.78);
+  --shadow-sm:    0 1px 4px rgba(0,0,0,0.7);
+  --shadow-md:    0 6px 22px rgba(0,0,0,0.82);
+  --shadow-lg:    0 16px 52px rgba(0,0,0,0.92), 0 0 0 1px rgba(255,255,255,0.04);
 
   --amber:        var(--accent);
   --amber2:       var(--accent2);
@@ -763,4 +764,228 @@ p { font-weight: 300; line-height: 1.8; }
 button, a, label {
   font-family: 'Poppins', sans-serif;
   font-weight: 500;
+}
+
+/* ══ ADMIN 3D & PREMIUM ENHANCEMENTS ════════════════════════════════════════
+   New keyframes & utility classes that the admin panel uses to add depth,
+   ambient motion and tactile hover states.
+   ══════════════════════════════════════════════════════════════════════════ */
+@keyframes float3D {
+  0%, 100% { transform: translate3d(0, 0, 0) rotateX(0) rotateY(0); }
+  25%      { transform: translate3d(0, -4px, 0) rotateX(2deg) rotateY(-2deg); }
+  50%      { transform: translate3d(0, -6px, 0) rotateX(0) rotateY(0); }
+  75%      { transform: translate3d(0, -4px, 0) rotateX(-2deg) rotateY(2deg); }
+}
+@keyframes ambientShift {
+  0%   { background-position: 0% 0%; }
+  50%  { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+@keyframes neonPulse {
+  0%, 100% { box-shadow: 0 0 8px var(--accent-dim), 0 0 20px var(--accent-pale); }
+  50%      { box-shadow: 0 0 16px var(--accent), 0 0 40px var(--accent-dim); }
+}
+@keyframes scanLine {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  50%  { opacity: 0.6; }
+  100% { transform: translateY(200%); opacity: 0; }
+}
+@keyframes ringSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes tickerDot {
+  0%, 100% { transform: scale(1);   opacity: 1;   }
+  50%      { transform: scale(1.6); opacity: 0.4; }
+}
+@keyframes ambientGradient {
+  0%   { background-position:   0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+
+/* — 3D card lift (tactile hover with perspective) — */
+.card-3d {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: perspective(800px) translate3d(0,0,0);
+  transition:
+    transform 0.32s cubic-bezier(0.16,1,0.3,1),
+    box-shadow 0.32s cubic-bezier(0.16,1,0.3,1),
+    border-color 0.22s;
+  will-change: transform;
+}
+.card-3d:hover {
+  transform: perspective(800px) translate3d(0,-4px,0) rotateX(2deg) scale(1.012);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-dim);
+}
+.card-3d::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.card-3d:hover::before { opacity: 1; }
+
+/* — Stat card with shine sweep on hover — */
+.stat-3d {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.28s cubic-bezier(0.16,1,0.3,1), box-shadow 0.28s, border-color 0.22s;
+  will-change: transform;
+}
+.stat-3d::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -120%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+  transition: transform 0.7s var(--ease);
+  pointer-events: none;
+}
+.stat-3d:hover {
+  transform: translateY(-3px) scale(1.012);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent-dim);
+}
+.stat-3d:hover::after { transform: translateX(280%); }
+
+/* — Sidebar nav item: subtle 3D push on hover — */
+.nav-3d {
+  transition: transform 0.18s var(--ease), background 0.18s, color 0.18s, box-shadow 0.18s !important;
+}
+.nav-3d:hover:not([data-active="true"]) {
+  transform: translateX(2px);
+}
+.nav-3d[data-active="true"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 4px 14px var(--accent-pale);
+}
+
+/* — Ambient gradient backdrop for the admin main area — */
+.admin-ambient-bg {
+  position: relative;
+  isolation: isolate;
+}
+.admin-ambient-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(900px 600px at 8% -10%, var(--accent-pale) 0%, transparent 55%),
+    radial-gradient(700px 500px at 92% 110%, rgba(56,189,248,0.06) 0%, transparent 55%);
+  background-size: 200% 200%;
+  animation: ambientGradient 22s ease-in-out infinite;
+  pointer-events: none;
+}
+[data-theme="dark"] .admin-ambient-bg::before {
+  background:
+    radial-gradient(900px 600px at 8% -10%, rgba(79,125,255,0.12) 0%, transparent 55%),
+    radial-gradient(700px 500px at 92% 110%, rgba(56,189,248,0.07) 0%, transparent 55%);
+  background-size: 200% 200%;
+}
+
+/* — Logo / brand 3D float — */
+.float-3d { animation: float3D 7s ease-in-out infinite; }
+
+/* — Neon ring around important badges — */
+.neon-ring { animation: neonPulse 2.4s ease-in-out infinite; }
+
+/* — Pulsing status dot (online/syncing) — */
+.ticker-dot { animation: tickerDot 1.6s ease-in-out infinite; }
+
+/* — Focus mode: collapses chrome for distraction-free work — */
+body.focus-mode .admin-pane-sidebar,
+body.focus-mode .admin-header-chrome { display: none !important; }
+body.focus-mode .admin-content-pad { padding: 8px !important; }
+
+/* — Animated gradient border (for premium CTA / hero card) — */
+.grad-border {
+  position: relative;
+  background-clip: padding-box;
+  border: 1px solid transparent;
+}
+.grad-border::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(120deg, var(--accent), var(--cyan), var(--accent));
+  background-size: 200% 200%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: ambientGradient 6s linear infinite;
+  pointer-events: none;
+}
+
+/* — Subtle scan line for the focus-mode entry / live cards — */
+.scan-line {
+  position: relative;
+  overflow: hidden;
+}
+.scan-line::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0; height: 36%;
+  background: linear-gradient(180deg, var(--accent-pale) 0%, transparent 100%);
+  pointer-events: none;
+  animation: scanLine 4s linear infinite;
+}
+
+/* — Inset 3D button (used in admin header) — */
+.btn-3d-inset {
+  position: relative;
+  transition: transform 0.16s var(--ease), box-shadow 0.18s, background 0.16s, border-color 0.16s;
+}
+.btn-3d-inset:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px var(--accent-pale), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.btn-3d-inset:active { transform: translateY(0); }
+
+/* — Animated bell / dot ring — */
+.bell-ring {
+  position: relative;
+}
+.bell-ring::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 1.5px solid var(--gold);
+  opacity: 0;
+  animation: pulseRing 2s ease-out infinite;
+  pointer-events: none;
+}
+
+/* — Override transition for transforms only on these specific elements,
+     since the global "*" transition rule excludes inline transforms — */
+.card-3d, .stat-3d, .nav-3d, .btn-3d-inset {
+  transition-property: transform, background-color, border-color, color, box-shadow !important;
+}
+
+/* — Pure-black-mode body tweak: full ink everywhere — */
+[data-theme="dark"] body {
+  background: var(--bg-base);
+  color: var(--ink2);
+}
+
+/* — Premium scrollbar tint for dark mode — */
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.10);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dim);
+  background-clip: padding-box;
 }

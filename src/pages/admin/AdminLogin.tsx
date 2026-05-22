@@ -78,7 +78,7 @@ export function AdminLogin({ onSuccess }: Props) {
         {/* Logo + tagline */}
         <div className="text-center mb-9">
           <div className="inline-flex items-center gap-3 mb-5">
-            <div className="relative w-12 h-12">
+            <div className="relative w-12 h-12 float-3d">
               <div className="absolute inset-0 rounded-2xl"
                 style={{
                   background: "linear-gradient(135deg, #4F7DFF 0%, #22B8D4 100%)",

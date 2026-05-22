@@ -258,6 +258,40 @@ const Ic = {
       <rect x="10" y="2" width="3" height="11" rx="0.8" stroke="currentColor" strokeWidth="1.1"/>
     </svg>
   ),
+  Wifi: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M1 5.5a9 9 0 0112 0M3 8a6 6 0 018 0M5 10.5a3 3 0 014 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <circle cx="7" cy="12.5" r="0.8" fill="currentColor"/>
+    </svg>
+  ),
+  WifiOff: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M1 5.5a9 9 0 016-2.5M9 3.2a9 9 0 014 2.3M3 8a6 6 0 016.5-1.2M11 8a6 6 0 00-2-1.4M5 10.5a3 3 0 014 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M1.5 1.5l11 11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  ),
+  Maximize: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M1.5 5V1.5H5M9 1.5h3.5V5M12.5 9v3.5H9M5 12.5H1.5V9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Minimize: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M5 1.5V5H1.5M9 1.5V5h3.5M9 12.5V9h3.5M5 12.5V9H1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Keyboard: () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+      <rect x="1" y="3.5" width="13" height="8" rx="1.6" stroke="currentColor" strokeWidth="1.1"/>
+      <path d="M3 6h.5M5 6h.5M7 6h.5M9 6h.5M11 6h.5M4 9.2h7" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+    </svg>
+  ),
+  Calendar: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <rect x="1.5" y="2.5" width="11" height="10" rx="1.4" stroke="currentColor" strokeWidth="1.1"/>
+      <path d="M1.5 5.5h11M4 1.5v2M10 1.5v2" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+    </svg>
+  ),
 };
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
@@ -290,6 +324,199 @@ function useWindowWidth() {
     return () => window.removeEventListener("resize", handler);
   }, []);
   return w;
+}
+
+// ─── Live clock (HH:MM:SS · weekday) ──────────────────────────────────────────
+function useNow(intervalMs = 1000) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), intervalMs);
+    return () => clearInterval(t);
+  }, [intervalMs]);
+  return now;
+}
+
+function LiveClock({ compact = false }: { compact?: boolean }) {
+  const now = useNow(1000);
+  const hh  = String(now.getHours()).padStart(2, "0");
+  const mm  = String(now.getMinutes()).padStart(2, "0");
+  const ss  = String(now.getSeconds()).padStart(2, "0");
+  const day = now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return (
+    <div
+      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
+      title={now.toLocaleString()}
+      style={{
+        background: "var(--bg-alt)",
+        border: "0.5px solid var(--border)",
+        fontFamily: "'JetBrains Mono', monospace",
+        color: "var(--ink2)",
+        lineHeight: 1,
+      }}>
+      <span style={{ color: "var(--accent)", fontSize: 11, fontWeight: 700, letterSpacing: "0.04em" }}>
+        {hh}:{mm}
+        <span style={{ opacity: 0.55, fontWeight: 500 }}>:{ss}</span>
+      </span>
+      {!compact && (
+        <span style={{ color: "var(--ink4)", fontSize: 10, letterSpacing: "0.04em" }}>
+          {day}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ─── Network status (online / offline) ───────────────────────────────────────
+function useOnline() {
+  const [online, setOnline] = useState(typeof navigator !== "undefined" ? navigator.onLine : true);
+  useEffect(() => {
+    const up = () => setOnline(true);
+    const down = () => setOnline(false);
+    window.addEventListener("online", up);
+    window.addEventListener("offline", down);
+    return () => { window.removeEventListener("online", up); window.removeEventListener("offline", down); };
+  }, []);
+  return online;
+}
+
+function NetworkPill() {
+  const online = useOnline();
+  return (
+    <div
+      title={online ? "Connected · all systems go" : "Offline — changes won't sync"}
+      className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg"
+      style={{
+        background: online ? "var(--green-pale)" : "var(--red-pale)",
+        border: `0.5px solid ${online ? "rgba(52,211,153,0.28)" : "rgba(248,113,113,0.30)"}`,
+        color: online ? "var(--green)" : "var(--red)",
+      }}>
+      <span className={online ? "ticker-dot" : ""}
+        style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor", flexShrink: 0 }}/>
+      <span style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: "0.04em" }}>
+        {online ? "ONLINE" : "OFFLINE"}
+      </span>
+    </div>
+  );
+}
+
+// ─── Focus mode toggle ───────────────────────────────────────────────────────
+// Hides sidebar/header chrome for distraction-free work.
+function useFocusMode(): [boolean, () => void] {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    document.body.classList.toggle("focus-mode", on);
+    return () => document.body.classList.remove("focus-mode");
+  }, [on]);
+  const toggle = useCallback(() => setOn((v) => !v), []);
+  return [on, toggle];
+}
+
+// ─── Keyboard shortcut help modal ────────────────────────────────────────────
+const SHORTCUTS: { keys: string[]; label: string; group: string }[] = [
+  { keys: ["⌘", "K"],       label: "Open command palette",     group: "Navigation" },
+  { keys: ["?"],            label: "Show this shortcut sheet", group: "Navigation" },
+  { keys: ["G", "O"],       label: "Go to Overview",           group: "Navigation" },
+  { keys: ["G", "P"],       label: "Go to Projects",           group: "Navigation" },
+  { keys: ["G", "L"],       label: "Go to Leads",              group: "Navigation" },
+  { keys: ["G", "T"],       label: "Go to Team",               group: "Navigation" },
+  { keys: ["G", "K"],       label: "Go to Tasks",              group: "Navigation" },
+  { keys: ["F"],            label: "Toggle focus mode",        group: "Workspace"  },
+  { keys: ["⇧", "D"],       label: "Toggle dark mode",         group: "Workspace"  },
+  { keys: ["N"],            label: "New item on current tab",  group: "Workspace"  },
+  { keys: ["Esc"],          label: "Close panel / modal",      group: "Workspace"  },
+];
+
+function KeyboardHelpModal({ onClose }: { onClose: () => void }) {
+  const groups = useMemo(() => {
+    const byGroup: Record<string, typeof SHORTCUTS> = {};
+    SHORTCUTS.forEach((s) => { (byGroup[s.group] ||= []).push(s); });
+    return byGroup;
+  }, []);
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[210] flex items-center justify-center px-4"
+      style={{ background: "rgba(0,0,0,0.62)", backdropFilter: "blur(10px)" }}
+      onClick={onClose}>
+      <div className="w-full max-w-[520px] rounded-2xl overflow-hidden grad-border"
+        style={{
+          background: "var(--bg-card)",
+          boxShadow: "var(--shadow-lg)",
+          animation: "fadeScaleIn .22s cubic-bezier(0.16,1,0.3,1) both",
+        }}
+        onClick={(e) => e.stopPropagation()}>
+
+        <div className="px-5 py-4 flex items-center justify-between"
+          style={{ borderBottom: "0.5px solid var(--border)" }}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: "var(--accent-pale)", color: "var(--accent)" }}>
+              <Ic.Keyboard />
+            </div>
+            <div>
+              <p className="text-[14px] font-semibold" style={{ color: "var(--ink)" }}>Keyboard shortcuts</p>
+              <p className="text-[11px]" style={{ color: "var(--ink4)" }}>Move faster around the admin panel</p>
+            </div>
+          </div>
+          <button onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border2)", cursor: "pointer", color: "var(--ink4)" }}>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-5 py-4" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+          {Object.entries(groups).map(([group, items]) => (
+            <div key={group} className="mb-4 last:mb-0">
+              <p className="text-[10px] font-semibold uppercase tracking-widest mb-2"
+                style={{ color: "var(--ink4)" }}>{group}</p>
+              <div className="flex flex-col gap-1.5">
+                {items.map((it) => (
+                  <div key={it.label}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg"
+                    style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border)" }}>
+                    <span className="text-[12.5px]" style={{ color: "var(--ink2)" }}>{it.label}</span>
+                    <span className="flex items-center gap-1">
+                      {it.keys.map((k, i) => (
+                        <kbd key={`${k}-${i}`}
+                          style={{
+                            fontSize: 10.5,
+                            padding: "3px 7px",
+                            borderRadius: 6,
+                            background: "var(--bg-card)",
+                            border: "0.5px solid var(--border2)",
+                            color: "var(--ink2)",
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontWeight: 600,
+                            minWidth: 22,
+                            textAlign: "center",
+                          }}>
+                          {k}
+                        </kbd>
+                      ))}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="px-5 py-3 flex items-center gap-2 text-[11px]"
+          style={{ borderTop: "0.5px solid var(--border)", color: "var(--ink4)" }}>
+          <span>Tip · press</span>
+          <kbd style={{ fontSize: 10, padding: "1px 5px", borderRadius: 4, background: "var(--bg-alt)", border: "0.5px solid var(--border2)", fontFamily: "monospace" }}>?</kbd>
+          <span>anywhere to bring this back.</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -341,9 +568,9 @@ function PrimaryBtn({ children, onClick, small = false }: {
   );
 }
 
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Card({ children, className = "", lift = false }: { children: React.ReactNode; className?: string; lift?: boolean }) {
   return (
-    <div className={`rounded-xl ${className}`}
+    <div className={`rounded-xl ${lift ? "card-3d" : ""} ${className}`}
       style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)" }}>
       {children}
     </div>
@@ -358,16 +585,32 @@ function StatCard({
   trend?: { text: string; up: boolean };
 }) {
   return (
-    <Card>
+    <div
+      className="rounded-xl stat-3d"
+      style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)" }}>
       <div className="p-4">
         <div className="flex items-start justify-between mb-3">
           <span className="text-[11px]" style={{ color: "var(--ink4)" }}>{label}</span>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: iconBg, color: iconColor }}>
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{
+              background: iconBg,
+              color: iconColor,
+              boxShadow: `0 6px 16px ${iconBg}, inset 0 1px 0 rgba(255,255,255,0.06)`,
+            }}>
             {icon}
           </div>
         </div>
-        <div className="text-[22px] font-semibold leading-none mb-1.5" style={{ color: "var(--ink)" }}>
+        <div
+          className="text-[22px] font-semibold leading-none mb-1.5"
+          style={{
+            color: "var(--ink)",
+            background: "linear-gradient(180deg, var(--ink) 0%, var(--ink2) 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            letterSpacing: "-0.02em",
+          }}>
           {value}
         </div>
         {trend ? (
@@ -380,7 +623,7 @@ function StatCard({
           <span className="text-[11px]" style={{ color: "var(--ink4)" }}>{sub}</span>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -1676,15 +1919,65 @@ export function AdminDashboard({ user }: Props) {
   const [clientAddOpen, setClientAddOpen] = useState(false);
   const [taskAddOpen,   setTaskAddOpen]   = useState(false);
   const [cmdOpen,       setCmdOpen]       = useState(false);
+  const [helpOpen,      setHelpOpen]      = useState(false);
+  const [focusOn, toggleFocus] = useFocusMode();
+  const lastKeyRef = useRef<{ key: string; at: number } | null>(null);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); setCmdOpen((o) => !o); }
-      if (e.key === "Escape") setCmdOpen(false);
+      // Ignore when the user is typing into an input / textarea / contenteditable.
+      const t = e.target as HTMLElement | null;
+      const typing =
+        !!t &&
+        (t.tagName === "INPUT" || t.tagName === "TEXTAREA" ||
+          (t as HTMLElement).isContentEditable);
+
+      // ⌘K / Ctrl+K — command palette
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault(); setCmdOpen((o) => !o); return;
+      }
+      // ⇧D — toggle dark mode
+      if (!typing && e.shiftKey && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        setDark((prev) => { const next = !prev; applyTheme(next); return next; });
+        return;
+      }
+      if (e.key === "Escape") { setCmdOpen(false); setHelpOpen(false); return; }
+      if (typing) return;
+
+      // Single-key shortcuts
+      if (e.key === "?")              { e.preventDefault(); setHelpOpen(true); return; }
+      if (e.key.toLowerCase() === "f"){ e.preventDefault(); toggleFocus(); return; }
+      if (e.key.toLowerCase() === "n"){
+        const ct = tab;
+        if (ct === "projects" || ct === "clients" || ct === "tasks") {
+          e.preventDefault();
+          if (ct === "projects") { setEditProject(null); setFormOpen(true); }
+          if (ct === "clients")  { setClientAddOpen(true); }
+          if (ct === "tasks")    { setTaskAddOpen(true); }
+        }
+        return;
+      }
+
+      // Chord shortcuts (G then O/P/L/T/K)
+      const now = Date.now();
+      const prev = lastKeyRef.current;
+      if (prev && prev.key === "g" && now - prev.at < 900) {
+        const map: Record<string, Tab> = { o: "overview", p: "projects", l: "leads", t: "team", k: "tasks" };
+        const next = map[e.key.toLowerCase()];
+        if (next) { e.preventDefault(); switchTab(next); }
+        lastKeyRef.current = null;
+        return;
+      }
+      if (e.key.toLowerCase() === "g") {
+        lastKeyRef.current = { key: "g", at: now };
+      } else {
+        lastKeyRef.current = null;
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [tab, toggleFocus]);
 
   function handleCta() {
     if (tab === "projects") { setEditProject(null); setFormOpen(true); }
@@ -1714,7 +2007,7 @@ export function AdminDashboard({ user }: Props) {
         )}
 
         {/* ══════════ SIDEBAR ══════════ */}
-        <aside className="flex flex-col flex-shrink-0"
+        <aside className="admin-pane-sidebar flex flex-col flex-shrink-0"
           style={{
             width:       isMobile ? 210 : sidebarW,
             background:  "var(--bg-panel)",
@@ -1789,6 +2082,8 @@ export function AdminDashboard({ user }: Props) {
                     <button key={item.id}
                       onClick={() => { switchTab(item.id); if (isMobile) setSidebarOpen(false); }}
                       title={item.label}
+                      className="nav-3d"
+                      data-active={active ? "true" : "false"}
                       style={{
                         display: "flex", alignItems: "center", width: "100%", position: "relative",
                         borderRadius: 9,
@@ -1799,7 +2094,7 @@ export function AdminDashboard({ user }: Props) {
                         color:          active ? "var(--accent)" : "var(--ink3)",
                         border:         active ? "1px solid var(--accent-dim)" : "1px solid transparent",
                         cursor: "pointer", fontWeight: active ? 600 : 400,
-                        transition: "all .15s", textAlign: "left", lineHeight: 1,
+                        textAlign: "left", lineHeight: 1,
                         fontFamily: "inherit",
                         overflow: "hidden",
                       }}
@@ -1868,7 +2163,7 @@ export function AdminDashboard({ user }: Props) {
         <div className="flex-1 flex flex-col min-w-0">
 
           {/* Header */}
-          <header className="flex items-center gap-2 flex-shrink-0"
+          <header className="admin-header-chrome flex items-center gap-2 flex-shrink-0"
             style={{
               height: 58,
               padding: "0 18px",
@@ -1926,11 +2221,19 @@ export function AdminDashboard({ user }: Props) {
             {/* Right actions */}
             <div className="flex items-center gap-2 ml-auto">
 
+              {/* Live status cluster — desktop only */}
+              {!isMobile && !isTablet && (
+                <>
+                  <NetworkPill />
+                  <LiveClock />
+                </>
+              )}
+
               {/* ⌘K search trigger */}
               {!isMobile && !isTablet && (
                 <button onClick={() => setCmdOpen(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px]"
-                  style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border2)", color: "var(--ink4)", cursor: "pointer", transition: "all .15s", fontFamily: "inherit" }}
+                  className="btn-3d-inset flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px]"
+                  style={{ background: "var(--bg-alt)", border: "0.5px solid var(--border2)", color: "var(--ink4)", cursor: "pointer", fontFamily: "inherit" }}
                   onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "var(--accent)"; el.style.color = "var(--ink2)"; }}
                   onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "var(--border2)"; el.style.color = "var(--ink4)"; }}>
                   <Ic.Search />
@@ -1979,6 +2282,23 @@ export function AdminDashboard({ user }: Props) {
                 <Ic.History />
               </IconBtn>
 
+              {/* Keyboard shortcuts ( ? ) */}
+              {!isMobile && (
+                <IconBtn title="Keyboard shortcuts ( ? )" onClick={() => setHelpOpen(true)}>
+                  <Ic.Keyboard />
+                </IconBtn>
+              )}
+
+              {/* Focus mode ( F ) */}
+              {!isMobile && (
+                <IconBtn
+                  title={focusOn ? "Exit focus mode ( F )" : "Focus mode ( F )"}
+                  accent={focusOn}
+                  onClick={toggleFocus}>
+                  {focusOn ? <Ic.Minimize /> : <Ic.Maximize />}
+                </IconBtn>
+              )}
+
               {/* Settings gear */}
               <IconBtn title="Admin Settings" onClick={() => setSettingsOpen(true)}>
                 <Ic.Gear />
@@ -1992,7 +2312,7 @@ export function AdminDashboard({ user }: Props) {
           </header>
 
           {/* Page content */}
-          <main className="flex-1 overflow-y-auto" style={{ background: "var(--bg)" }}>
+          <main className="admin-ambient-bg flex-1 overflow-y-auto" style={{ background: "var(--bg)" }}>
             {tab === "overview" && (
               <OverviewTab
                 showToast={showToast}
@@ -2058,6 +2378,38 @@ export function AdminDashboard({ user }: Props) {
           document.body
         )}
         {settingsOpen && <AdminSettingsModal onClose={() => setSettingsOpen(false)} />}
+        {helpOpen && createPortal(
+          <KeyboardHelpModal onClose={() => setHelpOpen(false)} />,
+          document.body
+        )}
+
+        {/* Focus mode entry banner — gives an obvious exit when chrome is hidden */}
+        {focusOn && (
+          <button
+            onClick={toggleFocus}
+            title="Exit focus mode ( F )"
+            className="btn-3d-inset"
+            style={{
+              position: "fixed",
+              top: 14, right: 14, zIndex: 220,
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "8px 14px",
+              borderRadius: 99,
+              background: "var(--bg-card)",
+              border: "1px solid var(--accent-dim)",
+              color: "var(--accent)",
+              cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              boxShadow: "var(--shadow-md), 0 0 0 4px var(--accent-pale)",
+              animation: "fadeScaleIn .25s var(--ease) both",
+            }}>
+            <Ic.Minimize />
+            Exit Focus
+            <kbd style={{ fontSize: 10, padding: "2px 6px", borderRadius: 4, background: "var(--bg-alt)", border: "0.5px solid var(--border2)", fontFamily: "monospace", color: "var(--ink3)" }}>F</kbd>
+          </button>
+        )}
       </div>
     </>
   );
