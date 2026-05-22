@@ -5,6 +5,7 @@ import {
   fetchIdeasByMemberId, createIdea,
   fetchRoutinesByMemberId, updateRoutine,
   fetchMessagesByMemberId, updateMemberMessage,
+  adjustMemberScore, TASK_SCORE_PENALTY,
   type FirestoreMember, type FirestoreTask, type FirestoreIdea, type FirestoreRoutine, type ChecklistItem,
   type FirestoreMemberMessage,
 } from "../lib/firebase";
@@ -764,6 +765,7 @@ export function MemberPage() {
   const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(null);
   const [messages,          setMessages]          = useState<FirestoreMemberMessage[]>([]);
   const [expandedMessageId, setExpandedMessageId] = useState<string | null>(null);
+  const [justPenalized,     setJustPenalized]     = useState(0);
 
   const toggleTheme = () => { const d = !isDark; setIsDark(d); saveTheme(d); };
 
@@ -785,6 +787,26 @@ export function MemberPage() {
         fetchIdeasByMemberId(memberId).then(setIdeas).catch(() => {});
         fetchRoutinesByMemberId(memberId).then(setRoutines).catch(() => {});
         fetchMessagesByMemberId(memberId).then(setMessages).catch(() => {});
+
+        // Apply overdue penalty (once per task) for tasks whose deadline has
+        // passed without completion. `penaltyApplied: true` guards against
+        // double-deduction whether the admin tab or this portal runs first.
+        const toPenalize = t.filter((x) => x.id && isOverdue(x) && !x.penaltyApplied);
+        if (toPenalize.length > 0) {
+          await Promise.all(toPenalize.map(async (x) => {
+            try {
+              await adjustMemberScore(memberId, -TASK_SCORE_PENALTY);
+              await updateTask(x.id!, { penaltyApplied: true });
+            } catch { /* best-effort */ }
+          }));
+          setJustPenalized(toPenalize.length);
+          const refreshed = await Promise.all([
+            fetchMemberById(memberId),
+            fetchTasksByMemberId(memberId),
+          ]);
+          if (refreshed[0]) setMember(refreshed[0]);
+          setTasks(refreshed[1]);
+        }
       }
     } catch { setNotFound(true); }
     finally { setLoading(false); }
@@ -1276,6 +1298,51 @@ export function MemberPage() {
 
         {/* ── Main Content ─────────────────────────────────────────────────────── */}
         <div style={{ maxWidth: 820, margin: "0 auto", padding: "24px 20px 48px" }}>
+
+          {/* ── Overdue Banner ────────────────────────────────────────────────── */}
+          {stats.overdue > 0 && (
+            <div style={{
+              marginBottom: 20, padding: "14px 18px", borderRadius: 14,
+              background: isDark ? "rgba(239,68,68,0.10)" : "rgba(239,68,68,0.07)",
+              border: `1px solid ${isDark ? "rgba(239,68,68,0.32)" : "rgba(239,68,68,0.25)"}`,
+              display: "flex", alignItems: "center", gap: 14,
+            }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: 11, flexShrink: 0,
+                background: "rgba(239,68,68,0.18)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 18,
+              }}>⚠️</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{
+                  fontSize: 13.5, fontWeight: 700, margin: 0,
+                  color: isDark ? "#FCA5A5" : "#B91C1C",
+                }}>
+                  {stats.overdue} overdue task{stats.overdue !== 1 ? "s" : ""}
+                  {justPenalized > 0 && (
+                    <span style={{ fontWeight: 600, marginLeft: 8 }}>
+                      · −{justPenalized * TASK_SCORE_PENALTY} just applied
+                    </span>
+                  )}
+                </p>
+                <p style={{
+                  fontSize: 11.5, margin: "2px 0 0 0",
+                  color: isDark ? "#FCA5A5cc" : "#B91C1Ccc",
+                }}>
+                  Each overdue task deducts <strong>−{TASK_SCORE_PENALTY}</strong> from your score. Wrap them up to stop the bleeding.
+                </p>
+              </div>
+              <button
+                onClick={() => setFilter("overdue")}
+                style={{
+                  padding: "8px 14px", borderRadius: 10, fontSize: 12, fontWeight: 700,
+                  background: "#EF4444", color: "white", border: "none", cursor: "pointer",
+                  flexShrink: 0, whiteSpace: "nowrap",
+                }}>
+                View Overdue →
+              </button>
+            </div>
+          )}
 
           {/* ── Admin Messages ────────────────────────────────────────────────── */}
           {messages.length > 0 && (
