@@ -1,5 +1,5 @@
 // ─── src/pages/MemberPage.tsx ─────────────────────────────────────────────────
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   fetchMemberById, fetchTasksByMemberId, updateTask, updateMember, createReview, fetchAdminSettings,
   fetchIdeasByMemberId, createIdea,
@@ -101,34 +101,54 @@ const PC = {
 
 // ─── Inline CSS ───────────────────────────────────────────────────────────────
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   .mp-root[data-mp-dark="true"] {
-    --mp-bg:       #07090F;
-    --mp-panel:    rgba(255,255,255,.025);
-    --mp-card:     rgba(255,255,255,.032);
-    --mp-hover:    rgba(255,255,255,.048);
-    --mp-border:   rgba(255,255,255,.07);
-    --mp-border2:  rgba(255,255,255,.12);
-    --mp-h:        #F1F5F9;
-    --mp-body:     #CBD5E1;
-    --mp-muted:    #64748B;
-    --mp-input:    rgba(255,255,255,.06);
-    --mp-scrollbar:#1E293B;
+    --mp-bg:        #06080E;
+    --mp-bg-deep:   #03050B;
+    --mp-panel:     rgba(255,255,255,.025);
+    --mp-card:      rgba(255,255,255,.032);
+    --mp-hover:     rgba(255,255,255,.048);
+    --mp-border:    rgba(255,255,255,.07);
+    --mp-border2:   rgba(255,255,255,.12);
+    --mp-h:         #F1F5F9;
+    --mp-body:      #CBD5E1;
+    --mp-muted:     #64748B;
+    --mp-input:     rgba(255,255,255,.06);
+    --mp-scrollbar: #1E293B;
+    --mp-accent:    #4F7DFF;
+    --mp-accent2:   #22B8D4;
+    --mp-violet:    #8B5CF6;
+    --mp-glow:      rgba(79,125,255,0.45);
+    --mp-aurora1:   rgba(79,125,255,0.22);
+    --mp-aurora2:   rgba(34,184,212,0.18);
+    --mp-aurora3:   rgba(139,92,246,0.20);
+    --mp-grid:      rgba(140,170,255,0.05);
+    --mp-shine:     rgba(255,255,255,0.16);
   }
   .mp-root[data-mp-dark="false"] {
-    --mp-bg:       #F1F5F9;
-    --mp-panel:    #FFFFFF;
-    --mp-card:     #FFFFFF;
-    --mp-hover:    #F8FAFC;
-    --mp-border:   rgba(0,0,0,.08);
-    --mp-border2:  rgba(0,0,0,.15);
-    --mp-h:        #0F172A;
-    --mp-body:     #475569;
-    --mp-muted:    #94A3B8;
-    --mp-input:    #F8FAFC;
-    --mp-scrollbar:#CBD5E1;
+    --mp-bg:        #F1F5F9;
+    --mp-bg-deep:   #E2E8F0;
+    --mp-panel:     #FFFFFF;
+    --mp-card:      #FFFFFF;
+    --mp-hover:     #F8FAFC;
+    --mp-border:    rgba(0,0,0,.08);
+    --mp-border2:   rgba(0,0,0,.15);
+    --mp-h:         #0F172A;
+    --mp-body:      #475569;
+    --mp-muted:     #94A3B8;
+    --mp-input:     #F8FAFC;
+    --mp-scrollbar: #CBD5E1;
+    --mp-accent:    #1E3A8A;
+    --mp-accent2:   #0891B2;
+    --mp-violet:    #6D28D9;
+    --mp-glow:      rgba(30,58,138,0.30);
+    --mp-aurora1:   rgba(30,58,138,0.11);
+    --mp-aurora2:   rgba(8,145,178,0.10);
+    --mp-aurora3:   rgba(124,58,237,0.09);
+    --mp-grid:      rgba(30,58,138,0.05);
+    --mp-shine:     rgba(255,255,255,0.55);
   }
 
   .mp-root {
@@ -137,20 +157,304 @@ const CSS = `
     font-family: 'Inter', sans-serif;
     color: var(--mp-body);
     transition: background .3s, color .3s;
+    position: relative;
+    overflow-x: hidden;
+    --ease:        cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .mp-root * { box-sizing: border-box; }
 
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--mp-scrollbar); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--mp-accent), var(--mp-accent2));
+    border-radius: 99px;
+  }
 
+  /* ════════ KEYFRAMES ════════ */
   @keyframes mp-spin { to { transform: rotate(360deg); } }
-  @keyframes mp-fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-  @keyframes mp-scale { from { opacity:0; transform:scale(.95) translateY(6px); } to { opacity:1; transform:none; } }
+  @keyframes mp-fade   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  @keyframes mp-scale  { from { opacity:0; transform:scale(.95) translateY(6px); } to { opacity:1; transform:none; } }
+  @keyframes mp-rise   { from { opacity:0; transform:translateY(18px) scale(.97); } to { opacity:1; transform:none; } }
 
-  .mp-card { animation: mp-fade .3s ease both; }
+  @keyframes mp-aurora-a {
+    0%   { transform: translate(-12%,-10%) scale(1)    rotate(0deg);   }
+    33%  { transform: translate( 12%,  8%) scale(1.15) rotate(40deg);  }
+    66%  { transform: translate( -8%, 14%) scale(.92)  rotate(-30deg); }
+    100% { transform: translate(-12%,-10%) scale(1)    rotate(0deg);   }
+  }
+  @keyframes mp-aurora-b {
+    0%   { transform: translate( 18%, 30%) scale(1.1) rotate(0deg);  }
+    50%  { transform: translate(-12%,-12%) scale(.85) rotate(70deg); }
+    100% { transform: translate( 18%, 30%) scale(1.1) rotate(0deg);  }
+  }
+  @keyframes mp-aurora-c {
+    0%   { transform: translate( 40%,-20%) scale(.9)  rotate(0deg);   }
+    50%  { transform: translate(-22%, 24%) scale(1.2) rotate(-80deg); }
+    100% { transform: translate( 40%,-20%) scale(.9)  rotate(0deg);   }
+  }
+
+  @keyframes mp-pulse-dot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.35); opacity: .65; }
+  }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.6); }
+    50%      { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+  }
+  @keyframes mp-shine {
+    0%   { transform: translateX(-120%) skewX(-22deg); }
+    100% { transform: translateX( 240%) skewX(-22deg); }
+  }
+  @keyframes mp-holo-rotate { to { transform: rotate(360deg); } }
+  @keyframes mp-gradient-flow {
+    0%, 100% { background-position:   0% 50%; }
+    50%      { background-position: 100% 50%; }
+  }
+  @keyframes mp-breathe {
+    0%, 100% { opacity: .78; }
+    50%      { opacity: 1; }
+  }
+  @keyframes mp-orb-float {
+    0%, 100% { transform: translate(0,0) scale(1);     }
+    50%      { transform: translate(22px,-30px) scale(1.06); }
+  }
+  @keyframes mp-scan {
+    0%   { transform: translateY(-110%); opacity: 0; }
+    35%  { opacity: 1; }
+    100% { transform: translateY( 210%); opacity: 0; }
+  }
+  @keyframes mp-progress-stripes {
+    from { background-position: 0 0; }
+    to   { background-position: 24px 0; }
+  }
+
+  /* ════════ UTILITIES ════════ */
+  .mp-card      { animation: mp-rise  .55s var(--ease) both; }
   .mp-modal-box { animation: mp-scale .22s cubic-bezier(0.16,1,0.3,1) both; }
+
+  /* —— Aurora gradient mesh background —— */
+  .mp-aurora {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none; overflow: hidden;
+  }
+  .mp-aurora i {
+    position: absolute;
+    width: 65vw; height: 65vw; border-radius: 50%;
+    filter: blur(110px); will-change: transform;
+  }
+  .mp-aurora i.a { background: radial-gradient(circle, var(--mp-aurora1) 0%, transparent 70%); top: -22vw; left: -12vw; animation: mp-aurora-a 22s ease-in-out infinite; }
+  .mp-aurora i.b { background: radial-gradient(circle, var(--mp-aurora2) 0%, transparent 70%); top:  20vh; right:-18vw; animation: mp-aurora-b 28s ease-in-out infinite; }
+  .mp-aurora i.c { background: radial-gradient(circle, var(--mp-aurora3) 0%, transparent 70%); bottom:-18vw; left: 22vw; animation: mp-aurora-c 32s ease-in-out infinite; }
+
+  /* —— Subtle global grid (fades out vertically) —— */
+  .mp-grid-bg {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(var(--mp-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--mp-grid) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 65% at 50% 0%, black 10%, transparent 75%);
+            mask-image: radial-gradient(ellipse 70% 65% at 50% 0%, black 10%, transparent 75%);
+    opacity: .85;
+  }
+
+  .mp-content { position: relative; z-index: 1; }
+
+  /* —— 3D tilt —— */
+  .mp-tilt {
+    transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transform-style: preserve-3d;
+    transition: transform .35s var(--ease), box-shadow .25s var(--ease);
+    will-change: transform;
+  }
+  .mp-tilt[data-active="true"] { transition: transform .08s linear; }
+  .mp-tilt-pop {
+    transform: translateZ(28px);
+    transform-style: preserve-3d;
+  }
+
+  /* —— Holo glow border (cards) — gentle —— */
+  .mp-glow-card {
+    position: relative;
+    isolation: isolate;
+    transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s;
+  }
+  .mp-glow-card::before {
+    content: ""; position: absolute; inset: -1px;
+    border-radius: inherit;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      var(--mp-accent) 90deg,
+      transparent 180deg,
+      var(--mp-accent2) 270deg,
+      transparent 360deg
+    );
+    opacity: 0; z-index: -1;
+    transition: opacity .4s var(--ease);
+    animation: mp-holo-rotate 9s linear infinite;
+    filter: blur(14px);
+  }
+  .mp-glow-card:hover::before { opacity: .32; }
+
+  /* —— Cyber chip / button with sweep —— */
+  .mp-chip {
+    position: relative;
+    overflow: hidden;
+    transition: transform .18s var(--ease-spring), border-color .18s, color .18s, background .18s;
+  }
+  .mp-chip::after {
+    content: "";
+    position: absolute; top: 0; bottom: 0;
+    left: -120%; width: 55%;
+    background: linear-gradient(90deg, transparent, var(--mp-shine), transparent);
+    transform: skewX(-22deg);
+    pointer-events: none;
+  }
+  .mp-chip:hover::after,
+  .mp-chip[data-active="true"]::after {
+    animation: mp-shine 1.2s var(--ease) forwards;
+  }
+  .mp-chip:hover { transform: translateY(-1px); }
+
+  /* —— Holographic rotating ring (avatar) —— */
+  .mp-holo-ring-soft {
+    position: absolute; inset: -10px;
+    border-radius: 30px;
+    background: conic-gradient(from 0deg,
+      var(--mp-accent), var(--mp-accent2), var(--mp-violet), var(--mp-accent2), var(--mp-accent));
+    filter: blur(14px); opacity: .55;
+    animation: mp-holo-rotate 7s linear infinite;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .mp-holo-ring-sharp {
+    position: absolute; inset: -3px;
+    border-radius: 25px;
+    background: conic-gradient(from 0deg,
+      var(--mp-accent) 0deg, transparent 100deg,
+      var(--mp-accent2) 180deg, transparent 270deg, var(--mp-accent) 360deg);
+    animation: mp-holo-rotate 5s linear infinite;
+    z-index: -1;
+    pointer-events: none;
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  }
+
+  /* —— Floating orbital satellites around avatar —— */
+  .mp-orbit {
+    position: absolute; inset: -22px;
+    border-radius: 50%;
+    animation: mp-holo-rotate 16s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .mp-orbit::before, .mp-orbit::after {
+    content: ""; position: absolute;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--mp-accent2);
+    box-shadow: 0 0 12px var(--mp-accent2);
+  }
+  .mp-orbit::before { top: -3px; left: 50%; transform: translateX(-50%); }
+  .mp-orbit::after  { bottom: -3px; left: 50%; transform: translateX(-50%); background: var(--mp-accent); box-shadow: 0 0 12px var(--mp-accent); }
+
+  /* —— Stat pill shine —— */
+  .mp-stat {
+    position: relative;
+    overflow: hidden;
+    transition: transform .22s var(--ease-spring), box-shadow .25s var(--ease), border-color .22s;
+  }
+  .mp-stat::after {
+    content: "";
+    position: absolute; top: 0; left: -150%;
+    width: 65%; height: 100%;
+    background: linear-gradient(90deg, transparent, var(--mp-shine), transparent);
+    transform: skewX(-22deg);
+    transition: left 1.1s var(--ease);
+    pointer-events: none;
+  }
+  .mp-stat:hover::after { left: 220%; }
+
+  /* —— Magnetic / spring hover —— */
+  .mp-magnetic { transition: transform .22s var(--ease-spring), box-shadow .22s var(--ease), filter .22s; }
+  .mp-magnetic:hover  { transform: translateY(-2px) scale(1.025); filter: brightness(1.08); }
+  .mp-magnetic:active { transform: translateY(0)    scale(.97); }
+
+  /* —— Holo text gradient —— */
+  .mp-holo-text {
+    background: linear-gradient(120deg,
+      var(--mp-accent), var(--mp-accent2), var(--mp-violet),
+      var(--mp-accent2), var(--mp-accent));
+    background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+    animation: mp-gradient-flow 6s ease-in-out infinite;
+  }
+
+  .mp-dot-pulse { animation: mp-pulse-dot 2.2s ease-in-out infinite; }
+
+  /* —— Progress bars with animated sheen —— */
+  .mp-progress-fill {
+    position: relative;
+    overflow: hidden;
+    background-image: linear-gradient(135deg,
+      rgba(255,255,255,.18) 25%, transparent 25%,
+      transparent 50%, rgba(255,255,255,.18) 50%,
+      rgba(255,255,255,.18) 75%, transparent 75%);
+    background-size: 24px 24px;
+    animation: mp-progress-stripes 1.4s linear infinite;
+  }
+  .mp-progress-fill::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.32), transparent);
+    transform: translateX(-100%);
+    animation: mp-shine 2.4s ease-in-out infinite;
+  }
+
+  /* —— Scan-line for unread / highlighted —— */
+  .mp-scan { position: relative; overflow: hidden; }
+  .mp-scan::after {
+    content: ""; position: absolute; left: 0; right: 0; top: 0;
+    height: 24%;
+    background: linear-gradient(180deg, rgba(99,102,241,0.28) 0%, transparent 100%);
+    pointer-events: none;
+    animation: mp-scan 4.2s ease-in-out infinite;
+  }
+
+  /* —— Hero animated wordmark sheen —— */
+  .mp-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+  .mp-sheen::after {
+    content: ""; position: absolute; top: 0; bottom: 0;
+    left: -150%; width: 60%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+    transform: skewX(-22deg);
+    animation: mp-shine 4.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* —— Floating tag —— */
+  .mp-breathe { animation: mp-breathe 3s ease-in-out infinite; }
+
+  /* —— Slide-in stagger —— */
+  .mp-stagger { opacity: 0; animation: mp-rise .55s var(--ease) both; }
+
+  /* —— Navbar center hides on small screens —— */
+  @media (max-width: 720px) {
+    .mp-nav-center { display: none !important; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .05ms !important;
+    }
+  }
 `;
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -176,6 +480,81 @@ function Badge({ label, color, bg }: { label: string; color: string; bg: string 
     }}>
       {label}
     </span>
+  );
+}
+
+// ─── Tilt3D ───────────────────────────────────────────────────────────────────
+// Mouse-tracking 3D tilt wrapper. Lightweight — no library, no per-frame React state.
+function Tilt3D({
+  children, intensity = 5, className = "", style,
+}: { children: React.ReactNode; intensity?: number; className?: string; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  function onMove(e: React.MouseEvent<HTMLDivElement>) {
+    const el = ref.current; if (!el) return;
+    const r  = el.getBoundingClientRect();
+    const x  = (e.clientX - r.left) / r.width;
+    const y  = (e.clientY - r.top)  / r.height;
+    const ry = (x - 0.5) *  intensity * 2;
+    const rx = (0.5 - y) *  intensity * 2;
+    el.style.setProperty("--rx", `${rx.toFixed(2)}deg`);
+    el.style.setProperty("--ry", `${ry.toFixed(2)}deg`);
+    el.dataset.active = "true";
+  }
+  function onLeave() {
+    const el = ref.current; if (!el) return;
+    el.style.setProperty("--rx", "0deg");
+    el.style.setProperty("--ry", "0deg");
+    el.dataset.active = "false";
+  }
+
+  return (
+    <div
+      ref={ref}
+      className={`mp-tilt ${className}`}
+      style={style}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ─── CountUp ──────────────────────────────────────────────────────────────────
+function CountUp({ value, duration = 850 }: { value: number; duration?: number }) {
+  const [n, setN]  = useState(0);
+  const lastRef    = useRef(0);
+
+  useEffect(() => {
+    const from = lastRef.current;
+    const to   = value;
+    if (from === to) { setN(to); return; }
+    const t0 = performance.now();
+    let raf = 0;
+    function step(now: number) {
+      const t = Math.min(1, (now - t0) / duration);
+      const e = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      setN(Math.round(from + (to - from) * e));
+      if (t < 1) raf = requestAnimationFrame(step);
+      else lastRef.current = to;
+    }
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
+
+  return <>{n}</>;
+}
+
+// ─── AuroraBackground ─────────────────────────────────────────────────────────
+function AuroraBackground() {
+  return (
+    <>
+      <div className="mp-aurora" aria-hidden="true">
+        <i className="a"/><i className="b"/><i className="c"/>
+      </div>
+      <div className="mp-grid-bg" aria-hidden="true"/>
+    </>
   );
 }
 
@@ -483,17 +862,30 @@ function TaskCard({
   const hasChecklist = totalCount > 0;
 
   return (
-    <div className="mp-card" style={{
-      background: isDark ? "var(--mp-card)" : "#FFFFFF",
-      border: `1px solid ${eff === "overdue" ? "rgba(239,68,68,.25)" : "var(--mp-border)"}`,
-      borderRadius: 16, overflow: "hidden", position: "relative",
-      transition: "box-shadow .2s, border-color .2s",
+    <div className="mp-card mp-glow-card" style={{
+      background: isDark
+        ? "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)"
+        : "#FFFFFF",
+      border: `1px solid ${eff === "overdue" ? "rgba(239,68,68,.32)" : "var(--mp-border)"}`,
+      borderRadius: 18, overflow: "hidden", position: "relative",
+      backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+      transition: "box-shadow .25s, border-color .25s",
+      boxShadow: isDark
+        ? "0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.03)"
+        : "0 2px 12px rgba(10,19,48,0.05), inset 0 1px 0 rgba(255,255,255,0.8)",
     }}
-    onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = isDark ? "0 4px 24px rgba(0,0,0,.3)" : "0 4px 24px rgba(0,0,0,.08)"; }}
-    onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}>
+    onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = isDark
+      ? `0 8px 24px rgba(0,0,0,.35), 0 0 16px ${pc.color}1f, inset 0 1px 0 rgba(255,255,255,0.04)`
+      : `0 8px 22px rgba(10,19,48,0.08), inset 0 1px 0 rgba(255,255,255,0.9)`; }}
+    onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = isDark
+      ? "0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.03)"
+      : "0 2px 12px rgba(10,19,48,0.05), inset 0 1px 0 rgba(255,255,255,0.8)"; }}>
 
       {/* Priority accent bar */}
-      <div style={{ height: 3, background: pc.color, width: "100%" }}/>
+      <div style={{
+        height: 3, width: "100%",
+        background: `linear-gradient(90deg, ${pc.color}, ${pc.color}55)`,
+      }}/>
 
       <div style={{ padding: "16px 18px" }}>
 
@@ -570,11 +962,15 @@ function TaskCard({
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.06)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.03)"; }}
           >
-            <div style={{ flex: 1, height: 5, background: isDark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.08)", borderRadius: 99, overflow: "hidden" }}>
-              <div style={{
+            <div style={{ flex: 1, height: 6, background: isDark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.08)", borderRadius: 99, overflow: "hidden" }}>
+              <div className="mp-progress-fill" style={{
                 height: "100%", width: `${pct}%`,
-                background: allChecked ? "#10B981" : "#6366F1",
-                borderRadius: 99, transition: "width .4s ease",
+                background: allChecked
+                  ? "linear-gradient(90deg, #10B981, #34D399, #10B981)"
+                  : "linear-gradient(90deg, #6366F1, #818CF8, #6366F1)",
+                backgroundSize: "200% 100%",
+                borderRadius: 99, transition: "width .5s var(--ease)",
+                boxShadow: allChecked ? "0 0 12px rgba(16,185,129,.55)" : "0 0 10px rgba(99,102,241,.5)",
               }}/>
             </div>
             <span style={{ fontSize: 11, fontWeight: 700, color: allChecked ? "#10B981" : (isDark ? "#94A3B8" : "#64748B"), flexShrink: 0 }}>
@@ -681,38 +1077,62 @@ function TaskCard({
 
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
             {eff === "pending" && (
-              <button onClick={onStart} disabled={starting} style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "7px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                background: "rgba(99,102,241,.12)", color: "#6366F1",
-                border: "1px solid rgba(99,102,241,.25)", cursor: starting ? "default" : "pointer",
-                opacity: starting ? 0.7 : 1, transition: "all .15s",
-              }}
-              onMouseEnter={(e) => { if (!starting) (e.currentTarget as HTMLElement).style.background = "rgba(99,102,241,.22)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(99,102,241,.12)"; }}>
-                {starting ? <Spinner size={12} color="#6366F1"/> : "▷"} Start Task
+              <button onClick={onStart} disabled={starting}
+                className="mp-magnetic"
+                style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                padding: "9px 18px", borderRadius: 10, fontSize: 12.5, fontWeight: 700,
+                background: "#6366F1",
+                color: "white",
+                border: "none",
+                boxShadow: "0 2px 8px rgba(99,102,241,.25)",
+                cursor: starting ? "default" : "pointer",
+                opacity: starting ? 0.7 : 1,
+                lineHeight: 1,
+              }}>
+                {starting ? <Spinner size={12} color="white"/> : (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M2 1.5v7L8 5 2 1.5z" fill="white"/>
+                  </svg>
+                )}
+                Start Task
               </button>
             )}
 
             {(eff === "in-progress" || eff === "overdue") && (
-              <button onClick={onReport} style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "7px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                background: allChecked && hasChecklist ? "#10B981" : (hasChecklist ? "rgba(16,185,129,.7)" : "#10B981"),
-                color: "white", border: "none", cursor: "pointer", transition: "opacity .15s",
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.88"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
-                ✓ Submit Report
+              <button onClick={onReport}
+                className="mp-magnetic"
+                style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                padding: "9px 18px", borderRadius: 10, fontSize: 12.5, fontWeight: 700,
+                background: hasChecklist && !allChecked ? "rgba(16,185,129,.85)" : "#10B981",
+                color: "white", border: "none", cursor: "pointer",
+                boxShadow: "0 2px 10px rgba(16,185,129,.28)",
+                lineHeight: 1,
+              }}>
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <path d="M2 5.5l2.4 2.4L9 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Submit Report
               </button>
             )}
 
             {eff === "completed" && (
-              <button onClick={onReport} style={{
-                padding: "7px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                background: "rgba(16,185,129,.12)", color: "#10B981",
-                border: "1px solid rgba(16,185,129,.25)", cursor: "pointer",
+              <button onClick={onReport}
+                className="mp-magnetic"
+                style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                padding: "9px 18px", borderRadius: 10, fontSize: 12.5, fontWeight: 700,
+                background: isDark ? "rgba(16,185,129,.14)" : "rgba(16,185,129,.10)",
+                color: "#10B981",
+                border: "1px solid rgba(16,185,129,.30)",
+                cursor: "pointer",
+                lineHeight: 1,
               }}>
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <path d="M1 5.5s1.7-3.5 4.5-3.5S10 5.5 10 5.5s-1.7 3.5-4.5 3.5S1 5.5 1 5.5z" stroke="currentColor" strokeWidth="1.2"/>
+                  <circle cx="5.5" cy="5.5" r="1.5" fill="currentColor"/>
+                </svg>
                 View Report
               </button>
             )}
@@ -750,6 +1170,8 @@ export function MemberPage() {
   const [notFound,    setNotFound]    = useState(false);
   const [isDark,      setIsDark]      = useState(() => getTheme());
   const [filter,      setFilter]      = useState<"all" | "pending" | "in-progress" | "completed" | "overdue">("all");
+  const [dateFilter,  setDateFilter]  = useState<"all" | "today" | "week" | "older">("all");
+  const [clock,       setClock]       = useState<Date>(() => new Date());
   const [reportTask,  setReportTask]  = useState<FirestoreTask | null>(null);
   const [startingId,  setStartingId]  = useState<string | null>(null);
   const [toast,       setToast]       = useState<string | null>(null);
@@ -813,6 +1235,12 @@ export function MemberPage() {
   }, [memberId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Live clock for navbar — tick every 30s (cheap, no per-second re-renders).
+  useEffect(() => {
+    const id = setInterval(() => setClock(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   async function saveEmail() {
     if (!memberId) return;
@@ -942,9 +1370,42 @@ export function MemberPage() {
     overdue:    tasks.filter((t) => isOverdue(t)).length,
   };
 
+  // —— Date scope helpers — uses deadline date if present, else dueDate.
+  const todayKey = todayStr();
+  function taskDateKey(t: FirestoreTask): string {
+    if (t.deadline) {
+      const d = new Date(t.deadline);
+      if (!isNaN(d.getTime())) {
+        const y   = d.getFullYear();
+        const m   = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+    }
+    return t.dueDate ?? "";
+  }
+  function dayOffset(t: FirestoreTask): number {
+    const k = taskDateKey(t);
+    if (!k) return NaN;
+    const t0 = new Date(todayKey + "T00:00:00").getTime();
+    const tk = new Date(k        + "T00:00:00").getTime();
+    return Math.round((tk - t0) / 86400000);
+  }
+
+  const dateCounts = {
+    today: tasks.filter((t) => dayOffset(t) === 0).length,
+    week:  tasks.filter((t) => { const d = dayOffset(t); return !isNaN(d) && d >= 0 && d <= 7; }).length,
+    older: tasks.filter((t) => { const d = dayOffset(t); return !isNaN(d) && d < 0; }).length,
+  };
+
   const filtered = tasks.filter((t) => {
-    if (filter === "all") return true;
-    return effectiveStatus(t) === filter;
+    if (filter !== "all" && effectiveStatus(t) !== filter) return false;
+    if (dateFilter === "all") return true;
+    const d = dayOffset(t);
+    if (dateFilter === "today") return d === 0;
+    if (dateFilter === "week")  return !isNaN(d) && d >= 0 && d <= 7;
+    if (dateFilter === "older") return !isNaN(d) && d < 0;
+    return true;
   });
 
   // Sort: overdue first, then pending, in-progress, completed last
@@ -987,52 +1448,119 @@ export function MemberPage() {
       <style>{CSS}</style>
       <div className="mp-root" data-mp-dark={dark} style={{ minHeight: "100vh" }}>
 
+        <AuroraBackground/>
+
+        <div className="mp-content">
+
         {/* ── Navbar ──────────────────────────────────────────────────────────── */}
         <nav style={{
           position: "sticky", top: 0, zIndex: 50,
-          background: isDark ? "rgba(6,11,34,.88)" : "rgba(242,245,252,.92)",
+          background: isDark ? "rgba(6,11,34,.78)" : "rgba(242,245,252,.85)",
           backdropFilter: "blur(20px) saturate(1.4)",
           WebkitBackdropFilter: "blur(20px) saturate(1.4)",
           borderBottom: `1px solid ${isDark ? "rgba(190,210,255,.07)" : "rgba(15,30,80,.07)"}`,
-          padding: "0 24px", height: 60,
+          padding: "0 24px", height: 64,
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
           boxShadow: isDark ? "0 1px 0 rgba(0,0,0,0.4)" : "0 1px 4px rgba(10,19,48,0.04)",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ position: "relative", width: 34, height: 34, flexShrink: 0 }}>
+          {/* —— Left: brand —— */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+            <div className="mp-sheen" style={{ position: "relative", width: 36, height: 36, flexShrink: 0, borderRadius: 11 }}>
               <div style={{
-                position: "absolute", inset: 0, borderRadius: 10,
-                background: "linear-gradient(135deg, #4F7DFF 0%, #22B8D4 100%)",
-                boxShadow: "0 4px 14px rgba(79,125,255,0.35)",
+                position: "absolute", inset: 0, borderRadius: 11,
+                background: "linear-gradient(135deg, #4F7DFF 0%, #22B8D4 60%, #8B5CF6 120%)",
+                backgroundSize: "200% 200%",
+                animation: "mp-gradient-flow 6s ease-in-out infinite",
+                boxShadow: "0 6px 20px rgba(79,125,255,0.45), 0 0 0 1px rgba(255,255,255,0.08) inset",
               }}/>
               <div style={{
                 position: "absolute", inset: 0,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 12, fontWeight: 800, color: "white",
-                textShadow: "0 1px 2px rgba(0,0,0,0.3)",
+                fontSize: 12, fontWeight: 900, color: "white",
+                letterSpacing: "0.02em",
+                textShadow: "0 1px 3px rgba(0,0,0,0.35)",
               }}>
                 ZH
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
-              <span style={{
-                fontSize: 14, fontWeight: 700,
-                color: isDark ? "#EEF2FF" : "#0A1330",
-                letterSpacing: "-0.015em",
+              <span className="mp-holo-text" style={{
+                fontSize: 15, fontWeight: 800,
+                letterSpacing: "-0.02em",
               }}>
                 ZynHive
               </span>
               <span style={{
-                fontSize: 10.5, fontWeight: 500, marginTop: 1,
+                fontSize: 9.5, fontWeight: 700, marginTop: 1,
                 color: isDark ? "#8C99C2" : "#6B7AA0",
-                letterSpacing: "0.04em",
+                letterSpacing: "0.16em", textTransform: "uppercase",
+                fontFamily: "'JetBrains Mono', monospace",
+                display: "inline-flex", alignItems: "center", gap: 5,
               }}>
+                <span className="mp-dot-pulse" style={{ width: 5, height: 5, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 8px #10B981" }}/>
                 Member Portal
               </span>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* —— Center: live clock + today scope chip (hidden on small) —— */}
+          <div className="mp-nav-center" style={{
+            display: "flex", alignItems: "center", gap: 8, flex: 1, justifyContent: "center", minWidth: 0,
+          }}>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 10,
+              padding: "6px 14px", borderRadius: 99,
+              background: isDark ? "rgba(16,25,55,0.5)" : "rgba(255,255,255,0.7)",
+              border: `1px solid ${isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)"}`,
+              backdropFilter: "blur(8px)",
+              fontFamily: "'JetBrains Mono', monospace",
+            }}>
+              <span style={{
+                width: 6, height: 6, borderRadius: "50%", background: "#10B981",
+                boxShadow: "0 0 8px #10B981",
+                animation: "mp-pulse-dot 2.2s ease-in-out infinite",
+                flexShrink: 0,
+              }}/>
+              <span style={{
+                fontSize: 12, fontWeight: 700,
+                color: isDark ? "#EEF2FF" : "#0A1330",
+                letterSpacing: "0.02em",
+                fontVariantNumeric: "tabular-nums",
+              }}>
+                {clock.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
+              </span>
+              <span style={{
+                width: 1, height: 12, background: isDark ? "rgba(190,210,255,.18)" : "rgba(15,30,80,.15)",
+              }}/>
+              <span style={{
+                fontSize: 11, fontWeight: 600,
+                color: isDark ? "#8C99C2" : "#6B7AA0",
+                letterSpacing: "0.04em",
+              }}>
+                {clock.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+              </span>
+            </div>
+
+            {dateCounts.today > 0 && (
+              <button onClick={() => { setDateFilter("today"); setFilter("all"); }}
+                className="mp-chip"
+                title="Filter to today's tasks"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "6px 12px", borderRadius: 99, fontSize: 11.5, fontWeight: 700,
+                  background: isDark ? "rgba(79,125,255,0.14)" : "rgba(30,58,138,0.08)",
+                  border: `1px solid ${isDark ? "rgba(79,125,255,0.30)" : "rgba(30,58,138,0.18)"}`,
+                  color: isDark ? "#7099FF" : "#1E3A8A",
+                  cursor: "pointer", whiteSpace: "nowrap",
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>
+                📅 {dateCounts.today} today
+              </button>
+            )}
+          </div>
+
+          {/* —— Right: alerts + bell + theme —— */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
             {stats.overdue > 0 && (
               <span style={{
                 fontSize: 11, fontWeight: 700, padding: "4px 11px", borderRadius: 99,
@@ -1045,6 +1573,55 @@ export function MemberPage() {
                 {stats.overdue} overdue
               </span>
             )}
+
+            {/* Unread message bell */}
+            <button
+              onClick={() => {
+                const el = document.getElementById("mp-messages");
+                el?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              aria-label="Messages"
+              title={unreadMessageCount > 0 ? `${unreadMessageCount} unread message${unreadMessageCount !== 1 ? "s" : ""}` : "No new messages"}
+              style={{
+                position: "relative",
+                width: 36, height: 36, borderRadius: 10, cursor: "pointer",
+                background: isDark ? "rgba(190,210,255,.06)" : "rgba(15,30,80,.05)",
+                border: `1px solid ${isDark ? "rgba(190,210,255,.12)" : "rgba(15,30,80,.10)"}`,
+                color: isDark ? "#C5CFF1" : "#4B567B",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "background .18s, border-color .18s, transform .15s",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = isDark ? "rgba(99,102,241,0.14)" : "rgba(99,102,241,0.10)";
+                el.style.borderColor = "rgba(99,102,241,0.35)";
+                el.style.color = "#6366F1";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = isDark ? "rgba(190,210,255,.06)" : "rgba(15,30,80,.05)";
+                el.style.borderColor = isDark ? "rgba(190,210,255,.12)" : "rgba(15,30,80,.10)";
+                el.style.color = isDark ? "#C5CFF1" : "#4B567B";
+              }}>
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <path d="M3.5 12V7c0-2.2 1.8-4 4-4s4 1.8 4 4v5M2.5 12h10M6 13.5c.3.6.9 1 1.5 1s1.2-.4 1.5-1"
+                  stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {unreadMessageCount > 0 && (
+                <span style={{
+                  position: "absolute", top: -3, right: -3,
+                  minWidth: 16, height: 16, padding: "0 4px",
+                  borderRadius: 99, background: "#EF4444", color: "white",
+                  fontSize: 9.5, fontWeight: 800, lineHeight: "16px",
+                  border: `2px solid ${isDark ? "#06080E" : "#F1F5F9"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  animation: "mp-pulse-dot 2s ease-in-out infinite",
+                }}>
+                  {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
+                </span>
+              )}
+            </button>
+
             <button onClick={toggleTheme}
               aria-label="Toggle theme"
               style={{
@@ -1116,16 +1693,20 @@ export function MemberPage() {
 
                 <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
 
-                  {/* Avatar */}
-                  <div style={{ position: "relative", flexShrink: 0 }}>
+                  {/* Avatar — holographic rotating ring + orbiting satellites */}
+                  <div style={{ position: "relative", flexShrink: 0, width: 80, height: 80 }}>
+                    <div className="mp-holo-ring-soft"/>
+                    <div className="mp-holo-ring-sharp"/>
+                    <div className="mp-orbit"/>
                     <div style={{
-                      width: 76, height: 76, borderRadius: 22,
+                      position: "relative",
+                      width: 80, height: 80, borderRadius: 22,
                       background: member.imageUrl
                         ? "transparent"
                         : `linear-gradient(135deg, ${member.color}, ${member.color}99)`,
                       padding: 3,
                       overflow: "hidden",
-                      boxShadow: `0 12px 32px ${member.color}40, 0 0 0 1px ${member.color}30`,
+                      boxShadow: `0 16px 40px ${member.color}55, 0 0 0 1px ${member.color}30`,
                     }}>
                       <div style={{
                         width: "100%", height: "100%", borderRadius: 19,
@@ -1137,37 +1718,50 @@ export function MemberPage() {
                           <img src={member.imageUrl} alt={member.name}
                             style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
                         ) : (
-                          <span style={{ fontSize: 26, fontWeight: 800, color: member.color, letterSpacing: "-0.02em" }}>
+                          <span style={{ fontSize: 28, fontWeight: 900, color: member.color, letterSpacing: "-0.02em" }}>
                             {member.initials}
                           </span>
                         )}
                       </div>
                     </div>
-                    {/* Status dot */}
-                    <div style={{
+                    {/* Live status dot */}
+                    <div className="mp-dot-pulse" style={{
                       position: "absolute", bottom: 2, right: 2,
                       width: 16, height: 16, borderRadius: "50%", background: "#10B981",
                       border: `3px solid ${isDark ? "#070A1C" : "#F2F5FC"}`,
-                      boxShadow: "0 0 12px rgba(16,185,129,0.6)",
+                      boxShadow: "0 0 14px rgba(16,185,129,0.85)",
                     }}/>
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{
-                      fontSize: 12, fontWeight: 500, marginBottom: 2,
+                      fontSize: 11.5, fontWeight: 700, marginBottom: 4,
                       color: isDark ? "#8C99C2" : "#6B7AA0",
-                      letterSpacing: "-0.005em",
+                      letterSpacing: "0.10em", textTransform: "uppercase",
+                      fontFamily: "'JetBrains Mono', monospace",
                     }}>
-                      {greeting},
+                      {greeting} ·
                     </p>
                     <h1 style={{
-                      fontSize: 28, fontWeight: 800, marginBottom: 6,
-                      color: isDark ? "#EEF2FF" : "#0A1330",
-                      letterSpacing: "-0.025em", lineHeight: 1.15,
+                      fontSize: 30, fontWeight: 900, marginBottom: 8,
+                      letterSpacing: "-0.03em", lineHeight: 1.1,
+                      display: "inline-flex", alignItems: "center", gap: 8,
                     }}>
-                      {firstName} 👋
+                      <span className="mp-holo-text">{firstName}</span>
+                      <span style={{
+                        display: "inline-block",
+                        animation: "mp-pulse-dot 2.4s ease-in-out infinite",
+                        transformOrigin: "70% 70%",
+                      }}>👋</span>
                     </h1>
-                    <p style={{ fontSize: 13, color: isDark ? "#8C99C2" : "#6B7AA0", fontWeight: 500 }}>
+                    <p style={{
+                      fontSize: 12.5, color: isDark ? "#8C99C2" : "#6B7AA0",
+                      fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 8,
+                      fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.02em",
+                    }}>
+                      <span style={{
+                        width: 18, height: 1.5, background: `linear-gradient(90deg, ${member.color}, transparent)`,
+                      }}/>
                       {member.role}
                     </p>
                   </div>
@@ -1234,61 +1828,75 @@ export function MemberPage() {
                   </div>
                 </div>
 
-                {/* Stat pills — polished cards with hover */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginTop: 24 }}>
+                {/* Stat pills — holo-tilt cards with count-up + shine sweep */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(126px, 1fr))", gap: 10, marginTop: 26 }}>
                   {[
-                    { label: "Total",       value: stats.total,      color: "#4F7DFF", icon: "📋" },
-                    { label: "Pending",     value: stats.pending,    color: "#8C99C2", icon: "○" },
+                    { label: "Total",       value: stats.total,      color: "#4F7DFF", icon: "▦" },
+                    { label: "Pending",     value: stats.pending,    color: "#8C99C2", icon: "◯" },
                     { label: "In Progress", value: stats.inProgress, color: "#F59E0B", icon: "◐" },
                     { label: "Completed",   value: stats.completed,  color: "#10B981", icon: "✓" },
                     { label: "Overdue",     value: stats.overdue,    color: "#EF4444", icon: "!" },
-                  ].map(({ label, value, color, icon }) => (
-                    <div key={label}
-                      style={{
-                        padding: "12px 14px", borderRadius: 12,
-                        background: isDark ? "rgba(16,25,55,0.6)" : "rgba(255,255,255,0.85)",
-                        border: `1px solid ${isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)"}`,
-                        backdropFilter: "blur(8px)",
-                        WebkitBackdropFilter: "blur(8px)",
-                        boxShadow: isDark ? "0 2px 8px rgba(0,0,0,0.25)" : "0 2px 8px rgba(10,19,48,0.05)",
-                        transition: "transform .18s, box-shadow .22s, border-color .18s",
-                        cursor: "default",
-                      }}
-                      onMouseEnter={(e) => {
-                        const el = e.currentTarget as HTMLElement;
-                        el.style.transform = "translateY(-2px)";
-                        el.style.boxShadow = isDark ? "0 8px 20px rgba(0,0,0,0.45)" : "0 8px 22px rgba(10,19,48,0.10)";
-                        el.style.borderColor = `${color}55`;
-                      }}
-                      onMouseLeave={(e) => {
-                        const el = e.currentTarget as HTMLElement;
-                        el.style.transform = "translateY(0)";
-                        el.style.boxShadow = isDark ? "0 2px 8px rgba(0,0,0,0.25)" : "0 2px 8px rgba(10,19,48,0.05)";
-                        el.style.borderColor = isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)";
-                      }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                        <span style={{
-                          width: 22, height: 22, borderRadius: 7, fontSize: 11, fontWeight: 800,
-                          background: `${color}1A`, color,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          border: `1px solid ${color}30`,
+                  ].map(({ label, value, color, icon }, idx) => (
+                    <Tilt3D key={label} intensity={4}
+                      style={{ animation: `mp-rise .55s var(--ease) ${idx * 80}ms both` }}>
+                      <div
+                        className="mp-stat"
+                        style={{
+                          padding: "14px 16px", borderRadius: 14,
+                          background: isDark
+                            ? "linear-gradient(180deg, rgba(16,25,55,0.7) 0%, rgba(10,17,40,0.55) 100%)"
+                            : "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(248,250,255,0.85) 100%)",
+                          border: `1px solid ${isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)"}`,
+                          backdropFilter: "blur(14px)",
+                          WebkitBackdropFilter: "blur(14px)",
+                          boxShadow: isDark
+                            ? `0 4px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)`
+                            : `0 4px 16px rgba(10,19,48,0.06), inset 0 1px 0 rgba(255,255,255,0.8)`,
+                          cursor: "default",
+                          transition: "border-color .25s",
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLElement).style.borderColor = `${color}66`;
+                          (e.currentTarget as HTMLElement).style.boxShadow = isDark
+                            ? `0 10px 30px rgba(0,0,0,0.5), 0 0 20px ${color}33, inset 0 1px 0 rgba(255,255,255,0.06)`
+                            : `0 12px 30px ${color}25, inset 0 1px 0 rgba(255,255,255,0.9)`;
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLElement).style.borderColor = isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)";
+                          (e.currentTarget as HTMLElement).style.boxShadow = isDark
+                            ? "0 4px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)"
+                            : "0 4px 16px rgba(10,19,48,0.06), inset 0 1px 0 rgba(255,255,255,0.8)";
                         }}>
-                          {icon}
-                        </span>
-                        <span style={{
-                          fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
-                          color: isDark ? "#8C99C2" : "#6B7AA0",
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                          <span style={{
+                            width: 24, height: 24, borderRadius: 8, fontSize: 12, fontWeight: 900,
+                            background: `linear-gradient(135deg, ${color}28, ${color}10)`,
+                            color,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            border: `1px solid ${color}40`,
+                            boxShadow: `0 0 12px ${color}33`,
+                          }}>
+                            {icon}
+                          </span>
+                          <span style={{
+                            fontSize: 9.5, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase",
+                            color: isDark ? "#8C99C2" : "#6B7AA0",
+                            fontFamily: "'JetBrains Mono', monospace",
+                          }}>
+                            {label}
+                          </span>
+                        </div>
+                        <div style={{
+                          fontSize: 26, fontWeight: 900,
+                          color: isDark ? "#EEF2FF" : "#0A1330",
+                          letterSpacing: "-0.025em", lineHeight: 1,
+                          fontFamily: "'Inter', sans-serif",
+                          fontVariantNumeric: "tabular-nums",
                         }}>
-                          {label}
-                        </span>
+                          <CountUp value={value}/>
+                        </div>
                       </div>
-                      <div style={{
-                        fontSize: 24, fontWeight: 800, color: isDark ? "#EEF2FF" : "#0A1330",
-                        letterSpacing: "-0.02em", lineHeight: 1,
-                      }}>
-                        {value}
-                      </div>
-                    </div>
+                    </Tilt3D>
                   ))}
                 </div>
               </div>
@@ -1333,7 +1941,7 @@ export function MemberPage() {
                 </p>
               </div>
               <button
-                onClick={() => setFilter("overdue")}
+                onClick={() => { setFilter("overdue"); setDateFilter("all"); }}
                 style={{
                   padding: "8px 14px", borderRadius: 10, fontSize: 12, fontWeight: 700,
                   background: "#EF4444", color: "white", border: "none", cursor: "pointer",
@@ -1346,7 +1954,7 @@ export function MemberPage() {
 
           {/* ── Admin Messages ────────────────────────────────────────────────── */}
           {messages.length > 0 && (
-            <div style={{ marginBottom: 24 }}>
+            <div id="mp-messages" style={{ marginBottom: 24, scrollMarginTop: 80 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                 <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: isDark ? "#64748B" : "#94A3B8", margin: 0 }}>
                   Messages from Admin
@@ -1451,8 +2059,68 @@ export function MemberPage() {
             </div>
           )}
 
+          {/* Date scope */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+            <span style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase",
+              color: isDark ? "#64748B" : "#94A3B8",
+              fontFamily: "'JetBrains Mono', monospace",
+              marginRight: 4,
+            }}>
+              Date
+            </span>
+            {([
+              { key: "all",   label: "All Time", count: stats.total,         color: "#4F7DFF" },
+              { key: "today", label: "Today",    count: dateCounts.today,    color: "#10B981" },
+              { key: "week",  label: "This Week",count: dateCounts.week,     color: "#22B8D4" },
+              { key: "older", label: "Older",    count: dateCounts.older,    color: "#94A3B8" },
+            ] as const).map(({ key, label, count, color }) => {
+              const active = dateFilter === key;
+              return (
+                <button key={key} onClick={() => setDateFilter(key)}
+                  className="mp-chip"
+                  data-active={active ? "true" : "false"}
+                  style={{
+                    padding: "6px 12px", borderRadius: 99, fontSize: 11.5, fontWeight: 700, cursor: "pointer",
+                    background: active
+                      ? `linear-gradient(135deg, ${color}28, ${color}10)`
+                      : (isDark ? "rgba(16,25,55,0.5)" : "rgba(255,255,255,0.7)"),
+                    border: `1px solid ${active ? color : (isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)")}`,
+                    color: active ? color : (isDark ? "#8C99C2" : "#6B7AA0"),
+                    letterSpacing: "-0.005em",
+                    backdropFilter: "blur(8px)",
+                    boxShadow: active ? `0 4px 14px ${color}28` : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.borderColor = `${color}55`;
+                      el.style.color = color;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.borderColor = isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)";
+                      el.style.color = isDark ? "#8C99C2" : "#6B7AA0";
+                    }
+                  }}>
+                  {label} <span style={{ opacity: .65, fontFamily: "'JetBrains Mono', monospace" }}>({count})</span>
+                </button>
+              );
+            })}
+          </div>
+
           {/* Filters */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+            <span style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase",
+              color: isDark ? "#64748B" : "#94A3B8",
+              fontFamily: "'JetBrains Mono', monospace",
+              marginRight: 4,
+            }}>
+              Status
+            </span>
             {(["all", "pending", "in-progress", "completed", "overdue"] as const).map((f) => {
               const labels: Record<string, string> = {
                 all: `All (${stats.total})`,
@@ -1464,24 +2132,27 @@ export function MemberPage() {
               const active = filter === f;
               const accentColor = f === "overdue" ? "#EF4444" : f === "completed" ? "#10B981" : f === "in-progress" ? "#F59E0B" : "#4F7DFF";
               return (
-                <button key={f} onClick={() => setFilter(f)} style={{
-                  padding: "8px 16px", borderRadius: 99, fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+                <button key={f} onClick={() => setFilter(f)}
+                  className="mp-chip"
+                  data-active={active ? "true" : "false"}
+                  style={{
+                  padding: "8px 16px", borderRadius: 99, fontSize: 12.5, fontWeight: 700, cursor: "pointer",
                   background: active
-                    ? `${accentColor}18`
+                    ? `linear-gradient(135deg, ${accentColor}28, ${accentColor}10)`
                     : (isDark ? "rgba(16,25,55,0.5)" : "rgba(255,255,255,0.7)"),
                   border: `1px solid ${active ? accentColor : (isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)")}`,
                   color: active ? accentColor : (isDark ? "#8C99C2" : "#6B7AA0"),
-                  transition: "all .15s var(--ease)",
                   letterSpacing: "-0.005em",
-                  backdropFilter: "blur(6px)",
-                  WebkitBackdropFilter: "blur(6px)",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                  boxShadow: active ? `0 4px 16px ${accentColor}33` : "none",
+                  fontFamily: "'Inter', sans-serif",
                 }}
                 onMouseEnter={(e) => {
                   if (!active) {
                     const el = e.currentTarget as HTMLElement;
-                    el.style.borderColor = `${accentColor}50`;
+                    el.style.borderColor = `${accentColor}55`;
                     el.style.color = accentColor;
-                    el.style.transform = "translateY(-1px)";
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -1489,7 +2160,6 @@ export function MemberPage() {
                     const el = e.currentTarget as HTMLElement;
                     el.style.borderColor = isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)";
                     el.style.color = isDark ? "#8C99C2" : "#6B7AA0";
-                    el.style.transform = "translateY(0)";
                   }
                 }}>
                   {labels[f]}
@@ -1497,26 +2167,25 @@ export function MemberPage() {
               );
             })}
 
-            <button onClick={load} style={{
-              marginLeft: "auto", padding: "8px 16px", borderRadius: 99, fontSize: 12.5, fontWeight: 600,
+            <button onClick={load}
+              className="mp-chip"
+              style={{
+              marginLeft: "auto", padding: "8px 16px", borderRadius: 99, fontSize: 12.5, fontWeight: 700,
               background: isDark ? "rgba(16,25,55,0.5)" : "rgba(255,255,255,0.7)", cursor: "pointer",
               border: `1px solid ${isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)"}`,
               color: isDark ? "#8C99C2" : "#6B7AA0",
-              transition: "all .15s var(--ease)",
               display: "inline-flex", alignItems: "center", gap: 6,
-              backdropFilter: "blur(6px)",
+              backdropFilter: "blur(8px)",
             }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLElement;
-              el.style.borderColor = "rgba(79,125,255,0.4)";
+              el.style.borderColor = "rgba(79,125,255,0.5)";
               el.style.color = "#4F7DFF";
-              el.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLElement;
               el.style.borderColor = isDark ? "rgba(190,210,255,.10)" : "rgba(15,30,80,.08)";
               el.style.color = isDark ? "#8C99C2" : "#6B7AA0";
-              el.style.transform = "translateY(0)";
             }}>
               ↻ Refresh
             </button>
@@ -1531,22 +2200,37 @@ export function MemberPage() {
             }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
               <p style={{ fontSize: 16, fontWeight: 700, color: isDark ? "#64748B" : "#94A3B8", marginBottom: 6 }}>
-                {tasks.length === 0 ? "No tasks assigned yet" : "No tasks match this filter"}
+                {tasks.length === 0 ? "No tasks assigned yet" : "No tasks match these filters"}
               </p>
-              <p style={{ fontSize: 13 }}>
-                {tasks.length === 0 ? "Your manager will assign tasks here soon." : "Try selecting a different filter above."}
+              <p style={{ fontSize: 13, marginBottom: tasks.length === 0 ? 0 : 14 }}>
+                {tasks.length === 0 ? "Your manager will assign tasks here soon." : "Try a different Date or Status filter — or clear them."}
               </p>
+              {tasks.length > 0 && (filter !== "all" || dateFilter !== "all") && (
+                <button
+                  onClick={() => { setFilter("all"); setDateFilter("all"); }}
+                  className="mp-magnetic"
+                  style={{
+                    padding: "8px 16px", borderRadius: 99, fontSize: 12, fontWeight: 700,
+                    background: "#6366F1", color: "white", border: "none", cursor: "pointer",
+                    boxShadow: "0 2px 10px rgba(99,102,241,.3)",
+                  }}>
+                  Clear filters
+                </button>
+              )}
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {sorted.map((t) => (
-                <TaskCard
-                  key={t.id} task={t} isDark={isDark}
-                  starting={startingId === t.id}
-                  onStart={() => handleStart(t)}
-                  onReport={() => setReportTask(t)}
-                  onToggleItem={(itemId, checked) => toggleChecklistItem(t.id!, itemId, checked)}
-                />
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {sorted.map((t, idx) => (
+                <Tilt3D key={t.id} intensity={3}
+                  style={{ animation: `mp-rise .5s var(--ease) ${Math.min(idx, 8) * 60}ms both` }}>
+                  <TaskCard
+                    task={t} isDark={isDark}
+                    starting={startingId === t.id}
+                    onStart={() => handleStart(t)}
+                    onReport={() => setReportTask(t)}
+                    onToggleItem={(itemId, checked) => toggleChecklistItem(t.id!, itemId, checked)}
+                  />
+                </Tilt3D>
               ))}
             </div>
           )}
@@ -1664,8 +2348,16 @@ export function MemberPage() {
 
                         {/* Progress bar */}
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{ flex: 1, height: 6, background: isDark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.06)", borderRadius: 99, overflow: "hidden" }}>
-                            <div style={{ height: "100%", width: `${pct}%`, background: pct === 100 ? "#10B981" : (member?.color || "#6366F1"), borderRadius: 99, transition: "width .4s ease" }}/>
+                          <div style={{ flex: 1, height: 7, background: isDark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.06)", borderRadius: 99, overflow: "hidden" }}>
+                            <div className="mp-progress-fill" style={{
+                              height: "100%", width: `${pct}%`,
+                              background: pct === 100
+                                ? "linear-gradient(90deg, #10B981, #34D399, #10B981)"
+                                : `linear-gradient(90deg, ${member?.color || "#6366F1"}, ${member?.color || "#6366F1"}cc, ${member?.color || "#6366F1"})`,
+                              backgroundSize: "200% 100%",
+                              borderRadius: 99, transition: "width .5s var(--ease)",
+                              boxShadow: pct === 100 ? "0 0 12px rgba(16,185,129,.55)" : `0 0 10px ${(member?.color || "#6366F1")}55`,
+                            }}/>
                           </div>
                           <span style={{ fontSize: 12, fontWeight: 700, color: pct === 100 ? "#10B981" : (isDark ? "#94A3B8" : "#64748B"), flexShrink: 0 }}>
                             {checkedCount}/{total}
@@ -1985,6 +2677,7 @@ export function MemberPage() {
             {toast}
           </div>
         )}
+        </div>
       </div>
     </>
   );
