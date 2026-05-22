@@ -4,7 +4,9 @@ import {
   fetchMemberById, fetchTasksByMemberId, updateTask, updateMember, createReview, fetchAdminSettings,
   fetchIdeasByMemberId, createIdea,
   fetchRoutinesByMemberId, updateRoutine,
+  fetchMessagesByMemberId, updateMemberMessage,
   type FirestoreMember, type FirestoreTask, type FirestoreIdea, type FirestoreRoutine, type ChecklistItem,
+  type FirestoreMemberMessage,
 } from "../lib/firebase";
 import { sendAdminReviewEmail } from "../lib/email";
 import { Timestamp } from "firebase/firestore";
@@ -760,6 +762,8 @@ export function MemberPage() {
   const [routineReport,setRoutineReport]= useState<{ id: string; text: string } | null>(null);
   const [reportSaving, setReportSaving] = useState(false);
   const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(null);
+  const [messages,          setMessages]          = useState<FirestoreMemberMessage[]>([]);
+  const [expandedMessageId, setExpandedMessageId] = useState<string | null>(null);
 
   const toggleTheme = () => { const d = !isDark; setIsDark(d); saveTheme(d); };
 
@@ -780,6 +784,7 @@ export function MemberPage() {
         setMember(m); setTasks(t); setEmailInput(m.email ?? "");
         fetchIdeasByMemberId(memberId).then(setIdeas).catch(() => {});
         fetchRoutinesByMemberId(memberId).then(setRoutines).catch(() => {});
+        fetchMessagesByMemberId(memberId).then(setMessages).catch(() => {});
       }
     } catch { setNotFound(true); }
     finally { setLoading(false); }
@@ -880,6 +885,22 @@ export function MemberPage() {
     } catch { showToast("Failed to submit report."); }
     finally { setReportSaving(false); }
   }
+
+  async function toggleMessageExpand(msg: FirestoreMemberMessage) {
+    if (!msg.id) return;
+    const nextId = expandedMessageId === msg.id ? null : msg.id;
+    setExpandedMessageId(nextId);
+    if (nextId && !msg.read) {
+      setMessages((prev) => prev.map((m) =>
+        m.id === msg.id ? { ...m, read: true, readAt: new Date().toISOString() } : m
+      ));
+      try {
+        await updateMemberMessage(msg.id, { read: true, readAt: new Date().toISOString() });
+      } catch { /* best-effort */ }
+    }
+  }
+
+  const unreadMessageCount = messages.filter((m) => !m.read).length;
 
   async function handleStart(task: FirestoreTask) {
     if (!task.id) return;
@@ -1255,6 +1276,113 @@ export function MemberPage() {
 
         {/* ── Main Content ─────────────────────────────────────────────────────── */}
         <div style={{ maxWidth: 820, margin: "0 auto", padding: "24px 20px 48px" }}>
+
+          {/* ── Admin Messages ────────────────────────────────────────────────── */}
+          {messages.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: isDark ? "#64748B" : "#94A3B8", margin: 0 }}>
+                  Messages from Admin
+                </p>
+                {unreadMessageCount > 0 && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 99,
+                    background: "#EF4444", color: "white", lineHeight: 1.4,
+                  }}>
+                    {unreadMessageCount} new
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {messages.map((msg) => {
+                  const isExpanded = expandedMessageId === msg.id;
+                  const unread     = !msg.read;
+                  const ts         = msg.createdAt
+                    ? new Date((msg.createdAt as unknown as { toMillis(): number }).toMillis()).toLocaleString("en-US", {
+                        month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
+                      })
+                    : "";
+                  return (
+                    <div key={msg.id} className="mp-card"
+                      onClick={() => toggleMessageExpand(msg)}
+                      style={{
+                        borderRadius: 14, overflow: "hidden", cursor: "pointer",
+                        background: unread
+                          ? (isDark ? "rgba(99,102,241,0.10)" : "rgba(99,102,241,0.06)")
+                          : (isDark ? "rgba(255,255,255,.03)" : "#FFFFFF"),
+                        border: `1px solid ${unread ? "rgba(99,102,241,0.35)" : (isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.08)")}`,
+                        transition: "background .2s, border-color .2s",
+                      }}>
+                      <div style={{ padding: "12px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{
+                            width: 28, height: 28, borderRadius: 9, flexShrink: 0,
+                            background: unread ? "#6366F1" : (isDark ? "rgba(255,255,255,.08)" : "rgba(99,102,241,.12)"),
+                            color: unread ? "white" : "#6366F1",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13,
+                          }}>
+                            ✉
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <p style={{
+                                fontSize: 13, fontWeight: unread ? 700 : 600,
+                                color: isDark ? "#F1F5F9" : "#0F172A",
+                                margin: 0, overflow: "hidden", textOverflow: "ellipsis",
+                                whiteSpace: isExpanded ? "normal" : "nowrap",
+                              }}>
+                                {msg.title || "Message from Admin"}
+                              </p>
+                              {unread && (
+                                <span style={{
+                                  width: 6, height: 6, borderRadius: "50%", background: "#EF4444", flexShrink: 0,
+                                }}/>
+                              )}
+                            </div>
+                            {!isExpanded && (
+                              <p style={{
+                                fontSize: 12, color: isDark ? "#94A3B8" : "#64748B",
+                                margin: "2px 0 0 0", overflow: "hidden", textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}>
+                                {msg.body}
+                              </p>
+                            )}
+                          </div>
+                          <span style={{
+                            fontSize: 11, color: isDark ? "#64748B" : "#94A3B8",
+                            flexShrink: 0, whiteSpace: "nowrap",
+                          }}>
+                            {ts}
+                          </span>
+                          <span style={{
+                            fontSize: 12, color: isDark ? "#64748B" : "#94A3B8",
+                            transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform .2s", flexShrink: 0,
+                          }}>▾</span>
+                        </div>
+
+                        {isExpanded && (
+                          <div style={{
+                            marginTop: 10, paddingTop: 10,
+                            borderTop: `1px solid ${isDark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.06)"}`,
+                          }}>
+                            <p style={{
+                              fontSize: 13, lineHeight: 1.65,
+                              color: isDark ? "#CBD5E1" : "#334155",
+                              margin: 0, whiteSpace: "pre-wrap",
+                            }}>
+                              {msg.body}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Filters */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>

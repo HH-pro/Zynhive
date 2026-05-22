@@ -1,9 +1,152 @@
 // ─── src/components/admin/TeamTab.tsx ───────────────────────────────────────
 import { useState, useEffect, useCallback } from "react";
 import {
-  fetchMembers, deleteMember, updateMember, type FirestoreMember,
+  fetchMembers, deleteMember, updateMember, createMemberMessage,
+  type FirestoreMember,
 } from "../../lib/firebase";
 import { TeamMemberForm } from "./TeamMemberForm";
+
+// ─── Send Message Modal ───────────────────────────────────────────────────────
+function SendMessageModal({
+  member, onClose, onSent,
+}: { member: FirestoreMember; onClose: () => void; onSent: () => void }) {
+  const [title,  setTitle]  = useState("");
+  const [body,   setBody]   = useState("");
+  const [saving, setSaving] = useState(false);
+  const [err,    setErr]    = useState("");
+
+  async function submit() {
+    if (!body.trim()) { setErr("Please write a message."); return; }
+    if (!member.id)   { setErr("Member id missing.");      return; }
+    setSaving(true);
+    try {
+      await createMemberMessage({
+        memberId: member.id,
+        title:    title.trim(),
+        body:     body.trim(),
+        read:     false,
+      });
+      onSent();
+      onClose();
+    } catch {
+      setErr("Failed to send. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[460px] rounded-2xl overflow-hidden"
+        style={{
+          background: "var(--bg-panel)",
+          border: "0.5px solid var(--border2)",
+          animation: "fadeScaleIn .22s cubic-bezier(0.16,1,0.3,1) both",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "0.5px solid var(--border)" }}>
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border-2"
+              style={{
+                borderColor: `${member.color}40`,
+                background:  member.imageUrl ? "transparent" : `${member.color}18`,
+              }}
+            >
+              {member.imageUrl ? (
+                <img src={member.imageUrl} alt={member.name} className="w-full h-full object-cover"/>
+              ) : (
+                <span className="font-display text-[12px] font-bold" style={{ color: member.color }}>
+                  {member.initials}
+                </span>
+              )}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <h2 className="font-semibold text-[15px]" style={{ color: "var(--ink)" }}>
+                Message {member.name.split(" ")[0]}
+              </h2>
+              <p className="text-[11px] truncate" style={{ color: "var(--ink4)" }}>
+                Delivered to their member portal
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border2)", cursor: "pointer", color: "var(--ink4)" }}>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>
+              Title <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+            </label>
+            <input
+              value={title}
+              onChange={(e) => { setTitle(e.target.value); setErr(""); }}
+              placeholder="e.g. Heads up — schedule change"
+              style={{
+                width: "100%", padding: "9px 12px", borderRadius: 10,
+                border: "0.5px solid var(--border2)", background: "var(--bg-surface)",
+                color: "var(--ink)", fontSize: 13, outline: "none",
+              }}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink4)" }}>Message *</label>
+            <textarea
+              value={body}
+              onChange={(e) => { setBody(e.target.value); setErr(""); }}
+              placeholder="Write your message…"
+              rows={5}
+              style={{
+                width: "100%", padding: "9px 12px", borderRadius: 10,
+                border: "0.5px solid var(--border2)", background: "var(--bg-surface)",
+                color: "var(--ink)", fontSize: 13, outline: "none",
+                resize: "vertical", lineHeight: 1.6,
+              }}
+            />
+          </div>
+
+          {err && (
+            <p className="text-[12px] px-3 py-2 rounded-lg"
+              style={{ background: "rgba(239,68,68,0.1)", color: "#EF4444", border: "0.5px solid rgba(239,68,68,0.25)" }}>
+              {err}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 flex gap-2.5" style={{ borderTop: "0.5px solid var(--border)" }}>
+          <button onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl text-[13px]"
+            style={{ border: "0.5px solid var(--border2)", color: "var(--ink3)", background: "transparent", cursor: "pointer" }}>
+            Cancel
+          </button>
+          <button onClick={submit} disabled={saving}
+            className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-white"
+            style={{
+              background: saving ? "rgba(99,102,241,.5)" : "linear-gradient(135deg, var(--accent), var(--cyan))",
+              border: "none", cursor: saving ? "default" : "pointer", opacity: saving ? 0.8 : 1,
+            }}>
+            {saving ? "Sending…" : "Send Message →"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Delete confirm ───────────────────────────────────────────────────────────
 function DeleteConfirm({
@@ -58,16 +201,17 @@ function DeleteConfirm({
 
 // ─── Member card (grid view) ──────────────────────────────────────────────────
 function MemberCard({
-  member, onEdit, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onCopyLink,
+  member, onEdit, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onCopyLink, onSendMessage,
 }: {
-  member:      FirestoreMember;
-  onEdit:      (m: FirestoreMember) => void;
-  onDelete:    (m: FirestoreMember) => void;
-  onMoveUp:    (m: FirestoreMember) => void;
-  onMoveDown:  (m: FirestoreMember) => void;
-  isFirst:     boolean;
-  isLast:      boolean;
-  onCopyLink:  (m: FirestoreMember) => void;
+  member:        FirestoreMember;
+  onEdit:        (m: FirestoreMember) => void;
+  onDelete:      (m: FirestoreMember) => void;
+  onMoveUp:      (m: FirestoreMember) => void;
+  onMoveDown:    (m: FirestoreMember) => void;
+  isFirst:       boolean;
+  isLast:        boolean;
+  onCopyLink:    (m: FirestoreMember) => void;
+  onSendMessage: (m: FirestoreMember) => void;
 }) {
   return (
     <div
@@ -129,6 +273,16 @@ function MemberCard({
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
                 <path d="M7.5 1.5l2 2L3 10H1V8L7.5 1.5z"
                   stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button
+              onClick={() => onSendMessage(member)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--ink4)]
+                hover:text-[var(--accent)] hover:bg-[var(--accent-pale)] transition-all"
+              title="Send Message"
+            >
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                <path d="M1 2h9v6H3.5L1 10V2z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
               </svg>
             </button>
             <button
@@ -233,6 +387,15 @@ function MemberCard({
           >
             🔗 Portal
           </button>
+          <button
+            onClick={() => onSendMessage(member)}
+            className="flex-1 py-1.5 rounded-lg text-[10px] font-mono border border-[var(--border2)]
+              text-[var(--accent)] hover:bg-[var(--accent-pale)] hover:border-[var(--accent)]
+              transition-all"
+            title="Send a message to this member's portal"
+          >
+            ✉ Message
+          </button>
         </div>
       </div>
     </div>
@@ -245,11 +408,12 @@ interface Props {
 }
 
 export function TeamTab({ showToast }: Props) {
-  const [members,      setMembers]      = useState<FirestoreMember[]>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [formOpen,     setFormOpen]     = useState(false);
-  const [editMember,   setEditMember]   = useState<FirestoreMember | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<FirestoreMember | null>(null);
+  const [members,        setMembers]        = useState<FirestoreMember[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [formOpen,       setFormOpen]       = useState(false);
+  const [editMember,     setEditMember]     = useState<FirestoreMember | null>(null);
+  const [deleteTarget,   setDeleteTarget]   = useState<FirestoreMember | null>(null);
+  const [messageTarget,  setMessageTarget]  = useState<FirestoreMember | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -412,6 +576,7 @@ export function TeamTab({ showToast }: Props) {
               isFirst={i === 0}
               isLast={i === members.length - 1}
               onCopyLink={handleCopyLink}
+              onSendMessage={setMessageTarget}
             />
           ))}
         </div>
@@ -450,6 +615,14 @@ export function TeamTab({ showToast }: Props) {
           member={deleteTarget}
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {messageTarget && (
+        <SendMessageModal
+          member={messageTarget}
+          onClose={() => setMessageTarget(null)}
+          onSent={() => showToast(`Message sent to ${messageTarget.name}`)}
         />
       )}
     </div>

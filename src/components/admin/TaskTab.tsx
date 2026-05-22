@@ -499,9 +499,10 @@ function RingProgress({ value, total, color, isTotal }: {
 }
 
 // ─── Add / Edit Task Modal ─────────────────────────────────────────────────────
-function AddTaskModal({ task, members, onClose, onSaved }: {
+function AddTaskModal({ task, members, tasks, onClose, onSaved }: {
   task: FirestoreTask | null;
   members: FirestoreMember[];
+  tasks: FirestoreTask[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -528,8 +529,40 @@ function AddTaskModal({ task, members, onClose, onSaved }: {
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(task?.checklistItems ?? []);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+  const [cloneSourceId, setCloneSourceId] = useState("");
 
   function clUid() { return Math.random().toString(36).slice(2, 10); }
+
+  // Only offer cloning when creating a new task. Filter out the current edit
+  // target (if any) and de-duplicate by title to keep the list short.
+  const cloneCandidates = useMemo(() => {
+    if (task) return [];
+    const seen = new Set<string>();
+    return tasks
+      .filter((t) => t.id && !seen.has(t.title.toLowerCase()) && (seen.add(t.title.toLowerCase()), true))
+      .slice(0, 50);
+  }, [tasks, task]);
+
+  function applyClone(id: string) {
+    setCloneSourceId(id);
+    if (!id) return;
+    const src = tasks.find((t) => t.id === id);
+    if (!src) return;
+    setForm((f) => ({
+      ...f,
+      title:       src.title,
+      description: src.description ?? "",
+      type:        src.type,
+      priority:    src.priority,
+    }));
+    setChecklistItems((src.checklistItems ?? []).map((i) => ({
+      ...i,
+      id:        clUid(),
+      checked:   false,
+      checkedAt: "",
+    })));
+    setErr("");
+  }
   function addClItem() {
     setChecklistItems((p) => [...p, { id: clUid(), title: "", checked: false, checkedAt: "", impact: "medium" as const, estimatedMinutes: 0, category: "" }]);
   }
@@ -634,6 +667,44 @@ function AddTaskModal({ task, members, onClose, onSaved }: {
 
         {/* Body */}
         <div className="px-6 py-5 flex flex-col gap-4" style={{ maxHeight: "62vh", overflowY: "auto" }}>
+
+          {/* Copy from previous task (new-task mode only) */}
+          {!task && cloneCandidates.length > 0 && (
+            <div className="flex flex-col gap-1.5 rounded-xl p-3"
+              style={{ background: "var(--accent-pale)", border: "0.5px solid rgba(99,102,241,0.25)" }}>
+              <label className="text-[10px] font-semibold uppercase tracking-widest flex items-center gap-1.5"
+                style={{ color: "var(--accent)" }}>
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <rect x="1" y="3.5" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1"/>
+                  <path d="M4 1h6v6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Copy from previous task
+              </label>
+              <div className="flex items-center gap-2">
+                <select value={cloneSourceId} onChange={(e) => applyClone(e.target.value)}
+                  style={{ ...inputBase, cursor: "pointer", flex: 1, background: "var(--bg-card)" }}
+                  onFocus={focusBorder} onBlur={blurBorder}>
+                  <option value="">— Start blank —</option>
+                  {cloneCandidates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.title}{t.assignedToName ? ` · ${t.assignedToName}` : ""}
+                    </option>
+                  ))}
+                </select>
+                {cloneSourceId && (
+                  <button onClick={() => applyClone("")}
+                    className="px-2.5 py-1.5 rounded-lg text-[10px] font-semibold"
+                    style={{ background: "var(--bg-card)", border: "0.5px solid var(--border2)", color: "var(--ink4)", cursor: "pointer" }}
+                    title="Clear">
+                    Reset
+                  </button>
+                )}
+              </div>
+              <p className="text-[10.5px]" style={{ color: "var(--ink4)" }}>
+                Inherits title, description, type, priority and routine steps. The assignee and due date stay yours to set.
+              </p>
+            </div>
+          )}
 
           {/* Title */}
           <div className="flex flex-col gap-1.5">
@@ -2273,7 +2344,7 @@ export function TaskTab({ showToast, openAdd, onOpenAddDone }: Props) {
 
       {/* Modals */}
       {addOpen && (
-        <AddTaskModal task={editTask} members={members}
+        <AddTaskModal task={editTask} members={members} tasks={tasks}
           onClose={() => { setAddOpen(false); setEditTask(null); }}
           onSaved={() => { load(); showToast(editTask ? "Task updated!" : "Task created!"); }}
         />

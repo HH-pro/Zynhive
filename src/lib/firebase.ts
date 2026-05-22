@@ -571,6 +571,40 @@ export const updateIdea = (id: string, data: Partial<FirestoreIdea>) =>
 
 export const deleteIdea = (id: string) => deleteDoc(doc(db, IDEAS_COL, id));
 
+// ─── Member Messages (admin → member) ─────────────────────────────────────────
+export type FirestoreMemberMessage = {
+  id?:          string;
+  memberId:     string;
+  title:        string;
+  body:         string;
+  read:         boolean;
+  readAt?:      string;
+  createdAt?:   Timestamp;
+  updatedAt?:   Timestamp;
+};
+
+const MEMBER_MESSAGES_COL = "member_messages";
+
+export async function fetchMessagesByMemberId(memberId: string): Promise<FirestoreMemberMessage[]> {
+  const snap = await getDocs(collection(db, MEMBER_MESSAGES_COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreMemberMessage))
+    .filter((m) => m.memberId === memberId)
+    .sort((a, b) => {
+      const ta = (a.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      const tb = (b.createdAt as Timestamp)?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+}
+
+export const createMemberMessage = (data: Omit<FirestoreMemberMessage, "id" | "createdAt" | "updatedAt">) =>
+  addDoc(collection(db, MEMBER_MESSAGES_COL), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+
+export const updateMemberMessage = (id: string, data: Partial<FirestoreMemberMessage>) =>
+  updateDoc(doc(db, MEMBER_MESSAGES_COL, id), { ...data, updatedAt: serverTimestamp() });
+
+export const deleteMemberMessage = (id: string) => deleteDoc(doc(db, MEMBER_MESSAGES_COL, id));
+
 // ─── Activity Log ─────────────────────────────────────────────────────────────
 export type ActivityLog = {
   id?:        string;
