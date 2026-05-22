@@ -1,4 +1,4 @@
-async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"direct",toEmail:r.to,subject:r.subject,html:r.html??"",text:r.body})});return i.ok?{success:!0}:{success:!1,error:(await i.json().catch(()=>({error:`HTTP ${i.status}`}))).error??`HTTP ${i.status}`}}catch(i){const t=i instanceof Error?i.message:"Network error";return console.error("[Email] /api/send-email unreachable:",t),{success:!1,error:t}}}const c="linear-gradient(135deg,#3730A3 0%,#6366F1 50%,#818CF8 100%)",b="linear-gradient(135deg,#EEF2FF 0%,#F5F3FF 100%)";function f(r){return`<!DOCTYPE html>
+async function p(r){try{const a=await fetch("/api/send-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"direct",toEmail:r.to,subject:r.subject,html:r.html??"",text:r.body})});return a.ok?{success:!0}:{success:!1,error:(await a.json().catch(()=>({error:`HTTP ${a.status}`}))).error??`HTTP ${a.status}`}}catch(a){const e=a instanceof Error?a.message:"Network error";return console.error("[Email] /api/send-email unreachable:",e),{success:!1,error:e}}}const c="linear-gradient(135deg,#3730A3 0%,#6366F1 50%,#818CF8 100%)",x="linear-gradient(135deg,#EEF2FF 0%,#F5F3FF 100%)";function g(r){return`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
@@ -61,7 +61,7 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
 </table>
 
 </body>
-</html>`}function x(r,i,t,e){const a=`
+</html>`}function y(r,a,e,i){const t=`
     <!-- HEADER -->
     <tr>
       <td style="background:${c};padding:0;text-align:center;position:relative;">
@@ -139,7 +139,7 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
         <!-- Update highlight card -->
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
           <tr>
-            <td style="background:${b};border:1.5px solid #C7D2FE;
+            <td style="background:${x};border:1.5px solid #C7D2FE;
                        border-radius:16px;padding:24px 26px;">
               <!-- Card header -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
@@ -158,17 +158,17 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
                       </tr>
                     </table>
                   </td>
-                  ${i?`
+                  ${a?`
                   <td align="right">
                     <span style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:100px;
                                  color:#4338CA;font-size:11px;font-weight:600;padding:4px 12px;
-                                 font-family:Arial,sans-serif;">📁 ${i}</span>
+                                 font-family:Arial,sans-serif;">📁 ${a}</span>
                   </td>`:""}
                 </tr>
               </table>
               <!-- Update title -->
               <p style="color:#1E1B4B;font-size:20px;font-weight:700;margin:0;
-                        line-height:1.3;font-family:Arial,sans-serif;">${t}</p>
+                        line-height:1.3;font-family:Arial,sans-serif;">${e}</p>
             </td>
           </tr>
         </table>
@@ -235,7 +235,7 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
                 <tr>
                   <td style="background:${c};border-radius:14px;
                              box-shadow:0 8px 24px rgba(99,102,241,0.4);">
-                    <a href="${e}"
+                    <a href="${i}"
                       style="display:block;color:#ffffff;text-decoration:none;
                              padding:16px 56px;font-size:15px;font-weight:800;
                              letter-spacing:-0.2px;font-family:Arial,sans-serif;
@@ -256,7 +256,7 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
               <p style="color:#94A3B8;font-size:12px;margin:0 0 6px;line-height:1.7;font-family:Arial,sans-serif;">
                 Have questions? Reply to your project manager directly.
               </p>
-              <a href="${e}" style="color:#6366F1;font-size:12px;font-weight:600;
+              <a href="${i}" style="color:#6366F1;font-size:12px;font-weight:600;
                                             text-decoration:none;font-family:Arial,sans-serif;">
                 Manage notification settings →
               </a>
@@ -266,7 +266,7 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
 
       </td>
     </tr>
-  `;return f(a)}function y(r,i,t,e,a){const n="linear-gradient(135deg,#0C4A6E 0%,#0369A1 45%,#0EA5E9 100%)",l=`
+  `;return g(t)}function m(r,a,e,i,t){const n="linear-gradient(135deg,#0C4A6E 0%,#0369A1 45%,#0EA5E9 100%)",l=`
     <!-- HEADER -->
     <tr>
       <td style="background:${n};padding:0;text-align:center;">
@@ -337,11 +337,11 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
           Hello, ${r} 👋
         </p>
         <p style="color:#64748B;font-size:14px;margin:0 0 28px;line-height:1.65;font-family:Arial,sans-serif;">
-          The ZynHive team replied to your feedback${t?` on <strong style="color:#1E293B;">${t}</strong>`:""}.
+          The ZynHive team replied to your feedback${e?` on <strong style="color:#1E293B;">${e}</strong>`:""}.
         </p>
 
         <!-- Context breadcrumb -->
-        ${t?`
+        ${e?`
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
           <tr>
             <td style="background:#F8FAFF;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;">
@@ -352,11 +352,11 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
                   </td>
                   <td style="padding-left:8px;vertical-align:middle;">
                     <span style="color:#334155;font-size:13px;font-weight:600;
-                                 font-family:Arial,sans-serif;">${t}</span>
+                                 font-family:Arial,sans-serif;">${e}</span>
                   </td>
-                  ${i?`
+                  ${a?`
                   <td style="padding-left:12px;vertical-align:middle;">
-                    <span style="color:#94A3B8;font-size:11px;font-family:Arial,sans-serif;">· 📁 ${i}</span>
+                    <span style="color:#94A3B8;font-size:11px;font-family:Arial,sans-serif;">· 📁 ${a}</span>
                   </td>`:""}
                 </tr>
               </table>
@@ -386,7 +386,7 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
               </table>
               <!-- Message content -->
               <p style="color:#1E293B;font-size:14px;line-height:1.8;margin:0;
-                        font-family:Arial,sans-serif;white-space:pre-line;">${e}</p>
+                        font-family:Arial,sans-serif;white-space:pre-line;">${i}</p>
             </td>
           </tr>
         </table>
@@ -399,7 +399,7 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
                 <tr>
                   <td style="background:${n};border-radius:14px;
                              box-shadow:0 8px 24px rgba(14,165,233,0.35);">
-                    <a href="${a}"
+                    <a href="${t}"
                       style="display:block;color:#ffffff;text-decoration:none;
                              padding:16px 56px;font-size:15px;font-weight:800;
                              letter-spacing:-0.2px;font-family:Arial,sans-serif;
@@ -420,7 +420,7 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
               <p style="color:#94A3B8;font-size:12px;margin:0 0 6px;line-height:1.7;font-family:Arial,sans-serif;">
                 You can reply directly from your project portal anytime.
               </p>
-              <a href="${a}" style="color:#0EA5E9;font-size:12px;font-weight:600;
+              <a href="${t}" style="color:#0EA5E9;font-size:12px;font-weight:600;
                                             text-decoration:none;font-family:Arial,sans-serif;">
                 Open my portal →
               </a>
@@ -430,7 +430,7 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
 
       </td>
     </tr>
-  `;return f(l)}function h(r,i,t,e,a,n){const l="linear-gradient(135deg,#1E1B4B 0%,#3730A3 50%,#4F46E5 100%)",o={high:{color:"#EF4444",bg:"#FEF2F2"},medium:{color:"#F59E0B",bg:"#FFFBEB"},low:{color:"#10B981",bg:"#F0FDF4"}},s=o[e]??o.medium,d=`
+  `;return g(l)}function h(r,a,e,i,t,n){const l="linear-gradient(135deg,#1E1B4B 0%,#3730A3 50%,#4F46E5 100%)",o={high:{color:"#EF4444",bg:"#FEF2F2"},medium:{color:"#F59E0B",bg:"#FFFBEB"},low:{color:"#10B981",bg:"#F0FDF4"}},s=o[i]??o.medium,d=`
     <!-- HEADER -->
     <tr>
       <td style="background:${l};padding:0;text-align:center;">
@@ -502,24 +502,24 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
                                  color:${s.color};font-size:10px;font-weight:700;text-transform:uppercase;
                                  letter-spacing:0.08em;padding:3px 10px;border-radius:99px;
                                  font-family:Arial,sans-serif;">
-                      ${e} priority
+                      ${i} priority
                     </span>
                   </td>
-                  ${a?`
+                  ${t?`
                   <td align="right">
                     <span style="color:#64748B;font-size:12px;font-family:Arial,sans-serif;">
-                      📅 Due: <strong style="color:#1E293B;">${a}</strong>
+                      📅 Due: <strong style="color:#1E293B;">${t}</strong>
                     </span>
                   </td>`:""}
                 </tr>
               </table>
               <!-- Title -->
               <p style="color:#1E1B4B;font-size:19px;font-weight:700;margin:0 0 10px;
-                        line-height:1.3;font-family:Arial,sans-serif;">${i}</p>
+                        line-height:1.3;font-family:Arial,sans-serif;">${a}</p>
               <!-- Description -->
-              ${t?`
+              ${e?`
               <p style="color:#475569;font-size:13px;line-height:1.7;margin:0;
-                        font-family:Arial,sans-serif;">${t}</p>`:""}
+                        font-family:Arial,sans-serif;">${e}</p>`:""}
             </td>
           </tr>
         </table>
@@ -556,7 +556,7 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
         </table>
       </td>
     </tr>
-  `;return f(d)}function m(r,i,t,e,a){const n="linear-gradient(135deg,#7F1D1D 0%,#B91C1C 50%,#EF4444 100%)",l=(t||"").trim(),o=`
+  `;return g(d)}function u(r,a,e,i,t){const n="linear-gradient(135deg,#7F1D1D 0%,#B91C1C 50%,#EF4444 100%)",l=(e||"").trim(),o=`
     <!-- HEADER -->
     <tr>
       <td style="background:${n};padding:0;text-align:center;">
@@ -632,13 +632,13 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
                   </td>
                   <td align="right">
                     <span style="color:#64748B;font-size:12px;font-family:Arial,sans-serif;">
-                      ⏱ New deadline: <strong style="color:#1E293B;">${e}</strong>
+                      ⏱ New deadline: <strong style="color:#1E293B;">${i}</strong>
                     </span>
                   </td>
                 </tr>
               </table>
               <p style="color:#7F1D1D;font-size:19px;font-weight:700;margin:0 0 10px;
-                        line-height:1.3;font-family:Arial,sans-serif;">${i}</p>
+                        line-height:1.3;font-family:Arial,sans-serif;">${a}</p>
               ${l?`
               <div style="background:#ffffff;border:1px solid #FECACA;border-radius:10px;padding:14px 16px;margin-top:8px;">
                 <p style="color:#B91C1C;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;font-family:Arial,sans-serif;">
@@ -658,7 +658,7 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
                 <tr>
                   <td style="background:${n};border-radius:14px;
                              box-shadow:0 8px 24px rgba(239,68,68,0.35);">
-                    <a href="${a}"
+                    <a href="${t}"
                       style="display:block;color:#ffffff;text-decoration:none;
                              padding:16px 52px;font-size:15px;font-weight:800;
                              letter-spacing:-0.2px;font-family:Arial,sans-serif;white-space:nowrap;">
@@ -682,42 +682,156 @@ async function g(r){try{const i=await fetch("/api/send-email",{method:"POST",hea
         </table>
       </td>
     </tr>
-  `;return f(o)}async function w(r){const{toEmail:i,toName:t,projectName:e,updateTitle:a,portalUrl:n}=r,l=`New Update on Your Project — ${a||e||"ZynHive"}`,o=x(t,e,a,n),s=`Hi ${t},
+  `;return g(o)}async function F(r){const{toEmail:a,toName:e,projectName:i,updateTitle:t,portalUrl:n}=r,l=`New Update on Your Project — ${t||i||"ZynHive"}`,o=y(e,i,t,n),s=`Hi ${e},
 
-Your project "${e}" has a new update: ${a}.
+Your project "${i}" has a new update: ${t}.
 
 View it here: ${n}
 
-— ZynHive Team`;await g({to:i,subject:l,body:s,html:o})}async function A(r){const{toEmail:i,toName:t,taskTitle:e,taskDescription:a,priority:n,dueDate:l,portalUrl:o}=r,s=`New Task Assigned: ${e}`,d=h(t,e,a,n,l,o),p=`Hi ${t},
+— ZynHive Team`;await p({to:a,subject:l,body:s,html:o})}async function k(r){const{toEmail:a,toName:e,taskTitle:i,taskDescription:t,priority:n,dueDate:l,portalUrl:o}=r,s=`New Task Assigned: ${i}`,d=h(e,i,t,n,l,o),f=`Hi ${e},
 
-A new task has been assigned to you: "${e}"
+A new task has been assigned to you: "${i}"
 
 Priority: ${n}
 Due: ${l}
 
 View your portal: ${o}
 
-— ZynHive Team`;await g({to:i,subject:s,body:p,html:d})}async function F(r){const{toEmail:i,toName:t,taskTitle:e,reason:a,newDeadline:n,portalUrl:l}=r,o=`Revision Requested: ${e}`,s=m(t,e,a,n,l),d=a?`
+— ZynHive Team`;await p({to:a,subject:s,body:f,html:d})}async function E(r){const{toEmail:a,toName:e,taskTitle:i,reason:t,newDeadline:n,portalUrl:l}=r,o=`Revision Requested: ${i}`,s=u(e,i,t,n,l),d=t?`
 
 Feedback from admin:
-${a}
-`:"",p=`Hi ${t},
+${t}
+`:"",f=`Hi ${e},
 
-Your submission for "${e}" needs revision.${d}
+Your submission for "${i}" needs revision.${d}
 The task has been re-assigned to you with a new 24-hour deadline:
 ${n}
 
 Open your portal: ${l}
 
-— ZynHive Team`;await g({to:i,subject:o,body:p,html:s})}async function k(r){const{toEmail:i,toName:t,projectName:e,updateTitle:a,replyMessage:n,portalUrl:l}=r,o=`ZynHive replied to your feedback${a?` on "${a}"`:""}`,s=y(t,e,a,n,l),d=`Hi ${t},
+— ZynHive Team`;await p({to:a,subject:o,body:f,html:s})}async function v(r){const{toEmail:a,toName:e,projectName:i,updateTitle:t,replyMessage:n,portalUrl:l}=r,o=`ZynHive replied to your feedback${t?` on "${t}"`:""}`,s=m(e,i,t,n,l),d=`Hi ${e},
 
-ZynHive Team replied to your feedback on "${a}":
+ZynHive Team replied to your feedback on "${t}":
 
 "${n}"
 
 View conversation: ${l}
 
-— ZynHive Team`;await g({to:i,subject:o,body:d,html:s})}function u(r,i,t,e,a,n){const l="linear-gradient(135deg,#064E3B 0%,#047857 50%,#10B981 100%)",o=`
+— ZynHive Team`;await p({to:a,subject:o,body:d,html:s})}function b(r){return r.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}function w(r,a,e,i){const t="linear-gradient(135deg,#1E1B4B 0%,#3730A3 50%,#4F46E5 100%)",n=b(e).replace(/\n/g,"<br/>"),l=b(a),o=b(r),s=`
+    <!-- HEADER -->
+    <tr>
+      <td style="background:${t};padding:0;text-align:center;">
+        <div style="height:4px;background:linear-gradient(90deg,#818CF8,#C7D2FE,#818CF8);"></div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:40px 40px 44px;text-align:center;">
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.22);
+                             border-radius:100px;padding:8px 20px;">
+                    <table cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td style="background:rgba(255,255,255,0.2);border-radius:6px;width:20px;height:20px;
+                                 text-align:center;vertical-align:middle;line-height:20px;">
+                        <span style="color:#fff;font-size:7px;font-weight:900;font-family:Arial,sans-serif;">ZH</span>
+                      </td>
+                      <td style="padding-left:8px;vertical-align:middle;">
+                        <span style="color:#fff;font-size:13px;font-weight:800;letter-spacing:-0.2px;
+                                     font-family:Arial,sans-serif;">ZynHive</span>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:20px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.18);border-radius:100px;padding:6px 16px;">
+                    <span style="color:rgba(255,255,255,0.95);font-size:11px;font-weight:700;
+                                 letter-spacing:0.08em;text-transform:uppercase;font-family:Arial,sans-serif;">
+                      ✉ &nbsp;New Message from Admin
+                    </span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="color:#ffffff;font-size:26px;font-weight:800;margin:0 0 10px;line-height:1.2;
+                         letter-spacing:-0.6px;font-family:Arial,sans-serif;">
+                You Have a New Message
+              </h1>
+              <p style="color:rgba(255,255,255,0.72);font-size:14px;margin:0;line-height:1.6;
+                        font-family:Arial,sans-serif;max-width:360px;margin-left:auto;margin-right:auto;">
+                Your admin has left you a note in your portal.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- BODY -->
+    <tr>
+      <td style="padding:36px 40px 32px;background:#ffffff;">
+        <p style="color:#0F172A;font-size:17px;font-weight:600;margin:0 0 6px;
+                  line-height:1.5;font-family:Arial,sans-serif;">
+          Hello, ${o} 👋
+        </p>
+        <p style="color:#64748B;font-size:14px;margin:0 0 24px;line-height:1.65;font-family:Arial,sans-serif;">
+          Here's a quick note from your admin:
+        </p>
+
+        <!-- Message card -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+          <tr>
+            <td style="background:#F8F9FF;border:1.5px solid #C7D2FE;border-radius:16px;padding:22px 24px;">
+              <p style="color:#1E1B4B;font-size:17px;font-weight:700;margin:0 0 12px;
+                        line-height:1.35;font-family:Arial,sans-serif;">${l}</p>
+              <p style="color:#475569;font-size:14px;line-height:1.75;margin:0;
+                        font-family:Arial,sans-serif;">${n}</p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+          <tr>
+            <td align="center">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background:${t};border-radius:14px;
+                             box-shadow:0 8px 24px rgba(99,102,241,0.4);">
+                    <a href="${i}"
+                      style="display:block;color:#ffffff;text-decoration:none;
+                             padding:16px 52px;font-size:15px;font-weight:800;
+                             letter-spacing:-0.2px;font-family:Arial,sans-serif;white-space:nowrap;">
+                      Open Portal &nbsp;→
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="border-top:1px solid #F1F5F9;padding-top:20px;text-align:center;">
+              <p style="color:#94A3B8;font-size:12px;margin:0;line-height:1.7;font-family:Arial,sans-serif;">
+                You can read it any time in your member portal under "Messages from Admin".
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;return g(s)}async function z(r){const{toEmail:a,toName:e,title:i,body:t,portalUrl:n}=r,l=i.trim()||"Message from your admin",o=`New message from admin: ${l}`,s=w(e,l,t,n),d=`Hi ${e},
+
+Your admin sent you a new message:
+
+${l}
+
+${t}
+
+Open your portal: ${n}
+
+— ZynHive Team`;await p({to:a,subject:o,body:d,html:s})}function A(r,a,e,i,t,n){const l="linear-gradient(135deg,#064E3B 0%,#047857 50%,#10B981 100%)",o=`
     <!-- HEADER -->
     <tr>
       <td style="background:${l};padding:0;text-align:center;">
@@ -792,25 +906,25 @@ View conversation: ${l}
                     <span style="color:#15803D;font-size:11px;font-weight:700;text-transform:uppercase;
                                  letter-spacing:0.08em;font-family:Arial,sans-serif;">Completed Task</span>
                   </td>
-                  ${a?`
+                  ${t?`
                   <td align="right">
                     <span style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:100px;
                                  color:#4338CA;font-size:11px;font-weight:600;padding:3px 10px;
-                                 font-family:Arial,sans-serif;">👤 ${a}</span>
+                                 font-family:Arial,sans-serif;">👤 ${t}</span>
                   </td>`:""}
                 </tr>
               </table>
               <p style="color:#14532D;font-size:18px;font-weight:700;margin:0 0 8px;
-                        line-height:1.3;font-family:Arial,sans-serif;">${i}</p>
-              ${t?`
+                        line-height:1.3;font-family:Arial,sans-serif;">${a}</p>
+              ${e?`
               <p style="color:#166534;font-size:13px;line-height:1.65;margin:0;
-                        font-family:Arial,sans-serif;">${t}</p>`:""}
+                        font-family:Arial,sans-serif;">${e}</p>`:""}
             </td>
           </tr>
         </table>
 
         <!-- Report bubble -->
-        ${e?`
+        ${i?`
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
           <tr>
             <td style="background:#F8FAFF;border:1.5px solid #C7D2FE;border-left:4px solid #6366F1;
@@ -820,7 +934,7 @@ View conversation: ${l}
                 Member's Report
               </p>
               <p style="color:#1E293B;font-size:14px;line-height:1.75;margin:0;
-                        font-family:Arial,sans-serif;white-space:pre-line;">${e}</p>
+                        font-family:Arial,sans-serif;white-space:pre-line;">${i}</p>
             </td>
           </tr>
         </table>`:"<div style='height:28px'></div>"}
@@ -857,9 +971,9 @@ View conversation: ${l}
         </table>
       </td>
     </tr>
-  `;return f(o)}async function v(r){const{toEmail:i,memberName:t,taskTitle:e,taskDescription:a,report:n,linkedClientName:l,dashboardUrl:o}=r,s=`✅ Review Needed: ${t} completed "${e}"`,d=u(t,e,a,n,l,o),p=`${t} completed a task: "${e}"
+  `;return g(o)}async function $(r){const{toEmail:a,memberName:e,taskTitle:i,taskDescription:t,report:n,linkedClientName:l,dashboardUrl:o}=r,s=`✅ Review Needed: ${e} completed "${i}"`,d=A(e,i,t,n,l,o),f=`${e} completed a task: "${i}"
 
 Report:
 ${n}
 
-Review it: ${o}`;await g({to:i,subject:s,body:p,html:d})}export{w as a,k as b,A as c,F as d,v as e,g as s};
+Review it: ${o}`;await p({to:a,subject:s,body:f,html:d})}export{p as a,F as b,v as c,k as d,E as e,$ as f,z as s};

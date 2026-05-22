@@ -788,6 +788,143 @@ export async function sendReplyNotificationEmail(params: {
   await sendEmail({ to: toEmail, subject, body, html });
 }
 
+// ─── Member message (admin → member portal) template ─────────────────────────
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildMemberMessageHtml(
+  toName: string, msgTitle: string, msgBody: string, portalUrl: string
+): string {
+  const GRADIENT = "linear-gradient(135deg,#1E1B4B 0%,#3730A3 50%,#4F46E5 100%)";
+  const safeBody = escapeHtml(msgBody).replace(/\n/g, "<br/>");
+  const safeTitle = escapeHtml(msgTitle || "Message from your admin");
+  const safeName  = escapeHtml(toName);
+
+  const body = `
+    <!-- HEADER -->
+    <tr>
+      <td style="background:${GRADIENT};padding:0;text-align:center;">
+        <div style="height:4px;background:linear-gradient(90deg,#818CF8,#C7D2FE,#818CF8);"></div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:40px 40px 44px;text-align:center;">
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.22);
+                             border-radius:100px;padding:8px 20px;">
+                    <table cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td style="background:rgba(255,255,255,0.2);border-radius:6px;width:20px;height:20px;
+                                 text-align:center;vertical-align:middle;line-height:20px;">
+                        <span style="color:#fff;font-size:7px;font-weight:900;font-family:Arial,sans-serif;">ZH</span>
+                      </td>
+                      <td style="padding-left:8px;vertical-align:middle;">
+                        <span style="color:#fff;font-size:13px;font-weight:800;letter-spacing:-0.2px;
+                                     font-family:Arial,sans-serif;">ZynHive</span>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+              <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:20px;">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.18);border-radius:100px;padding:6px 16px;">
+                    <span style="color:rgba(255,255,255,0.95);font-size:11px;font-weight:700;
+                                 letter-spacing:0.08em;text-transform:uppercase;font-family:Arial,sans-serif;">
+                      ✉ &nbsp;New Message from Admin
+                    </span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="color:#ffffff;font-size:26px;font-weight:800;margin:0 0 10px;line-height:1.2;
+                         letter-spacing:-0.6px;font-family:Arial,sans-serif;">
+                You Have a New Message
+              </h1>
+              <p style="color:rgba(255,255,255,0.72);font-size:14px;margin:0;line-height:1.6;
+                        font-family:Arial,sans-serif;max-width:360px;margin-left:auto;margin-right:auto;">
+                Your admin has left you a note in your portal.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- BODY -->
+    <tr>
+      <td style="padding:36px 40px 32px;background:#ffffff;">
+        <p style="color:#0F172A;font-size:17px;font-weight:600;margin:0 0 6px;
+                  line-height:1.5;font-family:Arial,sans-serif;">
+          Hello, ${safeName} 👋
+        </p>
+        <p style="color:#64748B;font-size:14px;margin:0 0 24px;line-height:1.65;font-family:Arial,sans-serif;">
+          Here's a quick note from your admin:
+        </p>
+
+        <!-- Message card -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+          <tr>
+            <td style="background:#F8F9FF;border:1.5px solid #C7D2FE;border-radius:16px;padding:22px 24px;">
+              <p style="color:#1E1B4B;font-size:17px;font-weight:700;margin:0 0 12px;
+                        line-height:1.35;font-family:Arial,sans-serif;">${safeTitle}</p>
+              <p style="color:#475569;font-size:14px;line-height:1.75;margin:0;
+                        font-family:Arial,sans-serif;">${safeBody}</p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+          <tr>
+            <td align="center">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background:${GRADIENT};border-radius:14px;
+                             box-shadow:0 8px 24px rgba(99,102,241,0.4);">
+                    <a href="${portalUrl}"
+                      style="display:block;color:#ffffff;text-decoration:none;
+                             padding:16px 52px;font-size:15px;font-weight:800;
+                             letter-spacing:-0.2px;font-family:Arial,sans-serif;white-space:nowrap;">
+                      Open Portal &nbsp;→
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="border-top:1px solid #F1F5F9;padding-top:20px;text-align:center;">
+              <p style="color:#94A3B8;font-size:12px;margin:0;line-height:1.7;font-family:Arial,sans-serif;">
+                You can read it any time in your member portal under "Messages from Admin".
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;
+  return emailWrapper(body);
+}
+
+export async function sendMemberMessageEmail(params: {
+  toEmail: string; toName: string; title: string; body: string; portalUrl: string;
+}): Promise<void> {
+  const { toEmail, toName, title, body: msgBody, portalUrl } = params;
+  const cleanTitle = title.trim() || "Message from your admin";
+  const subject    = `New message from admin: ${cleanTitle}`;
+  const html       = buildMemberMessageHtml(toName, cleanTitle, msgBody, portalUrl);
+  const text       = `Hi ${toName},\n\nYour admin sent you a new message:\n\n${cleanTitle}\n\n${msgBody}\n\nOpen your portal: ${portalUrl}\n\n— ZynHive Team`;
+  await sendEmail({ to: toEmail, subject, body: text, html });
+}
+
 // ─── Admin review notification template ──────────────────────────────────────
 function buildAdminReviewHtml(
   memberName: string, taskTitle: string, taskDescription: string,

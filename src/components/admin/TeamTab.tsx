@@ -4,16 +4,20 @@ import {
   fetchMembers, deleteMember, updateMember, createMemberMessage,
   type FirestoreMember,
 } from "../../lib/firebase";
+import { sendMemberMessageEmail } from "../../lib/email";
 import { TeamMemberForm } from "./TeamMemberForm";
 
 // ─── Send Message Modal ───────────────────────────────────────────────────────
 function SendMessageModal({
   member, onClose, onSent,
-}: { member: FirestoreMember; onClose: () => void; onSent: () => void }) {
+}: { member: FirestoreMember; onClose: () => void; onSent: (emailed: boolean) => void }) {
   const [title,  setTitle]  = useState("");
   const [body,   setBody]   = useState("");
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState("");
+  const [alsoEmail, setAlsoEmail] = useState(true);
+
+  const canEmail = !!member.email;
 
   async function submit() {
     if (!body.trim()) { setErr("Please write a message."); return; }
@@ -26,7 +30,27 @@ function SendMessageModal({
         body:     body.trim(),
         read:     false,
       });
-      onSent();
+
+      // Best-effort email — don't block the modal or surface failures since
+      // the in-portal message has already been delivered to Firestore.
+      let emailed = false;
+      if (canEmail && alsoEmail && member.email) {
+        try {
+          const portalUrl = `${window.location.origin}/member/${member.id}`;
+          await sendMemberMessageEmail({
+            toEmail:  member.email,
+            toName:   member.name,
+            title:    title.trim(),
+            body:     body.trim(),
+            portalUrl,
+          });
+          emailed = true;
+        } catch (mailErr) {
+          console.warn("[SendMessageModal] email failed:", mailErr);
+        }
+      }
+
+      onSent(emailed);
       onClose();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -126,6 +150,37 @@ function SendMessageModal({
               }}
             />
           </div>
+
+          {/* Email toggle */}
+          <label
+            className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer"
+            style={{
+              background: canEmail
+                ? (alsoEmail ? "var(--accent-pale)" : "var(--bg-surface)")
+                : "var(--bg-surface)",
+              border: `0.5px solid ${canEmail && alsoEmail ? "rgba(99,102,241,0.35)" : "var(--border2)"}`,
+              opacity: canEmail ? 1 : 0.7,
+            }}
+            title={canEmail ? "" : "This member doesn't have an email saved on their portal."}
+          >
+            <input
+              type="checkbox"
+              checked={canEmail && alsoEmail}
+              disabled={!canEmail}
+              onChange={(e) => setAlsoEmail(e.target.checked)}
+              style={{ accentColor: "var(--accent)", marginTop: 2, cursor: canEmail ? "pointer" : "not-allowed" }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p className="text-[12px] font-semibold" style={{ color: "var(--ink2)", margin: 0 }}>
+                Also send via email
+              </p>
+              <p className="text-[11px]" style={{ color: "var(--ink4)", margin: "2px 0 0 0" }}>
+                {canEmail
+                  ? <>Will email <strong style={{ color: "var(--ink3)" }}>{member.email}</strong></>
+                  : "No email on file — they only see this in the portal."}
+              </p>
+            </div>
+          </label>
 
           {err && (
             <p className="text-[12px] px-3 py-2 rounded-lg"
@@ -630,7 +685,11 @@ export function TeamTab({ showToast }: Props) {
         <SendMessageModal
           member={messageTarget}
           onClose={() => setMessageTarget(null)}
-          onSent={() => showToast(`Message sent to ${messageTarget.name}`)}
+          onSent={(emailed) => showToast(
+            emailed
+              ? `Message sent to ${messageTarget.name} (portal + email)`
+              : `Message sent to ${messageTarget.name}`
+          )}
         />
       )}
     </div>
