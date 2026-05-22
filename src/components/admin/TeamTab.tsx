@@ -28,8 +28,16 @@ function SendMessageModal({
       });
       onSent();
       onClose();
-    } catch {
-      setErr("Failed to send. Try again.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[SendMessageModal] create failed:", e);
+      // Firestore's permission-denied error is the most common cause —
+      // surface it explicitly so the admin knows to deploy updated rules.
+      if (/permission|insufficient|missing/i.test(msg)) {
+        setErr("Permission denied. Deploy the updated firestore.rules (member_messages collection).");
+      } else {
+        setErr(`Failed to send: ${msg}`);
+      }
     } finally {
       setSaving(false);
     }

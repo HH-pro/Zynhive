@@ -13,7 +13,10 @@ service cloud.firestore {
 
     match /team/{memberId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      // Member portal needs update access to save email and apply overdue
+      // score adjustments. Create/delete stay admin-only.
+      allow update: if true;
+      allow create, delete: if isAdmin();
     }
 
     match /leads/{leadId} {
@@ -52,12 +55,36 @@ service cloud.firestore {
     }
 
     match /tasks/{taskId} {
-      allow read, create, update, delete: if isAdmin();
+      // Member portal needs to read assigned tasks and write status,
+      // checklist progress, completion reports, and penaltyApplied.
+      allow read: if true;
+      allow update: if true;
+      allow create, delete: if isAdmin();
     }
 
     match /pending_reviews/{reviewId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
+    }
+
+    match /routines/{routineId} {
+      // Members read their assigned routines and toggle items / submit reports.
+      // Admin creates and removes routines.
+      allow read, update: if true;
+      allow create, delete: if isAdmin();
+    }
+
+    match /ideas/{ideaId} {
+      // Members submit ideas from the portal. Admin reviews, comments, deletes.
+      allow read, create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    match /member_messages/{messageId} {
+      // Admin sends messages from the dashboard; member portal reads them
+      // and flips `read: true` when opened.
+      allow read, update: if true;
+      allow create, delete: if isAdmin();
     }
 
     match /activity_log/{logId} {
