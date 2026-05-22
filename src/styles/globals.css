@@ -186,12 +186,13 @@ body {
 /* ══ SCROLL REVEAL ══════════════════════════════════════════════════════════ */
 .reveal {
   opacity: 0;
-  transform: translateY(32px) scale(0.985);
-  filter: blur(3px);
+  transform: translateY(28px) scale(0.99);
+  filter: blur(2px);
+  will-change: opacity, transform, filter;
   transition:
-    opacity   0.8s var(--ease),
-    transform 0.8s var(--ease),
-    filter    0.7s var(--ease);
+    opacity   0.85s cubic-bezier(0.22,1,0.36,1),
+    transform 0.95s cubic-bezier(0.22,1,0.36,1),
+    filter    0.7s  cubic-bezier(0.22,1,0.36,1);
 }
 .reveal.revealed {
   opacity: 1;
@@ -202,6 +203,19 @@ body {
 .reveal-d2 { transition-delay: 0.16s; }
 .reveal-d3 { transition-delay: 0.24s; }
 .reveal-d4 { transition-delay: 0.32s; }
+
+/* ══ REDUCED MOTION ════════════════════════════════════════════════════════
+   Respect users who prefer no motion — neutralize transforms, keep opacity.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal { opacity: 1; transform: none; filter: none; }
+}
 
 /* ══ ANIMATIONS ═════════════════════════════════════════════════════════════ */
 @keyframes heroUp {

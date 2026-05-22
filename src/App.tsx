@@ -50,32 +50,102 @@ function ScrollProgress() {
 function PageLoader() {
   return (
     <div
-      className="min-h-screen flex items-center justify-center"
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
       style={{ background: "var(--bg-base)" }}
     >
-      <div className="flex flex-col items-center gap-5">
-        {/* Animated diamond */}
-        <div className="relative w-12 h-12">
+      {/* Ambient glow */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: "50%", left: "50%",
+          width: 480, height: 320,
+          transform: "translate(-50%,-50%)",
+          background:
+            "radial-gradient(ellipse, var(--accent-pale) 0%, transparent 70%)",
+          animation: "rPulse 3.6s ease-in-out infinite",
+        }}
+      />
+
+      <div
+        className="relative flex flex-col items-center gap-6"
+        style={{ animation: "fadeIn 0.5s ease both" }}
+      >
+        {/* Animated diamond + orbit */}
+        <div className="relative w-16 h-16">
+          {/* Sweeping arc */}
           <div
-            className="absolute inset-0 rounded-[10px]"
+            className="absolute inset-0 rounded-full pointer-events-none"
             style={{
-              background: "linear-gradient(135deg, var(--accent), var(--cyan))",
-              backgroundSize: "200% 200%",
-              transform: "rotate(45deg)",
-              animation: "gradientShift 2s linear infinite, rPulse 1.5s ease-in-out infinite",
+              border: "1px solid transparent",
+              borderTopColor: "var(--cyan)",
+              borderRightColor: "var(--accent)",
+              animation: "spinLoader 1.8s linear infinite",
+              filter: "drop-shadow(0 0 6px var(--accent-dim))",
             }}
           />
+          {/* Outer ring */}
           <div
-            className="absolute inset-[3px] rounded-[8px]"
-            style={{ background: "var(--bg-base)", transform: "rotate(45deg)" }}
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              width: 76, height: 76,
+              top: "50%", left: "50%",
+              transform: "translate(-50%,-50%)",
+              border: "1px solid var(--accent-pale2)",
+              animation: "rPulse 2.2s ease-in-out infinite",
+            }}
           />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-mono font-bold text-[10px]" style={{ color: "var(--accent)" }}>ZH</span>
+
+          {/* Diamond body */}
+          <div className="absolute inset-2.5">
+            <div
+              className="absolute inset-0 rounded-[10px]"
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--accent), var(--cyan), var(--accent))",
+                backgroundSize: "200% 200%",
+                transform: "rotate(45deg)",
+                animation: "gradientShift 2.4s linear infinite",
+                boxShadow: "0 0 24px var(--accent-dim)",
+              }}
+            />
+            <div
+              className="absolute inset-[3px] rounded-[8px]"
+              style={{ background: "var(--bg-base)", transform: "rotate(45deg)" }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span
+                className="font-mono font-bold text-[10px]"
+                style={{ color: "var(--accent)" }}
+              >
+                ZH
+              </span>
+            </div>
           </div>
         </div>
-        <span className="font-mono text-[10px] tracking-[0.18em] uppercase" style={{ color: "var(--ink4)" }}>
-          Loading
-        </span>
+
+        {/* Label + dots */}
+        <div className="flex flex-col items-center gap-2.5">
+          <span
+            className="font-mono text-[10px] tracking-[0.24em] uppercase"
+            style={{ color: "var(--ink3)" }}
+          >
+            Loading
+          </span>
+          <div className="flex items-center gap-1.5">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="rounded-full"
+                style={{
+                  width: 4, height: 4,
+                  background: "var(--accent)",
+                  animation: `bPulse 1.2s ${i * 0.18}s ease-in-out infinite`,
+                  opacity: 0.7,
+                }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -202,8 +272,12 @@ export default function App() {
       <div
         style={{
           opacity:    splashDone ? 1 : 0,
-          transition: "opacity 0.5s ease 0.1s",
+          transform:  splashDone ? "none" : "scale(0.985)",
+          transition:
+            "opacity 0.75s cubic-bezier(0.22,1,0.36,1) 0.05s, " +
+            "transform 0.85s cubic-bezier(0.22,1,0.36,1) 0.05s",
           visibility: splashDone ? "visible" : "hidden",
+          transformOrigin: "center 35%",
         }}
       >
         <Cursor />

@@ -102,15 +102,29 @@ export function useInView(threshold = 0.1): [React.RefObject<HTMLDivElement>, bo
 /** Attaches IntersectionObserver to all .reveal elements in DOM */
 export function useReveal() {
   useEffect(() => {
+    // Re-scan when new sections are mounted (lazy pages, route changes)
+    const seen = new WeakSet<Element>();
     const obs = new IntersectionObserver(
       (entries) =>
         entries.forEach((e) => {
-          if (e.isIntersecting) { e.target.classList.add("revealed"); obs.unobserve(e.target); }
+          if (e.isIntersecting) {
+            e.target.classList.add("revealed");
+            obs.unobserve(e.target);
+          }
         }),
-      { threshold: 0.1 }
+      { threshold: 0.08, rootMargin: "0px 0px -8% 0px" }
     );
-    document.querySelectorAll(".reveal").forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
+    const scan = () => {
+      document.querySelectorAll(".reveal").forEach((el) => {
+        if (!seen.has(el)) { seen.add(el); obs.observe(el); }
+      });
+    };
+    scan();
+    // Watch for late-mounted nodes (lazy chunks, modal content)
+    const mo = new MutationObserver(scan);
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    return () => { obs.disconnect(); mo.disconnect(); };
   }, []);
 }
 
